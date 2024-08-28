@@ -8,12 +8,12 @@ A package for building tabs that comply with WCAG accessibility guidelines. The 
 - Navigate to the project repository and download it. Place it in the appropriate directory, such as a library folder
 - Include the following scripts:
   - js: `tabs-a11y/dist/js/script.min.css`
-  - css: `tabs-a11y/dist/css/style.min.css`
+  - css: `tabs-a11y/dist/css/styles.min.css`
 
 ### With npm
 
 #### Add css
-Include the css file from `dist/css/style.min.css`
+Include the css file from `dist/css/styles.min.css`
 
 #### Create HTML structure
 ```html
