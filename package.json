@@ -1,0 +1,36 @@
+{
+  "name": "tabs-a11y",
+  "version": "1.0.0",
+  "description": "Tabs with Full Accessibility ",
+  "main": "dist/js/index.js",
+  "scripts": {
+    "project-start": "gulp projectStart",
+    "build-dev-styles": "gulp compileStylesDev",
+    "build-dev-scripts": "gulp compileScriptsDev",
+    "build-dev": "gulp buildDev",
+    "build-prod-styles": "gulp compileStylesProd",
+    "build-prod-scripts": "gulp compileScriptsProd",
+    "build-prod": "gulp buildProd",
+    "watch": "gulp watchFiles"
+  },
+  "author": "Bartosz Trajder",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.25",
+    "@babel/preset-env": "^7.25",
+    "del": "^6.0.0",
+    "gulp": "^5.0",
+    "gulp-autoprefixer": "^9.0",
+    "gulp-babel": "^8.0",
+    "gulp-babel-minify": "^0.5",
+    "gulp-plumber": "^1.2",
+    "gulp-rename": "^2.0",
+    "gulp-sass": "^5.1",
+    "gulp-sourcemaps": "^2.6.5",
+    "sass": "^1.77"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sargadil/tabs.git"
+  }
+}
