@@ -1,8 +1,21 @@
 {
   "name": "tabs-a11y",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Tabs with Full Accessibility ",
-  "keywords": ["tabs", "tab", "a11y", "wcag", "accessible tabs", "wai-aria", "aria", "keyboard naviagation tabs", "tabpanel", "js", "javascript", "horizontal tabs"],
+  "keywords": [
+    "tabs",
+    "tab",
+    "a11y",
+    "wcag",
+    "accessible tabs",
+    "wai-aria",
+    "aria",
+    "keyboard naviagation tabs",
+    "tabpanel",
+    "js",
+    "javascript",
+    "horizontal tabs"
+  ],
   "main": "dist/js/index.js",
   "scripts": {
     "project-start": "gulp projectStart",
