@@ -87,6 +87,19 @@ const tabs = new Tabs();
 tabs.getSelectedIndex(); // 0
 ```
 
+### `tabs:change` event
+Dispatched (bubbling) on the main container element whenever the selected tab changes,
+whether triggered by mouse, keyboard, or `selectTab()`. Useful for analytics or for
+lazy-loading panel content.
+
+```javascript
+document.getElementById('tabs').addEventListener('tabs:change', (event) => {
+    const { index, tab, panel } = event.detail;
+
+    console.log('Selected tab index:', index);
+});
+```
+
 ## Configuration
 
 ### Configuration object

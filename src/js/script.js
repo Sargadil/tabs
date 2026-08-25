@@ -26,6 +26,7 @@ class Tabs {
 
     #boundOnKeyDown = this.#onKeyDown.bind(this);
     #boundOnClick = this.#onClick.bind(this);
+    #context = null;
 
     constructor(configs) {
         this.#configs = this.#deepMerge(this.#configs, configs);
@@ -229,6 +230,27 @@ class Tabs {
         new_tab.focus();
 
         this.#toggleTabContent(old_panel_tab_id, new_panel_tab_id);
+        this.#dispatchChangeEvent(new_tab, new_panel_tab_id);
+    }
+
+    /**
+     * Dispatch a "tabs:change" CustomEvent on the context element.
+     *
+     * @param {HTMLElement} tab
+     *   Newly selected tab button.
+     *
+     * @param {string} panel_id
+     *   ID of the newly selected tab panel.
+     */
+    #dispatchChangeEvent(tab, panel_id) {
+        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const index = Array.prototype.indexOf.call(tab_buttons, tab);
+        const panel = document.getElementById(panel_id);
+
+        this.#context.dispatchEvent(new CustomEvent('tabs:change', {
+            bubbles: true,
+            detail: { index, tab, panel },
+        }));
     }
 
     /**
@@ -447,6 +469,8 @@ class Tabs {
         if (!context) {
             throw new Error(`[tabs plugin] contextID does not exist in html structure.`);
         }
+
+        this.#context = context;
 
         for (const el in classes) {
             this.#objectsHTML[el] = context.querySelectorAll(classes[el]);

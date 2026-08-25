@@ -26,6 +26,20 @@ export interface TabsConfig {
     options?: TabsOptions;
 }
 
+export interface TabsChangeEventDetail {
+    index: number;
+    tab: HTMLElement;
+    panel: HTMLElement;
+}
+
+export type TabsChangeEvent = CustomEvent<TabsChangeEventDetail>;
+
+declare global {
+    interface HTMLElementEventMap {
+        'tabs:change': TabsChangeEvent;
+    }
+}
+
 export default class Tabs {
     constructor(configs?: TabsConfig);
 
