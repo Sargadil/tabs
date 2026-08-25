@@ -24,6 +24,9 @@ class Tabs {
         }
     }
 
+    #boundOnKeyDown = this.#onKeyDown.bind(this);
+    #boundOnClick = this.#onClick.bind(this);
+
     constructor(configs) {
         this.#configs = this.#deepMerge(this.#configs, configs);
         this.#initElements();
@@ -31,6 +34,21 @@ class Tabs {
 
         if (this.#configs.options.removeTabPanelTitle) {
             this.#removeTabPanelTitle();
+        }
+    }
+
+    /**
+     * Remove all event listeners added by this instance.
+     *
+     * Call this before discarding a Tabs instance (e.g. on component
+     * unmount in a framework) to avoid leaking listeners.
+     */
+    destroy() {
+        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+
+        for (let i = 0; i < tab_buttons.length; i++) {
+            tab_buttons[i].removeEventListener('keydown', this.#boundOnKeyDown);
+            tab_buttons[i].removeEventListener('click', this.#boundOnClick);
         }
     }
 
@@ -46,8 +64,8 @@ class Tabs {
             const tab_panel = document.getElementById(tab_buttons[i].getAttribute('aria-controls'));
 
             tab_buttons[i].tabIndex = parseInt(this.#configs.options.initSelectedItem) === i ? 0 : -1;
-            tab_buttons[i].addEventListener('keydown', this.#onKeyDown.bind(this));
-            tab_buttons[i].addEventListener('click', this.#onClick.bind(this));
+            tab_buttons[i].addEventListener('keydown', this.#boundOnKeyDown);
+            tab_buttons[i].addEventListener('click', this.#boundOnClick);
         }
 
         this.#prepareTabContent();

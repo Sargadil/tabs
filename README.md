@@ -55,6 +55,20 @@ import Tabs from 'tabs-a11y';
 new Tabs();
 ```
 
+## API
+
+### `destroy()`
+Removes all event listeners added by the instance. Call this before discarding a `Tabs`
+instance (e.g. on component unmount in a framework like React or Vue) to avoid leaking
+listeners.
+
+```javascript
+const tabs = new Tabs();
+
+// later, e.g. when the component unmounts
+tabs.destroy();
+```
+
 ## Configuration
 
 ### Configuration object

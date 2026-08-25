@@ -28,4 +28,11 @@ export interface TabsConfig {
 
 export default class Tabs {
     constructor(configs?: TabsConfig);
+
+    /**
+     * Remove all event listeners added by this instance. Call this
+     * before discarding a Tabs instance (e.g. on component unmount)
+     * to avoid leaking listeners.
+     */
+    destroy(): void;
 }
