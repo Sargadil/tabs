@@ -22,6 +22,7 @@ class Tabs {
             removeTabPanelTitle: false,
             ariaLabel: '',
             orientation: 'horizontal',
+            activationMode: 'automatic',
         }
     }
 
@@ -130,25 +131,26 @@ class Tabs {
     #onKeyDown(event) {
         const target = event.currentTarget;
         const is_vertical = this.#configs.options.orientation === 'vertical';
+        const is_manual = this.#configs.options.activationMode === 'manual';
         const previous_key = is_vertical ? 'ArrowUp' : 'ArrowLeft';
         const next_key = is_vertical ? 'ArrowDown' : 'ArrowRight';
         let flag = false;
 
         switch (event.key) {
             case previous_key:
-                this.#setSelectedToPreviousTab(target);
+                is_manual ? this.#moveFocusToPreviousTab(target) : this.#setSelectedToPreviousTab(target);
                 flag = true;
                 break;
             case next_key:
-                this.#setSelectedToNextTab(target);
+                is_manual ? this.#moveFocusToNextTab(target) : this.#setSelectedToNextTab(target);
                 flag = true;
                 break;
             case 'Home':
-                this.#setSelectedToFirstTab(target);
+                is_manual ? this.#moveFocusToFirstTab(target) : this.#setSelectedToFirstTab(target);
                 flag = true;
                 break;
             case 'End':
-                this.#setSelectedToLastTab(target);
+                is_manual ? this.#moveFocusToLastTab(target) : this.#setSelectedToLastTab(target);
                 flag = true;
                 break;
         }
@@ -212,6 +214,80 @@ class Tabs {
         const new_current_tab = tab_buttons[tab_buttons.length - 1];
 
         this.#setSelectedTab(target, new_current_tab);
+    }
+
+    /**
+     * Move keyboard focus to the previous tab without changing the
+     * active selection (manual activation mode).
+     *
+     * @param {HTMLElement} target
+     *   Focused nav button.
+     */
+    #moveFocusToPreviousTab(target) {
+        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const current_tab_index = this.#getClickedTabIndex(tab_buttons, target);
+        const new_current_tab = this.#getPreviousTab(current_tab_index, tab_buttons);
+
+        this.#moveFocusTo(target, new_current_tab);
+    }
+
+    /**
+     * Move keyboard focus to the next tab without changing the
+     * active selection (manual activation mode).
+     *
+     * @param {HTMLElement} target
+     *   Focused nav button.
+     */
+    #moveFocusToNextTab(target) {
+        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const current_tab_index = this.#getClickedTabIndex(tab_buttons, target);
+        const new_current_tab = this.#getNextTab(current_tab_index, tab_buttons);
+
+        this.#moveFocusTo(target, new_current_tab);
+    }
+
+    /**
+     * Move keyboard focus to the first tab without changing the
+     * active selection (manual activation mode).
+     *
+     * @param {HTMLElement} target
+     *   Focused nav button.
+     */
+    #moveFocusToFirstTab(target) {
+        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const new_current_tab = tab_buttons[0];
+
+        this.#moveFocusTo(target, new_current_tab);
+    }
+
+    /**
+     * Move keyboard focus to the last tab without changing the
+     * active selection (manual activation mode).
+     *
+     * @param {HTMLElement} target
+     *   Focused nav button.
+     */
+    #moveFocusToLastTab(target) {
+        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const new_current_tab = tab_buttons[tab_buttons.length - 1];
+
+        this.#moveFocusTo(target, new_current_tab);
+    }
+
+    /**
+     * Move the roving tabindex and keyboard focus to a tab, without
+     * touching aria-selected or the visible panel.
+     *
+     * @param {HTMLElement} old_tab
+     *   Previously focused tab.
+     *
+     * @param {HTMLElement} new_tab
+     *   Tab to move focus to.
+     */
+    #moveFocusTo(old_tab, new_tab) {
+        old_tab.tabIndex = -1;
+        new_tab.tabIndex = 0;
+        new_tab.focus();
     }
 
     /**

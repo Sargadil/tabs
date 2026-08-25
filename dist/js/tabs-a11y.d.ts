@@ -18,6 +18,7 @@ export interface TabsOptions {
     removeTabPanelTitle?: boolean;
     ariaLabel?: string;
     orientation?: 'horizontal' | 'vertical';
+    activationMode?: 'automatic' | 'manual';
 }
 
 export interface TabsConfig {
