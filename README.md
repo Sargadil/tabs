@@ -1,10 +1,35 @@
 # Tabs a11y
 
+[![npm version](https://img.shields.io/npm/v/tabs-a11y.svg)](https://www.npmjs.com/package/tabs-a11y)
+[![npm downloads](https://img.shields.io/npm/dm/tabs-a11y.svg)](https://www.npmjs.com/package/tabs-a11y)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/tabs-a11y)](https://bundlephobia.com/package/tabs-a11y)
+[![license](https://img.shields.io/npm/l/tabs-a11y.svg)](./LICENSE)
+[![CI](https://github.com/Sargadil/tabs/actions/workflows/ci.yml/badge.svg)](https://github.com/Sargadil/tabs/actions/workflows/ci.yml)
+
 A package for building tabs that comply with WCAG accessibility guidelines. The tabs can be navigated using both a mouse and a keyboard. The package also includes various configuration options.
+
+**[Live demo](https://sargadil.github.io/tabs/)** — try it before installing.
 
 ## Basic usage
 
 ### Without npm
+
+Via CDN (unpkg):
+```html
+<link rel="stylesheet" href="https://unpkg.com/tabs-a11y/dist/css/styles.min.css">
+<script src="https://unpkg.com/tabs-a11y/dist/js/tabs-a11y.umd.js"></script>
+```
+
+or jsDelivr:
+```html
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabs-a11y/dist/css/styles.min.css">
+<script src="https://cdn.jsdelivr.net/npm/tabs-a11y/dist/js/tabs-a11y.umd.js"></script>
+```
+
+Both expose a `Tabs` global. Pin a version for production use, e.g.
+`https://unpkg.com/tabs-a11y@1.0.2/...`, instead of always fetching the latest.
+
+Or, without a CDN:
 - Navigate to the project repository and download it. Place it in the appropriate directory, such as a library folder
 - Include the following scripts:
   - js: `tabs-a11y/dist/js/tabs-a11y.umd.js` (exposes a `Tabs` global)

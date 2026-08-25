@@ -99,10 +99,6 @@ class Tabs {
 
         const old_tab = tab_buttons[this.getSelectedIndex()];
 
-        if (new_tab === old_tab) {
-            return;
-        }
-
         this.#setSelectedTab(old_tab, new_tab);
     }
 
@@ -369,6 +365,10 @@ class Tabs {
      *   New tab element.
      */
     #setSelectedTab(old_tab, new_tab) {
+        if (old_tab === new_tab) {
+            return;
+        }
+
         const old_panel_tab_id = old_tab.getAttribute(['aria-controls']);
         const new_panel_tab_id = new_tab.getAttribute(['aria-controls']);
 

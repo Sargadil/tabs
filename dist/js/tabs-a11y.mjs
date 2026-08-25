@@ -52,7 +52,7 @@ var e = class {
 		let t = this.#e.tabsNavBtn, n = t[e];
 		if (!n) throw Error(`[tabs plugin] selectTab: no tab exists at index ${e}.`);
 		let r = t[this.getSelectedIndex()];
-		n !== r && this.#E(r, n);
+		this.#E(r, n);
 	}
 	#d() {
 		this.#N();
@@ -130,6 +130,7 @@ var e = class {
 		e.tabIndex = -1, t.tabIndex = 0, t.focus();
 	}
 	#E(e, t) {
+		if (e === t) return;
 		let n = e.getAttribute(["aria-controls"]), r = t.getAttribute(["aria-controls"]);
 		e.setAttribute("aria-selected", "false"), e.tabIndex = -1, t.setAttribute("aria-selected", "true"), t.tabIndex = 0, t.focus(), this.#j(n, r), this.#D(t, r);
 	}
