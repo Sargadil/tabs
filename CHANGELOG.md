@@ -3,6 +3,21 @@
 All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.1] — 2026-08-25
+
+### Added
+- Dark mode: the bundled CSS now respects `prefers-color-scheme: dark` automatically,
+  using CSS custom properties (`--tabs-nav-bg`, `--tabs-surface-bg`, `--tabs-text-color`,
+  etc.) scoped to `.tabs`, which consumers can also override to reskin the component.
+
+### Changed
+- `index.html` (the live demo) rebuilt from a single example into a documentation-style
+  page with 7 live variants (default, vertical, manual activation, custom nav, custom
+  titles, swipeable, responsive-in-a-narrow-container), each with a "Show code" panel,
+  plus a dark/light theme toggle in the sticky nav.
+- README's "Advance usage example" section (largely duplicated by the live demo above)
+  trimmed to a short pointer at the demo, saving ~100 lines.
+
 ## [1.1.0] — 2026-08-25
 
 The accessibility & DX overhaul. A large accessibility, developer-experience, and
