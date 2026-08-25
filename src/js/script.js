@@ -29,10 +29,12 @@ class Tabs {
     #boundOnKeyDown = this.#onKeyDown.bind(this);
     #boundOnClick = this.#onClick.bind(this);
     #context = null;
+    #panelIds = [];
 
     constructor(configs) {
         this.#configs = this.#deepMerge(this.#configs, configs);
         this.#initElements();
+        this.#generatePanelIds();
         this.#initTabs();
 
         if (this.#configs.options.removeTabPanelTitle) {
@@ -376,7 +378,7 @@ class Tabs {
         const tab_buttons = this.#objectsHTML['tabsNavBtn'];
 
         this.#objectsHTML['tabPanel'].forEach((item, index) => {
-            const tab_panel_id = this.#configs.selectors.tabPanelIdPrefix + '-' + index;
+            const tab_panel_id = this.#panelIds[index];
             const open_class_selector = this.#configs.selectors.tabPanelOpen;
             const tab_panel_open_index = this.#configs.options.initSelectedItem
 
@@ -497,7 +499,7 @@ class Tabs {
         let html = `<div class="${tab_nav_list_selector}" role="tablist"${aria_label_attr}${aria_orientation_attr}>`;
 
         for (let i = 0; i < this.#objectsHTML['tabPanelTitle'].length; i++) {
-            let tab_panel_id = this.#configs.selectors.tabPanelIdPrefix + '-' + i;
+            let tab_panel_id = this.#panelIds[i];
             let tab_id = tab_panel_id + '-tab';
             let is_selected = parseInt(this.#configs.options.initSelectedItem) === i;
 
@@ -528,7 +530,7 @@ class Tabs {
 
         for (let i = 0; i < this.#objectsHTML['tabsNavButton'].length; i++) {
             const button = this.#objectsHTML['tabsNavButton'][i];
-            let tab_panel_id = this.#configs.selectors.tabPanelIdPrefix + '-' + i;
+            let tab_panel_id = this.#panelIds[i];
             let is_selected = parseInt(this.#configs.options.initSelectedItem) === i;
 
             if (!button.id) {
@@ -543,6 +545,45 @@ class Tabs {
                 button.setAttribute('aria-selected', 'true');
             }
         }
+    }
+
+    /**
+     * Pre-compute a unique DOM id for each tab panel, so multiple Tabs
+     * instances with the default tabPanelIdPrefix on the same page
+     * don't collide (which would produce invalid duplicate-id HTML and
+     * make document.getElementById resolve to the wrong instance).
+     */
+    #generatePanelIds() {
+        const count = this.#objectsHTML['tabPanel'].length;
+        const prefix = this.#configs.selectors.tabPanelIdPrefix;
+        const ids = [];
+
+        for (let i = 0; i < count; i++) {
+            ids.push(this.#makeUniqueId(`${prefix}-${i}`));
+        }
+
+        this.#panelIds = ids;
+    }
+
+    /**
+     * Return base_id, or base_id with an incrementing numeric suffix
+     * if an element with that id already exists elsewhere in the
+     * document (e.g. from another Tabs instance on the same page).
+     *
+     * @param {string} base_id
+     *
+     * @returns {string}
+     */
+    #makeUniqueId(base_id) {
+        let id = base_id;
+        let suffix = 2;
+
+        while (document.getElementById(id)) {
+            id = `${base_id}-${suffix}`;
+            suffix++;
+        }
+
+        return id;
     }
 
     /**

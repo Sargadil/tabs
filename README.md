@@ -140,7 +140,7 @@ document.getElementById('tabs').addEventListener('tabs:change', (event) => {
 | classes.tabsNavButton       | string  | Navigation tabs buttons css class. Use this only when you want create custom navigation.                                        |
 | classes.tabPanel            | string  | Single tab panel css class.                                                                                                     |
 | classes.tabPanelTitle       | string  | Single tab title panel css class. This text will be copy to navigation button.                                                  |
-| selectors.tabPanelIdPrefix  | string  | Selector that will be used as ID prefix to add correct aria structure for accessibility.                                        |
+| selectors.tabPanelIdPrefix  | string  | Selector that will be used as ID prefix to add correct aria structure for accessibility. Safe to leave at the default even with multiple `Tabs` instances on the same page — a numeric suffix is added automatically if it would otherwise collide. |
 | selectors.tabPanelOpen      | string  | Selector that will be used as css class to indicate open tab panel.                                                             |
 | options.useCustomNav        | boolean | Indicate if should use custom tabs navigation. Important note is that you have to put your css classes to configuration object. |
 | options.customNavTitles     | array   | Array with custom titles.                                                                                                       |
