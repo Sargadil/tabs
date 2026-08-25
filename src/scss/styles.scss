@@ -1,9 +1,28 @@
 $tabs-mobile-breakpoint: 600px;
 
 .tabs {
+  --tabs-shadow-color: #e6e6ea;
+  --tabs-nav-bg: #F4F4F8;
+  --tabs-nav-hover-bg: #e6e6ea;
+  --tabs-surface-bg: #FFF;
+  --tabs-text-color: #000;
+  --tabs-focus-color: #000;
+  --tabs-scrollbar-thumb: rgba(0, 0, 0, 0.25);
+
+  @media (prefers-color-scheme: dark) {
+    // Tailwind's slate scale.
+    --tabs-shadow-color: rgba(0, 0, 0, 0.6);
+    --tabs-nav-bg: #0f172a; // slate-900
+    --tabs-nav-hover-bg: #334155; // slate-700
+    --tabs-surface-bg: #1e293b; // slate-800
+    --tabs-text-color: #f1f5f9; // slate-100
+    --tabs-focus-color: #f1f5f9; // slate-100
+    --tabs-scrollbar-thumb: rgba(203, 213, 225, 0.35); // slate-300
+  }
+
   max-width: 1200px;
   margin: 0 auto;
-  box-shadow: 0 0 24px 0 #e6e6ea;
+  box-shadow: 0 0 24px 0 var(--tabs-shadow-color);
 
   * {
     box-sizing: border-box;
@@ -16,10 +35,10 @@ $tabs-mobile-breakpoint: 600px;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x proximity;
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+    scrollbar-color: var(--tabs-scrollbar-thumb) transparent;
     padding: 0;
     margin: 0;
-    background-color: #F4F4F8;
+    background-color: var(--tabs-nav-bg);
     list-style-type: none;
 
     &::-webkit-scrollbar {
@@ -31,7 +50,7 @@ $tabs-mobile-breakpoint: 600px;
     }
 
     &::-webkit-scrollbar-thumb {
-      background-color: rgba(0, 0, 0, 0.25);
+      background-color: var(--tabs-scrollbar-thumb);
       border-radius: 3px;
     }
   }
@@ -49,27 +68,28 @@ $tabs-mobile-breakpoint: 600px;
     padding: 10px 15px;
     border-style: none;
     border-radius: 0;
-    background-color: #F4F4F8;
+    background-color: var(--tabs-nav-bg);
+    color: var(--tabs-text-color);
     cursor: pointer;
     transition: background-color 300ms linear;
 
     &:hover {
-      background-color: #e6e6ea;
+      background-color: var(--tabs-nav-hover-bg);
     }
 
     &[aria-selected="true"] {
-      color: #000;
-      background-color: #FFF;
+      color: var(--tabs-text-color);
+      background-color: var(--tabs-surface-bg);
     }
 
     &:focus-visible {
-      outline: 2px solid #000;
+      outline: 2px solid var(--tabs-focus-color);
       outline-offset: -2px;
     }
   }
 
   &__panels {
-    background-color: #FFF;
+    background-color: var(--tabs-surface-bg);
   }
 
   &--vertical {
@@ -116,8 +136,8 @@ $tabs-mobile-breakpoint: 600px;
     display: none;
     padding: 20px;
     opacity: 0;
-    color: #000;
-    background-color: #FFF;
+    color: var(--tabs-text-color);
+    background-color: var(--tabs-surface-bg);
     animation: tabpanelClose 1000ms;
 
     &--open {
@@ -136,7 +156,7 @@ $tabs-mobile-breakpoint: 600px;
     }
 
     &:focus-visible {
-      outline: 2px solid #000;
+      outline: 2px solid var(--tabs-focus-color);
       outline-offset: -2px;
     }
 

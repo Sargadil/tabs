@@ -3,40 +3,656 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+          content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Tabs a11y</title>
+    <title>Tabs a11y — examples</title>
     <link rel="stylesheet" href="./dist/css/styles.min.css">
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #fff;
+            --text: #1a1a1f;
+            --muted: #5a5a66;
+            --border: #e2e2e8;
+            --bg-code: #f6f6f9;
+            --accent: #2557d6;
+        }
+
+        /* Tailwind's slate scale. Applies by default via prefers-color-scheme,
+           unless the toggle below has set an explicit data-theme. */
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --bg: #0f172a; /* slate-900 */
+                --text: #f1f5f9; /* slate-100 */
+                --muted: #94a3b8; /* slate-400 */
+                --border: #334155; /* slate-700 */
+                --bg-code: #1e293b; /* slate-800 */
+                --accent: #60a5fa; /* blue-400 */
+            }
+        }
+
+        :root[data-theme="dark"] {
+            --bg: #0f172a;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --border: #334155;
+            --bg-code: #1e293b;
+            --accent: #60a5fa;
+        }
+
+        /* The library's own dark-mode variables (see src/scss/styles.scss)
+           only react to prefers-color-scheme. Mirror the same override here,
+           scoped to .tabs, so the manual toggle also affects the component
+           itself, not just this page's chrome. */
+        :root[data-theme="dark"] .tabs {
+            --tabs-shadow-color: rgba(0, 0, 0, 0.6);
+            --tabs-nav-bg: #0f172a;
+            --tabs-nav-hover-bg: #334155;
+            --tabs-surface-bg: #1e293b;
+            --tabs-text-color: #f1f5f9;
+            --tabs-focus-color: #f1f5f9;
+            --tabs-scrollbar-thumb: rgba(203, 213, 225, 0.35);
+        }
+
+        :root[data-theme="light"] .tabs {
+            --tabs-shadow-color: #e6e6ea;
+            --tabs-nav-bg: #F4F4F8;
+            --tabs-nav-hover-bg: #e6e6ea;
+            --tabs-surface-bg: #FFF;
+            --tabs-text-color: #000;
+            --tabs-focus-color: #000;
+            --tabs-scrollbar-thumb: rgba(0, 0, 0, 0.25);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .page {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 20px 80px;
+        }
+
+        header.intro {
+            padding: 40px 0 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        header.intro h1 {
+            margin: 0 0 8px;
+            font-size: 1.9rem;
+        }
+
+        header.intro p {
+            margin: 0;
+            color: var(--muted);
+            max-width: 60ch;
+        }
+
+        header.intro .links {
+            margin-top: 16px;
+            font-size: 0.9rem;
+        }
+
+        header.intro .links a {
+            color: var(--accent);
+            text-decoration: none;
+            margin-right: 16px;
+        }
+
+        header.intro .links a:hover {
+            text-decoration: underline;
+        }
+
+        nav.toc {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 0;
+            margin-bottom: 8px;
+        }
+
+        nav.toc .toc-links {
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        nav.toc a {
+            display: inline-block;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            margin-right: 8px;
+        }
+
+        nav.toc a:hover,
+        nav.toc a:focus-visible {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        section.example {
+            padding: 40px 0;
+            border-bottom: 1px solid var(--border);
+            scroll-margin-top: 64px;
+        }
+
+        section.example h2 {
+            margin: 0 0 4px;
+            font-size: 1.3rem;
+        }
+
+        section.example .description {
+            color: var(--muted);
+            margin: 0 0 20px;
+            max-width: 70ch;
+        }
+
+        .demo {
+            margin-bottom: 16px;
+        }
+
+        details.code {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        details.code summary {
+            cursor: pointer;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--muted);
+            user-select: none;
+        }
+
+        details.code summary:hover {
+            color: var(--text);
+        }
+
+        details.code pre {
+            margin: 0;
+            padding: 16px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-code);
+            overflow-x: auto;
+            font-size: 0.82rem;
+        }
+
+        details.code code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+
+        .narrow-wrap {
+            max-width: 320px;
+            border: 1px dashed var(--border);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .narrow-wrap p.hint {
+            margin: 0 0 10px;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .swipe-hint {
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .theme-toggle {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text);
+            font-size: 1rem;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .theme-toggle:hover,
+        .theme-toggle:focus-visible {
+            border-color: var(--accent);
+        }
+    </style>
+    <script>
+        // Runs before first paint to avoid a flash of the wrong theme.
+        try {
+            var storedTheme = localStorage.getItem('tabs-demo-theme');
+            if (storedTheme) {
+                document.documentElement.setAttribute('data-theme', storedTheme);
+            }
+        } catch (e) {}
+    </script>
 </head>
 <body>
-    <div class="tabs" id="tabs">
-        <div class="tabs__nav"></div>
-        <div class="tabs__panels">
-            <div class="tab-panel">
-                <h3 class="tab-panel__title">Aliquid architecto</h3>
-                <div class="tab-panel__content">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Assumenda dolores est fuga id iure minima non rem repellat, ullam voluptatem. Architecto debitis ea modi, officia quis sequi similique tenetur veritatis?</div>
+    <div class="page">
+        <header class="intro">
+            <h1>Tabs a11y — examples</h1>
+            <p>
+                Every variant below is a real, working instance of the same <code>Tabs</code> class —
+                just a different config. Open "Show code" under each one to see exactly what produced it.
+            </p>
+            <p class="links">
+                <a href="https://github.com/Sargadil/tabs">GitHub</a>
+                <a href="https://www.npmjs.com/package/tabs-a11y">npm</a>
+                <a href="./README.md">README</a>
+            </p>
+        </header>
+
+        <nav class="toc" aria-label="Jump to example">
+            <div class="toc-links">
+                <a href="#default">Default</a>
+                <a href="#vertical">Vertical</a>
+                <a href="#manual">Manual activation</a>
+                <a href="#custom-nav">Custom nav markup</a>
+                <a href="#custom-titles">Custom titles</a>
+                <a href="#swipeable">Swipeable</a>
+                <a href="#narrow">Narrow container</a>
             </div>
-            <div class="tab-panel">
-                <h3 class="tab-panel__title">Consectetur deserunt</h3>
-                <div class="tab-panel__content">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Accusantium adipisci animi consectetur delectus dolor dolores, magni molestiae nulla odit quo saepe suscipit unde. Animi, eaque id minus non officiis tempore.</div>
+            <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Switch to light theme">🌙</button>
+        </nav>
+        <script>
+            (function () {
+                var root = document.documentElement;
+                var button = document.getElementById('theme-toggle');
+
+                function isDark() {
+                    var explicit = root.getAttribute('data-theme');
+                    if (explicit) {
+                        return explicit === 'dark';
+                    }
+                    return typeof window.matchMedia === 'function'
+                        && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                }
+
+                function syncButton() {
+                    var dark = isDark();
+                    button.textContent = dark ? '☀️' : '🌙';
+                    button.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+                }
+
+                button.addEventListener('click', function () {
+                    var next = isDark() ? 'light' : 'dark';
+                    root.setAttribute('data-theme', next);
+                    try {
+                        localStorage.setItem('tabs-demo-theme', next);
+                    } catch (e) {}
+                    syncButton();
+                });
+
+                syncButton();
+            })();
+        </script>
+
+        <section class="example" id="default">
+            <h2>Default</h2>
+            <p class="description">
+                No config at all. Horizontal nav, automatic activation, first tab selected.
+            </p>
+            <div class="demo">
+                <div class="tabs" id="tabs-default">
+                    <div class="tabs__nav"></div>
+                    <div class="tabs__panels">
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Overview</h3>
+                            <div class="tab-panel__content">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Assumenda dolores est fuga id iure minima non rem repellat, ullam voluptatem.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Features</h3>
+                            <div class="tab-panel__content">Accusantium adipisci animi consectetur delectus dolor dolores, magni molestiae nulla odit quo saepe suscipit unde.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Pricing</h3>
+                            <div class="tab-panel__content">In libero molestiae odio odit perferendis praesentium repellat sed vero voluptatum? Eius quidem recusandae sapiente?</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="tab-panel">
-                <h3 class="tab-panel__title">Ducimus</h3>
-                <div class="tab-panel__content">Lorem ipsum dolor sit amet, consectetur adipisicing elit. In libero molestiae odio odit perferendis praesentium repellat sed vero voluptatum? Eius quidem recusandae sapiente? Cupiditate ea earum error explicabo inventore obcaecati.</div>
+            <details class="code">
+                <summary>Show code</summary>
+                <pre><code>&lt;div class="tabs" id="tabs-default"&gt;
+    &lt;div class="tabs__nav"&gt;&lt;/div&gt;
+    &lt;div class="tabs__panels"&gt;
+        &lt;div class="tab-panel"&gt;
+            &lt;h3 class="tab-panel__title"&gt;Overview&lt;/h3&gt;
+            &lt;div class="tab-panel__content"&gt;...&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;!-- ...more .tab-panel elements... --&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+    new Tabs({ contextID: 'tabs-default' });
+&lt;/script&gt;</code></pre>
+            </details>
+        </section>
+
+        <section class="example" id="vertical">
+            <h2>Vertical orientation</h2>
+            <p class="description">
+                <code>orientation: 'vertical'</code> switches the keyboard model to <kbd>ArrowUp</kbd>/<kbd>ArrowDown</kbd>
+                and sets <code>aria-orientation="vertical"</code>. Add the <code>tabs--vertical</code> class for the
+                matching sidebar-style layout (nav beside the panel instead of above it).
+            </p>
+            <div class="demo">
+                <div class="tabs tabs--vertical" id="tabs-vertical">
+                    <div class="tabs__nav"></div>
+                    <div class="tabs__panels">
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Account</h3>
+                            <div class="tab-panel__content">Culpa neque, veritatis! A accusamus blanditiis consectetur deleniti dolores dolorum esse expedita facilis fugit.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Notifications</h3>
+                            <div class="tab-panel__content">A asperiores, deserunt est facere fuga laborum maxime modi necessitatibus nobis praesentium.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Security</h3>
+                            <div class="tab-panel__content">Corporis fugiat odit reiciendis! Laboriosam, nihil! Cupiditate ea earum error explicabo inventore obcaecati.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="tab-panel">
-                <h3 class="tab-panel__title">Itaque magnam</h3>
-                <div class="tab-panel__content">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Culpa neque, veritatis! A accusamus blanditiis consectetur deleniti dolores dolorum esse expedita facilis fugit nemo nihil perspiciatis quam quidem reprehenderit, soluta veritatis?</div>
+            <details class="code">
+                <summary>Show code</summary>
+                <pre><code>&lt;div class="tabs tabs--vertical" id="tabs-vertical"&gt;
+    &lt;div class="tabs__nav"&gt;&lt;/div&gt;
+    &lt;div class="tabs__panels"&gt;...&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+    new Tabs({
+        contextID: 'tabs-vertical',
+        options: { orientation: 'vertical' },
+    });
+&lt;/script&gt;</code></pre>
+            </details>
+        </section>
+
+        <section class="example" id="manual">
+            <h2>Manual activation mode</h2>
+            <p class="description">
+                <code>activationMode: 'manual'</code> — arrow keys move focus without selecting; the tab only
+                activates on click, <kbd>Enter</kbd>, or <kbd>Space</kbd>. Try tabbing in, then arrowing between
+                tabs: notice the panel doesn't change until you press Enter/Space. Pairs well with the
+                <code>tabs:change</code> event for lazy-loading expensive panel content.
+            </p>
+            <div class="demo">
+                <div class="tabs" id="tabs-manual">
+                    <div class="tabs__nav"></div>
+                    <div class="tabs__panels">
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Report A</h3>
+                            <div class="tab-panel__content">Assumenda dolores est fuga id iure minima non rem repellat, ullam voluptatem. Architecto debitis ea modi.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Report B</h3>
+                            <div class="tab-panel__content">Animi, eaque id minus non officiis tempore. Cupiditate ea earum error explicabo inventore obcaecati.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Report C</h3>
+                            <div class="tab-panel__content">Officia quis sequi similique tenetur veritatis? Eius quidem recusandae sapiente?</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="tab-panel">
-                <h3 class="tab-panel__title">Molestias natus</h3>
-                <div class="tab-panel__content">Lorem ipsum dolor sit amet, consectetur adipisicing elit. A asperiores, deserunt est facere fuga laborum maxime modi necessitatibus nobis praesentium saepe totam vero voluptatibus? Corporis fugiat odit reiciendis! Laboriosam, nihil!</div>
+            <details class="code">
+                <summary>Show code</summary>
+                <pre><code>&lt;script&gt;
+    new Tabs({
+        contextID: 'tabs-manual',
+        options: { activationMode: 'manual' },
+    });
+&lt;/script&gt;</code></pre>
+            </details>
+        </section>
+
+        <section class="example" id="custom-nav">
+            <h2>Custom navigation markup</h2>
+            <p class="description">
+                <code>useCustomNav: true</code> — bring your own nav markup (your own classes, your own extra
+                wrapper elements) instead of letting the library generate the tablist. Useful when the nav needs
+                icons, badges, or a layout the default generator doesn't support.
+            </p>
+            <div class="demo">
+                <div class="tabs" id="tabs-custom-nav">
+                    <div class="custom-tabs__nav">
+                        <div class="custom-tabs__nav-inner">
+                            <button class="custom-tabs__nav-button" role="tab">📄 Docs</button>
+                            <button class="custom-tabs__nav-button" role="tab">💬 Support</button>
+                            <button class="custom-tabs__nav-button" role="tab">⚙️ Settings</button>
+                        </div>
+                    </div>
+                    <div class="tabs__panels">
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Docs</h3>
+                            <div class="tab-panel__content">Lorem ipsum dolor sit amet, consectetur adipisicing elit.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Support</h3>
+                            <div class="tab-panel__content">Accusantium adipisci animi consectetur delectus dolor dolores.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Settings</h3>
+                            <div class="tab-panel__content">In libero molestiae odio odit perferendis praesentium repellat.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+            <details class="code">
+                <summary>Show code</summary>
+                <pre><code>&lt;div class="tabs" id="tabs-custom-nav"&gt;
+    &lt;div class="custom-tabs__nav"&gt;
+        &lt;div class="custom-tabs__nav-inner"&gt;
+            &lt;button class="custom-tabs__nav-button" role="tab"&gt;📄 Docs&lt;/button&gt;
+            &lt;button class="custom-tabs__nav-button" role="tab"&gt;💬 Support&lt;/button&gt;
+            &lt;button class="custom-tabs__nav-button" role="tab"&gt;⚙️ Settings&lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class="tabs__panels"&gt;...&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+    new Tabs({
+        contextID: 'tabs-custom-nav',
+        classes: {
+            tabsNavContainer: '.custom-tabs__nav',
+            tabsNavList: '.custom-tabs__nav-inner',
+            tabsNavButton: '.custom-tabs__nav-button',
+        },
+        options: { useCustomNav: true },
+    });
+&lt;/script&gt;</code></pre>
+            </details>
+        </section>
+
+        <section class="example" id="custom-titles">
+            <h2>Custom nav titles</h2>
+            <p class="description">
+                Override the auto-generated nav button text with <code>options.customNavTitles</code> — the
+                panel's own <code>.tab-panel__title</code> stays untouched, only what shows up in the tablist
+                changes. (The <code>data-nav-title</code> markup attribute does the same thing per-panel — see
+                the README.)
+            </p>
+            <div class="demo">
+                <div class="tabs" id="tabs-custom-titles">
+                    <div class="tabs__nav"></div>
+                    <div class="tabs__panels">
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Aliquid architecto</h3>
+                            <div class="tab-panel__content">Assumenda dolores est fuga id iure minima non rem repellat, ullam voluptatem.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Consectetur deserunt</h3>
+                            <div class="tab-panel__content">Accusantium adipisci animi consectetur delectus dolor dolores, magni molestiae nulla odit quo saepe suscipit unde.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Ducimus</h3>
+                            <div class="tab-panel__content">In libero molestiae odio odit perferendis praesentium repellat sed vero voluptatum?</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <details class="code">
+                <summary>Show code</summary>
+                <pre><code>&lt;script&gt;
+    new Tabs({
+        contextID: 'tabs-custom-titles',
+        options: {
+            customNavTitles: ['1. Overview', '2. Details', '3. Summary'],
+        },
+    });
+&lt;/script&gt;</code></pre>
+            </details>
+        </section>
+
+        <section class="example" id="swipeable">
+            <h2>Swipeable</h2>
+            <p class="description">
+                <code>swipeable: true</code> — on a touchscreen, swipe left/right on the panel to move to the
+                next/previous tab. Never blocks vertical page scrolling.
+            </p>
+            <div class="demo">
+                <div class="tabs" id="tabs-swipeable">
+                    <div class="tabs__nav"></div>
+                    <div class="tabs__panels">
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Photo 1</h3>
+                            <div class="tab-panel__content">Culpa neque, veritatis! A accusamus blanditiis consectetur deleniti dolores dolorum.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Photo 2</h3>
+                            <div class="tab-panel__content">A asperiores, deserunt est facere fuga laborum maxime modi necessitatibus nobis.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Photo 3</h3>
+                            <div class="tab-panel__content">Corporis fugiat odit reiciendis! Laboriosam, nihil! Cupiditate ea earum error.</div>
+                        </div>
+                    </div>
+                </div>
+                <span class="swipe-hint">👆 On a phone or touch emulation: swipe the panel left/right.</span>
+            </div>
+            <details class="code">
+                <summary>Show code</summary>
+                <pre><code>&lt;script&gt;
+    new Tabs({
+        contextID: 'tabs-swipeable',
+        options: { swipeable: true },
+    });
+&lt;/script&gt;</code></pre>
+            </details>
+        </section>
+
+        <section class="example" id="narrow">
+            <h2>Responsive nav in a narrow container</h2>
+            <p class="description">
+                The nav never wraps — it scrolls horizontally the moment it doesn't fit, reacting to whatever
+                actually constrains its width. This instance is the same as "Default" above, just placed inside
+                a 320px-wide box, on a full-width desktop screen, to prove it's the <em>container</em> width that
+                matters, not the viewport.
+            </p>
+            <div class="demo narrow-wrap">
+                <p class="hint">↓ This box is hard-coded to 320px wide, regardless of your window size.</p>
+                <div class="tabs" id="tabs-narrow">
+                    <div class="tabs__nav"></div>
+                    <div class="tabs__panels">
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Description</h3>
+                            <div class="tab-panel__content">Assumenda dolores est fuga id iure.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Specifications</h3>
+                            <div class="tab-panel__content">Accusantium adipisci animi consectetur.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Reviews</h3>
+                            <div class="tab-panel__content">In libero molestiae odio odit.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Shipping info</h3>
+                            <div class="tab-panel__content">Culpa neque, veritatis accusamus.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <details class="code">
+                <summary>Show code</summary>
+                <pre><code>&lt;div style="max-width: 320px"&gt;
+    &lt;div class="tabs" id="tabs-narrow"&gt;
+        &lt;div class="tabs__nav"&gt;&lt;/div&gt;
+        &lt;div class="tabs__panels"&gt;...&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+    new Tabs({ contextID: 'tabs-narrow' });
+&lt;/script&gt;</code></pre>
+            </details>
+        </section>
     </div>
+
     <script src="dist/js/tabs-a11y.umd.js"></script>
     <script>
-        new Tabs();
+        new Tabs({ contextID: 'tabs-default' });
+
+        new Tabs({
+            contextID: 'tabs-vertical',
+            options: { orientation: 'vertical' },
+        });
+
+        new Tabs({
+            contextID: 'tabs-manual',
+            options: { activationMode: 'manual' },
+        });
+
+        new Tabs({
+            contextID: 'tabs-custom-nav',
+            classes: {
+                tabsNavContainer: '.custom-tabs__nav',
+                tabsNavList: '.custom-tabs__nav-inner',
+                tabsNavButton: '.custom-tabs__nav-button',
+            },
+            options: { useCustomNav: true },
+        });
+
+        new Tabs({
+            contextID: 'tabs-custom-titles',
+            options: {
+                customNavTitles: ['1. Overview', '2. Details', '3. Summary'],
+            },
+        });
+
+        new Tabs({
+            contextID: 'tabs-swipeable',
+            options: { swipeable: true },
+        });
+
+        new Tabs({ contextID: 'tabs-narrow' });
     </script>
 </body>
 </html>

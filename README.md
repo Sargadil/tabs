@@ -198,114 +198,15 @@ const container = document.querySelector('.my-tabs');
 new Tabs({ contextID: container });
 ```
 
+## More examples
 
-## Advance usage example
+**[See every option in action, live, with the code for each one →](https://sargadil.github.io/tabs/)**
 
-### Example 1 - Create nav custom title
-You can use the **data-nav-title** attribute on the tabPanelTitle CSS class to copy its content to the navigation tabs button."
-
-```html
-<div class="tabs" id="tabs">
-    <div class="tabs__nav"></div>
-    <div class="tabs__panels">
-        <div class="tab-panel">
-            <h3 class="tab-panel__title" data-nav-title="This is a custom title 1">Aliquid architecto</h3>
-            <div class="tab-panel__content">Assumenda dolores est fuga id iure minima non rem repellat, ullam voluptatem.</div>
-        </div>
-        <div class="tab-panel">
-            <h3 class="tab-panel__title">Consectetur deserunt</h3>
-            <div class="tab-panel__content">Accusantium adipisci animi consectetur delectus dolor dolores, magni molestiae nulla odit quo saepe suscipit unde.</div>
-        </div>
-        <div class="tab-panel">
-            <h3 class="tab-panel__title" data-nav-title="This is a custom title 2">Ducimus</h3>
-            <div class="tab-panel__content">In libero molestiae odio odit perferendis praesentium repellat sed vero voluptatum? Eius quidem recusandae sapiente?</div>
-        </div>
-    </div>
-</div>
-```
-
-
-### Example 2 - Create own navigation tabs
-Note: the library will add `role="tablist"` to the `tabsNavList` element (here `.custom-tabs__nav-inner`)
-automatically if it's missing, but it's good practice to include it in your markup too.
-```html
-<div class="tabs" id="tabs">
-    <div class="custom-tabs__nav">
-        <div class="custom-tabs__nav-inner" role="tablist">
-            <button class="custom-tabs__nav-button" role="tab">Tab 1</button>
-            <button class="custom-tabs__nav-button" role="tab">Tab 2</button>
-            <button class="custom-tabs__nav-button" role="tab">Tab 3</button>
-        </div>
-    </div>
-    <div class="tabs__panels">
-        <div class="tab-panel">
-            <h3 class="tab-panel__title">Aliquid architecto</h3>
-            <div class="tab-panel__content">Assumenda dolores est fuga id iure minima non rem repellat, ullam voluptatem.</div>
-        </div>
-        <div class="tab-panel">
-            <h3 class="tab-panel__title">Consectetur deserunt</h3>
-            <div class="tab-panel__content">Accusantium adipisci animi consectetur delectus dolor dolores, magni molestiae nulla odit quo saepe suscipit unde.</div>
-        </div>
-        <div class="tab-panel">
-            <h3 class="tab-panel__title">Ducimus</h3>
-            <div class="tab-panel__content">In libero molestiae odio odit perferendis praesentium repellat sed vero voluptatum? Eius quidem recusandae sapiente?</div>
-        </div>
-    </div>
-</div>
-```
-
-```javascript
-//commonjs
-var tabs = require('tabs-a11y');
-
-new tabs({
-    classes: {
-        tabsNavContainer: '.custom-tabs__nav',
-        tabsNavList: '.custom-tabs__nav-inner',
-        tabsNavButton: '.custom-tabs__nav-button',
-    },
-    options: {
-        useCustomNav: true,
-    }
-});
-```
-
-
-### Example 3 - Add custom title via config object
-```html
-<div class="tabs" id="tabs">
-    <div class="tabs__nav"></div>
-    <div class="tabs__panels">
-        <div class="tab-panel">
-            <h3 class="tab-panel__title" data-nav-title="This is a custom title 1">Aliquid architecto</h3>
-            <div class="tab-panel__content">Assumenda dolores est fuga id iure minima non rem repellat, ullam voluptatem.</div>
-        </div>
-        <div class="tab-panel">
-            <h3 class="tab-panel__title">Consectetur deserunt</h3>
-            <div class="tab-panel__content">Accusantium adipisci animi consectetur delectus dolor dolores, magni molestiae nulla odit quo saepe suscipit unde.</div>
-        </div>
-        <div class="tab-panel">
-            <h3 class="tab-panel__title" data-nav-title="This is a custom title 2">Ducimus</h3>
-            <div class="tab-panel__content">In libero molestiae odio odit perferendis praesentium repellat sed vero voluptatum? Eius quidem recusandae sapiente?</div>
-        </div>
-    </div>
-</div>
-```
-
-```javascript
-//commonjs
-var tabs = require('tabs-a11y');
-
-new tabs({
-    options: {
-        customNavTitles: [
-            'Custom title 1',
-            'Custom title 2',
-            'Custom title 3',
-        ],
-    } 
-});
-```
+Vertical orientation, manual activation, custom nav markup, custom titles, swipeable panels, and
+the responsive nav are all demonstrated there with a "Show code" panel under each one. One
+technique that's markup-only and not on that page: you can put the **`data-nav-title`** attribute
+on a panel's `.tab-panel__title` to override just that tab's button text, instead of listing every
+title in `options.customNavTitles`.
 
 ## Recipes
 
