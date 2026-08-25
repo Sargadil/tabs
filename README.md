@@ -124,6 +124,7 @@ document.getElementById('tabs').addEventListener('tabs:change', (event) => {
         initSelectedItem: 1,
         removeTabPanelTitle: false,
         ariaLabel: '',
+        orientation: 'horizontal',
     }
 }
 ```
@@ -145,6 +146,15 @@ document.getElementById('tabs').addEventListener('tabs:change', (event) => {
 | options.initSelectedItem    | number  | Indicate which tab should be open on initial state. Count start from 0.                                                         |
 | options.removeTabPanelTitle | boolean | Indicate if we should remove title from tab panel that will be moved to navigation tab buttons.                                 |
 | options.ariaLabel           | string  | Accessible name (`aria-label`) for the tablist, e.g. `"Product details"`. Recommended when a page has more than one tab group.  |
+| options.orientation         | string  | `'horizontal'` (default, `ArrowLeft`/`ArrowRight`) or `'vertical'` (`ArrowUp`/`ArrowDown`, sets `aria-orientation="vertical"`).  |
+
+`orientation` only changes keyboard/ARIA behaviour, not layout. When using `'vertical'`, also add
+the `tabs--vertical` class to the main container to lay the nav beside the panels instead of above
+them (provided by the bundled `dist/css/styles.min.css`):
+
+```html
+<div class="tabs tabs--vertical" id="tabs">
+```
 
 
 ## Advance usage example

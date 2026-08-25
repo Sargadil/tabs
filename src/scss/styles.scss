@@ -44,6 +44,27 @@
     background-color: #FFF;
   }
 
+  &--vertical {
+    display: flex;
+    align-items: flex-start;
+
+    .tabs__nav-list {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
+      width: 220px;
+    }
+
+    .tabs__nav-btn {
+      flex: initial;
+      text-align: left;
+    }
+
+    .tabs__panels {
+      flex: 1;
+    }
+  }
+
   .tab-panel {
     display: none;
     padding: 20px;

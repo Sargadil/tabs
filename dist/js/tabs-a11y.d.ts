@@ -17,6 +17,7 @@ export interface TabsOptions {
     initSelectedItem?: number;
     removeTabPanelTitle?: boolean;
     ariaLabel?: string;
+    orientation?: 'horizontal' | 'vertical';
 }
 
 export interface TabsConfig {

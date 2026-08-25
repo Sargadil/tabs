@@ -21,6 +21,7 @@ class Tabs {
             initSelectedItem: 0,
             removeTabPanelTitle: false,
             ariaLabel: '',
+            orientation: 'horizontal',
         }
     }
 
@@ -128,14 +129,17 @@ class Tabs {
      */
     #onKeyDown(event) {
         const target = event.currentTarget;
+        const is_vertical = this.#configs.options.orientation === 'vertical';
+        const previous_key = is_vertical ? 'ArrowUp' : 'ArrowLeft';
+        const next_key = is_vertical ? 'ArrowDown' : 'ArrowRight';
         let flag = false;
 
         switch (event.key) {
-            case 'ArrowLeft':
+            case previous_key:
                 this.#setSelectedToPreviousTab(target);
                 flag = true;
                 break;
-            case 'ArrowRight':
+            case next_key:
                 this.#setSelectedToNextTab(target);
                 flag = true;
                 break;
@@ -411,8 +415,10 @@ class Tabs {
         const tab_nav_btn_selector = this.#configs.classes.tabsNavButton.substring(1);
         const aria_label = this.#configs.options.ariaLabel;
         const aria_label_attr = aria_label ? ` aria-label="${aria_label}"` : '';
+        const is_vertical = this.#configs.options.orientation === 'vertical';
+        const aria_orientation_attr = is_vertical ? ` aria-orientation="vertical"` : '';
 
-        let html = `<div class="${tab_nav_list_selector}" role="tablist"${aria_label_attr}>`;
+        let html = `<div class="${tab_nav_list_selector}" role="tablist"${aria_label_attr}${aria_orientation_attr}>`;
 
         for (let i = 0; i < this.#objectsHTML['tabPanelTitle'].length; i++) {
             let tab_panel_id = this.#configs.selectors.tabPanelIdPrefix + '-' + i;
@@ -437,6 +443,10 @@ class Tabs {
 
             if (this.#configs.options.ariaLabel) {
                 tablist.setAttribute('aria-label', this.#configs.options.ariaLabel);
+            }
+
+            if (this.#configs.options.orientation === 'vertical') {
+                tablist.setAttribute('aria-orientation', 'vertical');
             }
         }
 

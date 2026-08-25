@@ -19,7 +19,8 @@ var e = class {
 			customNavTitles: [],
 			initSelectedItem: 0,
 			removeTabPanelTitle: !1,
-			ariaLabel: ""
+			ariaLabel: "",
+			orientation: "horizontal"
 		}
 	};
 	#n = this.#s.bind(this);
@@ -53,20 +54,20 @@ var e = class {
 		this.#f(n, t);
 	}
 	#s(e) {
-		let t = e.currentTarget, n = !1;
+		let t = e.currentTarget, n = this.#t.options.orientation === "vertical", r = n ? "ArrowUp" : "ArrowLeft", i = n ? "ArrowDown" : "ArrowRight", a = !1;
 		switch (e.key) {
-			case "ArrowLeft":
-				this.#c(t), n = !0;
+			case r:
+				this.#c(t), a = !0;
 				break;
-			case "ArrowRight":
-				this.#l(t), n = !0;
+			case i:
+				this.#l(t), a = !0;
 				break;
 			case "Home":
-				this.#u(t), n = !0;
+				this.#u(t), a = !0;
 				break;
-			case "End": this.#d(t), n = !0;
+			case "End": this.#d(t), a = !0;
 		}
-		n && (e.stopPropagation(), e.preventDefault());
+		a && (e.stopPropagation(), e.preventDefault());
 	}
 	#c(e) {
 		let t = this.#e.tabsNavBtn, n = this.#v(t, e), r = this.#m(n, t);
@@ -138,7 +139,7 @@ var e = class {
 		return t = this.#t.options.customNavTitles.length ? this.#t.options.customNavTitles[e] : this.#e.tabPanelTitle[e].getAttribute("data-nav-title") ?? this.#e.tabPanelTitle[e].innerText, t === void 0 && (t = ""), t;
 	}
 	#S() {
-		let e = this.#t.classes.tabsNavList.substring(1), t = this.#t.classes.tabsNavButton.substring(1), n = this.#t.options.ariaLabel, r = `<div class="${e}" role="tablist"${n ? ` aria-label="${n}"` : ""}>`;
+		let e = this.#t.classes.tabsNavList.substring(1), t = this.#t.classes.tabsNavButton.substring(1), n = this.#t.options.ariaLabel, r = `<div class="${e}" role="tablist"${n ? ` aria-label="${n}"` : ""}${this.#t.options.orientation === "vertical" ? " aria-orientation=\"vertical\"" : ""}>`;
 		for (let e = 0; e < this.#e.tabPanelTitle.length; e++) {
 			let n = this.#t.selectors.tabPanelIdPrefix + "-" + e, i = n + "-tab", a = parseInt(this.#t.options.initSelectedItem) === e;
 			r += `<button id="${i}" class="${t}" role="tab" aria-selected="${a ? "true" : "false"}" aria-controls="${n}">${this.#x(e)}</button>`;
@@ -148,7 +149,7 @@ var e = class {
 	#C() {
 		if (this.#e.tabsNavList.length > 0) {
 			let e = this.#e.tabsNavList[0];
-			e.setAttribute("role", "tablist"), this.#t.options.ariaLabel && e.setAttribute("aria-label", this.#t.options.ariaLabel);
+			e.setAttribute("role", "tablist"), this.#t.options.ariaLabel && e.setAttribute("aria-label", this.#t.options.ariaLabel), this.#t.options.orientation === "vertical" && e.setAttribute("aria-orientation", "vertical");
 		}
 		for (let e = 0; e < this.#e.tabsNavButton.length; e++) {
 			let t = this.#e.tabsNavButton[e], n = this.#t.selectors.tabPanelIdPrefix + "-" + e, r = parseInt(this.#t.options.initSelectedItem) === e;
