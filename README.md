@@ -78,6 +78,7 @@ new Tabs();
         customNavTitles: [],
         initSelectedItem: 1,
         removeTabPanelTitle: false,
+        ariaLabel: '',
     }
 }
 ```
@@ -98,6 +99,7 @@ new Tabs();
 | options.customNavTitles     | array   | Array with custom titles.                                                                                                       |
 | options.initSelectedItem    | number  | Indicate which tab should be open on initial state. Count start from 0.                                                         |
 | options.removeTabPanelTitle | boolean | Indicate if we should remove title from tab panel that will be moved to navigation tab buttons.                                 |
+| options.ariaLabel           | string  | Accessible name (`aria-label`) for the tablist, e.g. `"Product details"`. Recommended when a page has more than one tab group.  |
 
 
 ## Advance usage example
@@ -127,10 +129,12 @@ You can use the **data-nav-title** attribute on the tabPanelTitle CSS class to c
 
 
 ### Example 2 - Create own navigation tabs
+Note: the library will add `role="tablist"` to the `tabsNavList` element (here `.custom-tabs__nav-inner`)
+automatically if it's missing, but it's good practice to include it in your markup too.
 ```html
 <div class="tabs" id="tabs">
     <div class="custom-tabs__nav">
-        <div class="custom-tabs__nav-inner">
+        <div class="custom-tabs__nav-inner" role="tablist">
             <button class="custom-tabs__nav-button" role="tab">Tab 1</button>
             <button class="custom-tabs__nav-button" role="tab">Tab 2</button>
             <button class="custom-tabs__nav-button" role="tab">Tab 3</button>

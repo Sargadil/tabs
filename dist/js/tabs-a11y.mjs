@@ -18,7 +18,8 @@ var e = class {
 			useCustomNav: !1,
 			customNavTitles: [],
 			initSelectedItem: 0,
-			removeTabPanelTitle: !1
+			removeTabPanelTitle: !1,
+			ariaLabel: ""
 		}
 	};
 	constructor(e) {
@@ -78,9 +79,10 @@ var e = class {
 	}
 	#f() {
 		if (this.#e.tabPanel.length === 0) throw Error("[tabs plugin] tab panels should exist.");
-		this.#e.tabPanel.forEach((e, t) => {
-			let n = this.#t.selectors.tabPanelIdPrefix + "-" + t, r = this.#t.selectors.tabPanelOpen, i = this.#t.options.initSelectedItem;
-			e.setAttribute("id", n), e.setAttribute("tabindex", "0"), i === t && e.classList.add(r);
+		let e = this.#e.tabsNavBtn;
+		this.#e.tabPanel.forEach((t, n) => {
+			let r = this.#t.selectors.tabPanelIdPrefix + "-" + n, i = this.#t.selectors.tabPanelOpen, a = this.#t.options.initSelectedItem;
+			t.setAttribute("id", r), t.setAttribute("tabindex", "0"), t.setAttribute("role", "tabpanel"), e[n] && t.setAttribute("aria-labelledby", e[n].id), a === n && t.classList.add(i);
 		});
 	}
 	#p(e, t) {
@@ -108,17 +110,21 @@ var e = class {
 		return t = this.#t.options.customNavTitles.length ? this.#t.options.customNavTitles[e] : this.#e.tabPanelTitle[e].getAttribute("data-nav-title") ?? this.#e.tabPanelTitle[e].innerText, t === void 0 && (t = ""), t;
 	}
 	#v() {
-		let e = this.#t.classes.tabsNavList.substring(1), t = this.#t.classes.tabsNavButton.substring(1), n = `<div class="${e}" role="tablist">`;
+		let e = this.#t.classes.tabsNavList.substring(1), t = this.#t.classes.tabsNavButton.substring(1), n = this.#t.options.ariaLabel, r = `<div class="${e}" role="tablist"${n ? ` aria-label="${n}"` : ""}>`;
 		for (let e = 0; e < this.#e.tabPanelTitle.length; e++) {
-			let r = this.#t.selectors.tabPanelIdPrefix + "-" + e, i = parseInt(this.#t.options.initSelectedItem) === e;
-			n += `<button class="${t}" role="tab" aria-selected="${i ? "true" : "false"}" aria-controls="${r}">${this.#_(e)}</button>`;
+			let n = this.#t.selectors.tabPanelIdPrefix + "-" + e, i = n + "-tab", a = parseInt(this.#t.options.initSelectedItem) === e;
+			r += `<button id="${i}" class="${t}" role="tab" aria-selected="${a ? "true" : "false"}" aria-controls="${n}">${this.#_(e)}</button>`;
 		}
-		return n += "</div>", n;
+		return r += "</div>", r;
 	}
 	#y() {
+		if (this.#e.tabsNavList.length > 0) {
+			let e = this.#e.tabsNavList[0];
+			e.setAttribute("role", "tablist"), this.#t.options.ariaLabel && e.setAttribute("aria-label", this.#t.options.ariaLabel);
+		}
 		for (let e = 0; e < this.#e.tabsNavButton.length; e++) {
-			let t = this.#t.selectors.tabPanelIdPrefix + "-" + e, n = parseInt(this.#t.options.initSelectedItem) === e;
-			this.#e.tabsNavButton[e].setAttribute("aria-controls", t), this.#e.tabsNavButton[e].setAttribute("aria-selected", "false"), n && this.#e.tabsNavButton[e].setAttribute("aria-selected", "true");
+			let t = this.#e.tabsNavButton[e], n = this.#t.selectors.tabPanelIdPrefix + "-" + e, r = parseInt(this.#t.options.initSelectedItem) === e;
+			t.id || t.setAttribute("id", n + "-tab"), t.setAttribute("aria-controls", n), t.setAttribute("aria-selected", "false"), r && t.setAttribute("aria-selected", "true");
 		}
 	}
 	#b() {

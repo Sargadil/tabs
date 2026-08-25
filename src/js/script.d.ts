@@ -16,6 +16,7 @@ export interface TabsOptions {
     customNavTitles?: string[];
     initSelectedItem?: number;
     removeTabPanelTitle?: boolean;
+    ariaLabel?: string;
 }
 
 export interface TabsConfig {

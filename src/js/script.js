@@ -20,6 +20,7 @@ class Tabs {
             customNavTitles: [],
             initSelectedItem: 0,
             removeTabPanelTitle: false,
+            ariaLabel: '',
         }
     }
 
@@ -217,6 +218,8 @@ class Tabs {
             throw new Error(`[tabs plugin] tab panels should exist.`);
         }
 
+        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+
         this.#objectsHTML['tabPanel'].forEach((item, index) => {
             const tab_panel_id = this.#configs.selectors.tabPanelIdPrefix + '-' + index;
             const open_class_selector = this.#configs.selectors.tabPanelOpen;
@@ -224,6 +227,11 @@ class Tabs {
 
             item.setAttribute('id', tab_panel_id);
             item.setAttribute('tabindex', '0');
+            item.setAttribute('role', 'tabpanel');
+
+            if (tab_buttons[index]) {
+                item.setAttribute('aria-labelledby', tab_buttons[index].id);
+            }
 
             if (tab_panel_open_index === index) {
                 item.classList.add(open_class_selector);
@@ -326,14 +334,17 @@ class Tabs {
     #createNav() {
         const tab_nav_list_selector = this.#configs.classes.tabsNavList.substring(1);
         const tab_nav_btn_selector = this.#configs.classes.tabsNavButton.substring(1);
+        const aria_label = this.#configs.options.ariaLabel;
+        const aria_label_attr = aria_label ? ` aria-label="${aria_label}"` : '';
 
-        let html = `<div class="${tab_nav_list_selector}" role="tablist">`;
+        let html = `<div class="${tab_nav_list_selector}" role="tablist"${aria_label_attr}>`;
 
         for (let i = 0; i < this.#objectsHTML['tabPanelTitle'].length; i++) {
             let tab_panel_id = this.#configs.selectors.tabPanelIdPrefix + '-' + i;
+            let tab_id = tab_panel_id + '-tab';
             let is_selected = parseInt(this.#configs.options.initSelectedItem) === i;
 
-            html += `<button class="${tab_nav_btn_selector}" role="tab" aria-selected="${is_selected ? 'true' : 'false'}" aria-controls="${tab_panel_id}">${this.#getNavTitle(i)}</button>`
+            html += `<button id="${tab_id}" class="${tab_nav_btn_selector}" role="tab" aria-selected="${is_selected ? 'true' : 'false'}" aria-controls="${tab_panel_id}">${this.#getNavTitle(i)}</button>`
         }
 
         html += '</div>';
@@ -344,16 +355,31 @@ class Tabs {
      * Prepared custom nav buttons by adding aria attributes.
      */
     #preparedCustomNavButton() {
+        if (this.#objectsHTML['tabsNavList'].length > 0) {
+            const tablist = this.#objectsHTML['tabsNavList'][0];
+
+            tablist.setAttribute('role', 'tablist');
+
+            if (this.#configs.options.ariaLabel) {
+                tablist.setAttribute('aria-label', this.#configs.options.ariaLabel);
+            }
+        }
+
         for (let i = 0; i < this.#objectsHTML['tabsNavButton'].length; i++) {
+            const button = this.#objectsHTML['tabsNavButton'][i];
             let tab_panel_id = this.#configs.selectors.tabPanelIdPrefix + '-' + i;
             let is_selected = parseInt(this.#configs.options.initSelectedItem) === i;
 
-            this.#objectsHTML['tabsNavButton'][i].setAttribute('aria-controls', tab_panel_id);
-            this.#objectsHTML['tabsNavButton'][i].setAttribute('aria-selected', 'false');
+            if (!button.id) {
+                button.setAttribute('id', tab_panel_id + '-tab');
+            }
+
+            button.setAttribute('aria-controls', tab_panel_id);
+            button.setAttribute('aria-selected', 'false');
 
 
             if (is_selected) {
-                this.#objectsHTML['tabsNavButton'][i].setAttribute('aria-selected', 'true');
+                button.setAttribute('aria-selected', 'true');
             }
         }
     }
