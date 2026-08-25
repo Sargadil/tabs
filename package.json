@@ -1,6 +1,6 @@
 {
   "name": "tabs-a11y",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Tabs with Full Accessibility ",
   "keywords": [
     "tabs",
@@ -34,7 +34,8 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build:js": "vite build",
