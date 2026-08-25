@@ -68,7 +68,7 @@ var e = class {
 	}
 	#l(e, t) {
 		let n = e.getAttribute(["aria-controls"]), r = t.getAttribute(["aria-controls"]);
-		e.setAttribute("aria-selected", "false"), e.tabIndex = -1, t.setAttribute("aria-selected", "true"), t.tabIndex = 1, t.focus(), this.#p(n, r);
+		e.setAttribute("aria-selected", "false"), e.tabIndex = -1, t.setAttribute("aria-selected", "true"), t.tabIndex = 0, t.focus(), this.#p(n, r);
 	}
 	#u(e, t) {
 		return e > 0 ? t[e - 1] : t[t.length - 1];

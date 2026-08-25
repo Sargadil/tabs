@@ -171,7 +171,7 @@ class Tabs {
         old_tab.setAttribute('aria-selected', 'false');
         old_tab.tabIndex = -1;
         new_tab.setAttribute('aria-selected', 'true');
-        new_tab.tabIndex = 1;
+        new_tab.tabIndex = 0;
         new_tab.focus();
 
         this.#toggleTabContent(old_panel_tab_id, new_panel_tab_id);
