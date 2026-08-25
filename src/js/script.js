@@ -119,7 +119,7 @@ class Tabs {
      */
     #onClick(event) {
         const new_tab = event.currentTarget;
-        const old_tab = document.querySelector(`#${this.#configs.contextID} [aria-selected = "true"]`);
+        const old_tab = this.#context.querySelector('[aria-selected = "true"]');
 
         this.#setSelectedTab(old_tab, new_tab);
     }
@@ -444,7 +444,7 @@ class Tabs {
             this.#preparedCustomNavButton();
         }
 
-        this.#appendElement('tabsNavBtn', document.querySelectorAll(`#${this.#configs.contextID} [role = "tab"]`));
+        this.#appendElement('tabsNavBtn', this.#context.querySelectorAll('[role = "tab"]'));
     }
 
     /**
@@ -591,7 +591,8 @@ class Tabs {
      */
     #initElements() {
         const classes = this.#configs.classes;
-        const context  = document.getElementById(this.#configs.contextID);
+        const context_id = this.#configs.contextID;
+        const context = context_id instanceof HTMLElement ? context_id : document.getElementById(context_id);
 
         if (!context) {
             throw new Error(`[tabs plugin] contextID does not exist in html structure.`);

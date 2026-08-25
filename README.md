@@ -136,7 +136,7 @@ document.getElementById('tabs').addEventListener('tabs:change', (event) => {
 
 | Option                      | Type    | Description                                                                                                                     |
 |-----------------------------|---------|---------------------------------------------------------------------------------------------------------------------------------|
-| contextID                   | string  | Main Container ID.                                                                                                              |
+| contextID                   | string \| HTMLElement | Main container: either its `id` (string), or a direct reference to the element — useful for elements without an `id` or created dynamically. |
 | classes.tabsNavContainer    | string  | Navigation tabs container css class. Use this only when you want create custom navigation.                                      |
 | classes.tabsNavList         | string  | Navigation tabs list css class. Use this only when you want create custom navigation.                                           |
 | classes.tabsNavButton       | string  | Navigation tabs buttons css class. Use this only when you want create custom navigation.                                        |
@@ -162,6 +162,14 @@ them (provided by the bundled `dist/css/styles.min.css`):
 
 Use `activationMode: 'manual'` when selecting a tab is expensive (e.g. it lazy-loads content) —
 see the [`tabs:change`](#tabschange-event) event to hook into that.
+
+`contextID` also accepts an element directly, which is handy when it wasn't created with an `id`:
+
+```javascript
+const container = document.querySelector('.my-tabs');
+
+new Tabs({ contextID: container });
+```
 
 
 ## Advance usage example

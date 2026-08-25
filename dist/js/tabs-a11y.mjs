@@ -52,7 +52,7 @@ var e = class {
 		this.#S();
 	}
 	#s(e) {
-		let t = e.currentTarget, n = document.querySelector(`#${this.#t.contextID} [aria-selected = "true"]`);
+		let t = e.currentTarget, n = this.#i.querySelector("[aria-selected = \"true\"]");
 		this.#v(n, t);
 	}
 	#c(e) {
@@ -148,7 +148,7 @@ var e = class {
 			if (this.#e.tabsNavContainer.length === 0) throw Error("[tabs plugin] tabsNavContainer element should exist.");
 			this.#e.tabsNavContainer[0].innerHTML = this.#O();
 		}
-		this.#N("tabsNavBtn", document.querySelectorAll(`#${this.#t.contextID} [role = "tab"]`));
+		this.#N("tabsNavBtn", this.#i.querySelectorAll("[role = \"tab\"]"));
 	}
 	#E() {
 		this.#e.tabPanelTitle.forEach((e) => {
@@ -188,10 +188,10 @@ var e = class {
 		return t;
 	}
 	#M() {
-		let e = this.#t.classes, t = document.getElementById(this.#t.contextID);
-		if (!t) throw Error("[tabs plugin] contextID does not exist in html structure.");
-		this.#i = t;
-		for (let n in e) this.#e[n] = t.querySelectorAll(e[n]);
+		let e = this.#t.classes, t = this.#t.contextID, n = t instanceof HTMLElement ? t : document.getElementById(t);
+		if (!n) throw Error("[tabs plugin] contextID does not exist in html structure.");
+		this.#i = n;
+		for (let t in e) this.#e[t] = n.querySelectorAll(e[t]);
 	}
 	#N(e, t) {
 		this.#e[e] = t;

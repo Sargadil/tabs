@@ -22,7 +22,7 @@ export interface TabsOptions {
 }
 
 export interface TabsConfig {
-    contextID?: string;
+    contextID?: string | HTMLElement;
     classes?: TabsClasses;
     selectors?: TabsSelectors;
     options?: TabsOptions;
