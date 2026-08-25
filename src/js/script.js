@@ -85,11 +85,11 @@ class Tabs {
                 flag = true;
                 break;
             case 'Home':
-                this.#setSelectedTab(target);
+                this.#setSelectedToFirstTab(target);
                 flag = true;
                 break;
             case 'End':
-                this.#setSelectedTab(target);
+                this.#setSelectedToLastTab(target);
                 flag = true;
                 break;
         }
@@ -125,6 +125,32 @@ class Tabs {
         const tab_buttons = this.#objectsHTML['tabsNavBtn'];
         const current_tab_index = this.#getClickedTabIndex(tab_buttons, target);
         const new_current_tab = this.#getNextTab(current_tab_index, tab_buttons);
+
+        this.#setSelectedTab(target, new_current_tab);
+    }
+
+    /**
+     * Select first tab.
+     *
+     * @param {HTMLElement} target
+     *   Clicked nav button.
+     */
+    #setSelectedToFirstTab(target) {
+        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const new_current_tab = tab_buttons[0];
+
+        this.#setSelectedTab(target, new_current_tab);
+    }
+
+    /**
+     * Select last tab.
+     *
+     * @param {HTMLElement} target
+     *   Clicked nav button.
+     */
+    #setSelectedToLastTab(target) {
+        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const new_current_tab = tab_buttons[tab_buttons.length - 1];
 
         this.#setSelectedTab(target, new_current_tab);
     }
