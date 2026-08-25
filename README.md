@@ -281,3 +281,115 @@ new tabs({
     } 
 });
 ```
+
+## Recipes
+
+These aren't extra config options — they're just the existing API (`destroy()`, `selectTab()`,
+`getSelectedIndex()`, `contextID` as an element, and the `tabs:change` event) put together for a
+few common needs, so you don't have to figure it out from scratch.
+
+### Using it in React
+`contextID` accepts an element directly, so a ref works fine without needing an `id`. Call
+`destroy()` in the effect's cleanup function so listeners don't leak across remounts.
+
+```jsx
+import { useEffect, useRef } from 'react';
+import Tabs from 'tabs-a11y';
+
+function TabsWidget() {
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+        const tabs = new Tabs({ contextID: containerRef.current });
+
+        return () => tabs.destroy();
+    }, []);
+
+    return (
+        <div className="tabs" ref={containerRef}>
+            {/* ...tabs__nav / tabs__panels markup... */}
+        </div>
+    );
+}
+```
+
+### Using it in Vue
+Same idea with the Composition API — create it in `onMounted`, clean it up in `onUnmounted`.
+
+```vue
+<script setup>
+import { onMounted, onUnmounted, ref } from 'vue';
+import Tabs from 'tabs-a11y';
+
+const containerRef = ref(null);
+let tabs;
+
+onMounted(() => {
+    tabs = new Tabs({ contextID: containerRef.value });
+});
+
+onUnmounted(() => {
+    tabs.destroy();
+});
+</script>
+
+<template>
+    <div class="tabs" ref="containerRef">
+        <!-- ...tabs__nav / tabs__panels markup... -->
+    </div>
+</template>
+```
+
+### Syncing the active tab with the URL
+Useful for documentation-style pages where a tab should be linkable/bookmarkable and support the
+browser's back/forward buttons.
+
+```javascript
+const tabs = new Tabs();
+const container = document.getElementById('tabs');
+
+// Restore from the URL on load.
+const initialIndex = Number(location.hash.slice(1));
+if (!Number.isNaN(initialIndex)) {
+    tabs.selectTab(initialIndex);
+}
+
+// Keep the URL in sync when the user switches tabs.
+container.addEventListener('tabs:change', (event) => {
+    history.replaceState(null, '', `#${event.detail.index}`);
+});
+
+// Support the browser's back/forward buttons.
+window.addEventListener('hashchange', () => {
+    const index = Number(location.hash.slice(1));
+
+    if (!Number.isNaN(index) && index !== tabs.getSelectedIndex()) {
+        tabs.selectTab(index);
+    }
+});
+```
+
+### Lazy-loading panel content
+Combine `activationMode: 'manual'` with `tabs:change` — the event only fires when a tab is
+actually activated (click, Enter, Space, or `selectTab()`), not while arrow keys are just moving
+focus between tabs, so you only fetch data for a tab the user actually opened.
+
+```javascript
+const tabs = new Tabs({ options: { activationMode: 'manual' } });
+const container = document.getElementById('tabs');
+const loaded = new Set();
+
+container.addEventListener('tabs:change', async (event) => {
+    const { index, panel } = event.detail;
+
+    if (loaded.has(index)) {
+        return;
+    }
+
+    loaded.add(index);
+
+    const content = panel.querySelector('.tab-panel__content');
+    content.textContent = 'Loading…';
+    content.textContent = await fetch(`/api/tab-${index}`).then((res) => res.text());
+});
+```
