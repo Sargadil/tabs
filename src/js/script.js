@@ -23,13 +23,20 @@ class Tabs {
             ariaLabel: '',
             orientation: 'horizontal',
             activationMode: 'automatic',
+            swipeable: false,
         }
     }
 
+    #swipeThreshold = 50;
+
     #boundOnKeyDown = this.#onKeyDown.bind(this);
     #boundOnClick = this.#onClick.bind(this);
+    #boundOnTouchStart = this.#onTouchStart.bind(this);
+    #boundOnTouchEnd = this.#onTouchEnd.bind(this);
     #context = null;
     #panelIds = [];
+    #touchStartX = 0;
+    #touchStartY = 0;
 
     constructor(configs) {
         this.#configs = this.#deepMerge(this.#configs, configs);
@@ -54,6 +61,13 @@ class Tabs {
         for (let i = 0; i < tab_buttons.length; i++) {
             tab_buttons[i].removeEventListener('keydown', this.#boundOnKeyDown);
             tab_buttons[i].removeEventListener('click', this.#boundOnClick);
+        }
+
+        if (this.#configs.options.swipeable) {
+            this.#objectsHTML['tabPanel'].forEach((panel) => {
+                panel.removeEventListener('touchstart', this.#boundOnTouchStart);
+                panel.removeEventListener('touchend', this.#boundOnTouchEnd);
+            });
         }
     }
 
@@ -109,6 +123,59 @@ class Tabs {
         }
 
         this.#prepareTabContent();
+
+        if (this.#configs.options.swipeable) {
+            this.#initSwipe();
+        }
+    }
+
+    /**
+     * Attach touch listeners to each panel to switch tabs on a
+     * horizontal swipe (options.swipeable).
+     */
+    #initSwipe() {
+        this.#objectsHTML['tabPanel'].forEach((panel) => {
+            panel.style.touchAction = 'pan-y';
+            panel.addEventListener('touchstart', this.#boundOnTouchStart, { passive: true });
+            panel.addEventListener('touchend', this.#boundOnTouchEnd, { passive: true });
+        });
+    }
+
+    /**
+     * Record the starting point of a touch (options.swipeable).
+     *
+     * @param {TouchEvent} event
+     *   Touchstart event.
+     */
+    #onTouchStart(event) {
+        this.#touchStartX = event.changedTouches[0].screenX;
+        this.#touchStartY = event.changedTouches[0].screenY;
+    }
+
+    /**
+     * Switch to the previous/next tab if the touch ended far enough
+     * away horizontally to count as a swipe rather than a vertical
+     * scroll (options.swipeable).
+     *
+     * @param {TouchEvent} event
+     *   Touchend event.
+     */
+    #onTouchEnd(event) {
+        const touch = event.changedTouches[0];
+        const delta_x = touch.screenX - this.#touchStartX;
+        const delta_y = touch.screenY - this.#touchStartY;
+
+        if (Math.abs(delta_x) < this.#swipeThreshold || Math.abs(delta_x) <= Math.abs(delta_y)) {
+            return;
+        }
+
+        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const current_index = this.getSelectedIndex();
+        const next_index = delta_x < 0
+            ? (current_index < tab_buttons.length - 1 ? current_index + 1 : 0)
+            : (current_index > 0 ? current_index - 1 : tab_buttons.length - 1);
+
+        this.selectTab(next_index);
     }
 
     /**

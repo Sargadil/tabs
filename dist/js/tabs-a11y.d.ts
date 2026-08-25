@@ -19,6 +19,7 @@ export interface TabsOptions {
     ariaLabel?: string;
     orientation?: 'horizontal' | 'vertical';
     activationMode?: 'automatic' | 'manual';
+    swipeable?: boolean;
 }
 
 export interface TabsConfig {
