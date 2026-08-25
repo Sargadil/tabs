@@ -91,7 +91,12 @@ var e = class {
 		return Array.from(e).findIndex((e) => e.getAttribute("aria-controls") === t.getAttribute("aria-controls"));
 	}
 	#h() {
-		this.#t.options.useCustomNav ? this.#y() : this.#e.tabsNavContainer[0].innerHTML = this.#v(), this.#x("tabsNavBtn", document.querySelectorAll(`#${this.#t.contextID} [role = "tab"]`));
+		if (this.#t.options.useCustomNav) this.#y();
+		else {
+			if (this.#e.tabsNavContainer.length === 0) throw Error("[tabs plugin] tabsNavContainer element should exist.");
+			this.#e.tabsNavContainer[0].innerHTML = this.#v();
+		}
+		this.#x("tabsNavBtn", document.querySelectorAll(`#${this.#t.contextID} [role = "tab"]`));
 	}
 	#g() {
 		this.#e.tabPanelTitle.forEach((e) => {
@@ -119,10 +124,7 @@ var e = class {
 	#b() {
 		let e = this.#t.classes, t = document.getElementById(this.#t.contextID);
 		if (!t) throw Error("[tabs plugin] contextID does not exist in html structure.");
-		for (let n in e) {
-			let r = t.querySelectorAll(e[n]);
-			r.length !== 0 && (this.#e[n] = r);
-		}
+		for (let n in e) this.#e[n] = t.querySelectorAll(e[n]);
 	}
 	#x(e, t) {
 		this.#e[e] = t;

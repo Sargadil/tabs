@@ -270,6 +270,10 @@ class Tabs {
      */
     #insertNav() {
         if (!this.#configs.options.useCustomNav) {
+            if (this.#objectsHTML['tabsNavContainer'].length === 0) {
+                throw new Error(`[tabs plugin] tabsNavContainer element should exist.`);
+            }
+
             this.#objectsHTML['tabsNavContainer'][0].innerHTML = this.#createNav();
         } else {
             this.#preparedCustomNavButton();
@@ -366,13 +370,7 @@ class Tabs {
         }
 
         for (const el in classes) {
-            let selectors = context.querySelectorAll(classes[el]);
-
-            if (selectors.length === 0) {
-                continue;
-            }
-
-            this.#objectsHTML[el] = selectors;
+            this.#objectsHTML[el] = context.querySelectorAll(classes[el]);
         }
     }
 
