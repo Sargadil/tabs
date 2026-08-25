@@ -1,3 +1,5 @@
+$tabs-mobile-breakpoint: 600px;
+
 .tabs {
   max-width: 1200px;
   margin: 0 auto;
@@ -9,15 +11,41 @@
 
   &__nav-list {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
     padding: 0;
     margin: 0;
     background-color: #F4F4F8;
     list-style-type: none;
+
+    &::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.25);
+      border-radius: 3px;
+    }
   }
 
+  // flex-grow lets buttons stretch to fill a roomy container (no
+  // scrollbar needed); min-width: max-content stops flex-shrink from
+  // squeezing them illegibly instead of overflowing, so the nav-list's
+  // overflow-x: auto kicks in and scrolls whenever the buttons don't
+  // fit -- whether that's because of the viewport or a narrower
+  // ancestor container.
   &__nav-btn {
-    flex: 1;
+    flex: 1 1 auto;
+    min-width: max-content;
+    scroll-snap-align: start;
     padding: 10px 15px;
     border-style: none;
     border-radius: 0;
@@ -42,6 +70,46 @@
 
   &__panels {
     background-color: #FFF;
+  }
+
+  &--vertical {
+    display: flex;
+    align-items: flex-start;
+
+    .tabs__nav-list {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
+      width: 220px;
+    }
+
+    .tabs__nav-btn {
+      flex: initial;
+      min-width: 0;
+      text-align: left;
+    }
+
+    .tabs__panels {
+      flex: 1;
+    }
+  }
+
+  // The nav-list scrolls horizontally on its own whenever the buttons
+  // don't fit (see &__nav-list/&__nav-btn above) -- that reacts to
+  // whatever actually constrains its width, viewport or a narrower
+  // ancestor container, no breakpoint needed. Below this viewport
+  // breakpoint though, a vertical sidebar nav specifically no longer
+  // makes sense next to the panel, so collapse it back to a normal
+  // (scrollable) strip above the panel instead.
+  @media (max-width: $tabs-mobile-breakpoint) {
+    &--vertical {
+      display: block;
+
+      .tabs__nav-list {
+        flex-direction: row;
+        width: auto;
+      }
+    }
   }
 
   .tab-panel {
@@ -70,6 +138,14 @@
     &:focus-visible {
       outline: 2px solid #000;
       outline-offset: -2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+
+      &--open {
+        animation: none;
+      }
     }
   }
 }

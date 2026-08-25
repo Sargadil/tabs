@@ -1,6 +1,6 @@
 {
   "name": "tabs-a11y",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Tabs with Full Accessibility ",
   "keywords": [
     "tabs",
@@ -16,32 +16,42 @@
     "javascript",
     "horizontal tabs"
   ],
-  "main": "dist/js/index.js",
+  "main": "./dist/js/tabs-a11y.cjs",
+  "module": "./dist/js/tabs-a11y.mjs",
+  "types": "./dist/js/tabs-a11y.d.ts",
+  "unpkg": "./dist/js/tabs-a11y.umd.js",
+  "jsdelivr": "./dist/js/tabs-a11y.umd.js",
+  "exports": {
+    ".": {
+      "types": "./dist/js/tabs-a11y.d.ts",
+      "import": "./dist/js/tabs-a11y.mjs",
+      "require": "./dist/js/tabs-a11y.cjs",
+      "default": "./dist/js/tabs-a11y.mjs"
+    },
+    "./style.css": "./dist/css/styles.min.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "scripts": {
-    "project-start": "gulp projectStart",
-    "build-dev-styles": "gulp compileStylesDev",
-    "build-dev-scripts": "gulp compileScriptsDev",
-    "build-dev": "gulp buildDev",
-    "build-prod-styles": "gulp compileStylesProd",
-    "build-prod-scripts": "gulp compileScriptsProd",
-    "build-prod": "gulp buildProd",
-    "watch": "gulp watchFiles"
+    "build:js": "vite build",
+    "build:types": "cp src/js/script.d.ts dist/js/tabs-a11y.d.ts",
+    "build:css": "sass src/scss/styles.scss:dist/css/styles.min.css --style=compressed --no-source-map",
+    "build": "npm run build:js && npm run build:types && npm run build:css",
+    "dev:js": "vite build --watch",
+    "dev:css": "sass --watch src/scss/styles.scss:dist/css/styles.min.css --no-source-map",
+    "test": "node --test"
   },
   "author": "Bartosz Trajder",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.25",
-    "@babel/preset-env": "^7.25",
-    "del": "^6.0.0",
-    "gulp": "^5.0",
-    "gulp-autoprefixer": "^9.0",
-    "gulp-babel": "^8.0",
-    "gulp-babel-minify": "^0.5",
-    "gulp-plumber": "^1.2",
-    "gulp-rename": "^2.0",
-    "gulp-sass": "^5.1",
-    "gulp-sourcemaps": "^2.6.5",
-    "sass": "^1.77"
+    "jsdom": "^30.0.1",
+    "sass": "^1.103.1",
+    "vite": "^8.2.2"
   },
   "repository": {
     "type": "git",
