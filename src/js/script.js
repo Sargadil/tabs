@@ -397,6 +397,4 @@ class Tabs {
     }
 }
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = Tabs;
-}
+export default Tabs;

@@ -7,7 +7,7 @@ A package for building tabs that comply with WCAG accessibility guidelines. The 
 ### Without npm
 - Navigate to the project repository and download it. Place it in the appropriate directory, such as a library folder
 - Include the following scripts:
-  - js: `tabs-a11y/dist/js/script.min.css`
+  - js: `tabs-a11y/dist/js/tabs-a11y.umd.js` (exposes a `Tabs` global)
   - css: `tabs-a11y/dist/css/styles.min.css`
 
 ### With npm
@@ -37,16 +37,22 @@ Include the css file from `dist/css/styles.min.css`
 ```
 
 #### Add javascript
-Include the js file from `dist/js/script.min.css`
+Include the js file from `dist/js/tabs-a11y.umd.js`
 
-or 
+or
 
 ```javascript
-
 //commonjs
-var tabs = require('tabs-a11y');
+const Tabs = require('tabs-a11y');
 
-new tabs();
+new Tabs();
+```
+
+```javascript
+//esm
+import Tabs from 'tabs-a11y';
+
+new Tabs();
 ```
 
 ## Configuration
