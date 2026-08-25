@@ -31,6 +31,16 @@ var e = class {
 		let e = this.#e.tabsNavBtn;
 		for (let t = 0; t < e.length; t++) e[t].removeEventListener("keydown", this.#n), e[t].removeEventListener("click", this.#r);
 	}
+	getSelectedIndex() {
+		let e = this.#e.tabsNavBtn;
+		return Array.from(e).findIndex((e) => e.getAttribute("aria-selected") === "true");
+	}
+	selectTab(e) {
+		let t = this.#e.tabsNavBtn, n = t[e];
+		if (!n) throw Error(`[tabs plugin] selectTab: no tab exists at index ${e}.`);
+		let r = t[this.getSelectedIndex()];
+		n !== r && this.#d(r, n);
+	}
 	#i() {
 		this.#_();
 		let e = this.#e.tabsNavBtn;

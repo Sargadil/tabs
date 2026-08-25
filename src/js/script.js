@@ -53,6 +53,41 @@ class Tabs {
     }
 
     /**
+     * Get the index of the currently selected tab.
+     *
+     * @returns {number}
+     *   Return the index of the currently selected tab, or -1 if none is selected.
+     */
+    getSelectedIndex() {
+        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+
+        return Array.from(tab_buttons).findIndex((item) => item.getAttribute('aria-selected') === 'true');
+    }
+
+    /**
+     * Select a tab by index.
+     *
+     * @param {number} index
+     *   Index of the tab to select.
+     */
+    selectTab(index) {
+        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const new_tab = tab_buttons[index];
+
+        if (!new_tab) {
+            throw new Error(`[tabs plugin] selectTab: no tab exists at index ${index}.`);
+        }
+
+        const old_tab = tab_buttons[this.getSelectedIndex()];
+
+        if (new_tab === old_tab) {
+            return;
+        }
+
+        this.#setSelectedTab(old_tab, new_tab);
+    }
+
+    /**
      * Initial tabs functionality.
      */
     #initTabs() {

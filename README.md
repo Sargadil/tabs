@@ -69,6 +69,24 @@ const tabs = new Tabs();
 tabs.destroy();
 ```
 
+### `selectTab(index)`
+Programmatically select a tab by index (0-based). Throws if no tab exists at that index.
+
+```javascript
+const tabs = new Tabs();
+
+tabs.selectTab(2);
+```
+
+### `getSelectedIndex()`
+Returns the index of the currently selected tab.
+
+```javascript
+const tabs = new Tabs();
+
+tabs.getSelectedIndex(); // 0
+```
+
 ## Configuration
 
 ### Configuration object

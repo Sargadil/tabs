@@ -35,4 +35,14 @@ export default class Tabs {
      * to avoid leaking listeners.
      */
     destroy(): void;
+
+    /**
+     * Get the index of the currently selected tab, or -1 if none is selected.
+     */
+    getSelectedIndex(): number;
+
+    /**
+     * Select a tab by index. Throws if no tab exists at that index.
+     */
+    selectTab(index: number): void;
 }
