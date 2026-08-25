@@ -13,7 +13,9 @@ A package for building tabs that comply with WCAG accessibility guidelines. The 
 ### With npm
 
 #### Add css
-Include the css file from `dist/css/styles.min.css`
+Include the css file from `dist/css/styles.min.css`. Below 600px wide, the nav becomes a
+horizontally scrollable strip (instead of wrapping, or staying a tall vertical list with
+`tabs--vertical`) so the tab content never gets pushed out of view on a phone.
 
 #### Create HTML structure
 ```html
