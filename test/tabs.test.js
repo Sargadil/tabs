@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { JSDOM } = require('jsdom');
 const path = require('node:path');
 
-const TABS_CJS = path.join(__dirname, '..', 'dist', 'js', 'tabs-a11y.cjs');
+const TABS_CJS = path.join(__dirname, '..', 'dist', 'js', 'tabs.cjs');
 
 const DEFAULT_HTML = `
 <div class="tabs" id="tabs">

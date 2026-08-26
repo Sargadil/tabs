@@ -1,12 +1,15 @@
-# Tabs a11y
+# @sargadil/tabs
 
-[![npm version](https://img.shields.io/npm/v/tabs-a11y.svg)](https://www.npmjs.com/package/tabs-a11y)
-[![npm downloads](https://img.shields.io/npm/dm/tabs-a11y.svg)](https://www.npmjs.com/package/tabs-a11y)
-[![bundle size](https://img.shields.io/bundlephobia/minzip/tabs-a11y)](https://bundlephobia.com/package/tabs-a11y)
-[![license](https://img.shields.io/npm/l/tabs-a11y.svg)](./LICENSE)
+[![npm version](https://img.shields.io/npm/v/@sargadil/tabs.svg)](https://www.npmjs.com/package/@sargadil/tabs)
+[![npm downloads](https://img.shields.io/npm/dm/@sargadil/tabs.svg)](https://www.npmjs.com/package/@sargadil/tabs)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/@sargadil/tabs)](https://bundlephobia.com/package/@sargadil/tabs)
+[![license](https://img.shields.io/npm/l/@sargadil/tabs.svg)](./LICENSE)
 [![CI](https://github.com/Sargadil/tabs/actions/workflows/ci.yml/badge.svg)](https://github.com/Sargadil/tabs/actions/workflows/ci.yml)
 
 A package for building tabs that comply with WCAG accessibility guidelines. The tabs can be navigated using both a mouse and a keyboard. The package also includes various configuration options.
+
+> Formerly published as `tabs-a11y`. That package is deprecated in favor of this one — see
+> [Migrating from `tabs-a11y`](#migrating-from-tabs-a11y) below.
 
 **[Live demo](https://sargadil.github.io/tabs/)** — try it before installing.
 
@@ -16,24 +19,24 @@ A package for building tabs that comply with WCAG accessibility guidelines. The 
 
 Via CDN (unpkg):
 ```html
-<link rel="stylesheet" href="https://unpkg.com/tabs-a11y/dist/css/styles.min.css">
-<script src="https://unpkg.com/tabs-a11y/dist/js/tabs-a11y.umd.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/@sargadil/tabs/dist/css/styles.min.css">
+<script src="https://unpkg.com/@sargadil/tabs/dist/js/tabs.umd.js"></script>
 ```
 
 or jsDelivr:
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabs-a11y/dist/css/styles.min.css">
-<script src="https://cdn.jsdelivr.net/npm/tabs-a11y/dist/js/tabs-a11y.umd.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sargadil/tabs/dist/css/styles.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@sargadil/tabs/dist/js/tabs.umd.js"></script>
 ```
 
 Both expose a `Tabs` global. Pin a version for production use, e.g.
-`https://unpkg.com/tabs-a11y@1.0.2/...`, instead of always fetching the latest.
+`https://unpkg.com/@sargadil/tabs@1.2.0/...`, instead of always fetching the latest.
 
 Or, without a CDN:
 - Navigate to the project repository and download it. Place it in the appropriate directory, such as a library folder
 - Include the following scripts:
-  - js: `tabs-a11y/dist/js/tabs-a11y.umd.js` (exposes a `Tabs` global)
-  - css: `tabs-a11y/dist/css/styles.min.css`
+  - js: `@sargadil/tabs/dist/js/tabs.umd.js` (exposes a `Tabs` global)
+  - css: `@sargadil/tabs/dist/css/styles.min.css`
 
 ### With npm
 
@@ -64,20 +67,20 @@ horizontally scrollable strip (instead of wrapping, or staying a tall vertical l
 ```
 
 #### Add javascript
-Include the js file from `dist/js/tabs-a11y.umd.js`
+Include the js file from `dist/js/tabs.umd.js`
 
 or
 
 ```javascript
 //commonjs
-const Tabs = require('tabs-a11y');
+const Tabs = require('@sargadil/tabs');
 
 new Tabs();
 ```
 
 ```javascript
 //esm
-import Tabs from 'tabs-a11y';
+import Tabs from '@sargadil/tabs';
 
 new Tabs();
 ```
@@ -220,7 +223,7 @@ few common needs, so you don't have to figure it out from scratch.
 
 ```jsx
 import { useEffect, useRef } from 'react';
-import Tabs from 'tabs-a11y';
+import Tabs from '@sargadil/tabs';
 
 function TabsWidget() {
     const containerRef = useRef(null);
@@ -245,7 +248,7 @@ Same idea with the Composition API — create it in `onMounted`, clean it up in 
 ```vue
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue';
-import Tabs from 'tabs-a11y';
+import Tabs from '@sargadil/tabs';
 
 const containerRef = ref(null);
 let tabs;
@@ -318,4 +321,25 @@ container.addEventListener('tabs:change', async (event) => {
     content.textContent = 'Loading…';
     content.textContent = await fetch(`/api/tab-${index}`).then((res) => res.text());
 });
+```
+
+## Migrating from `tabs-a11y`
+
+This package was previously published as `tabs-a11y`. `@sargadil/tabs` is its direct continuation
+under a new name — same API, same behavior. `tabs-a11y` is deprecated; please switch to
+`@sargadil/tabs` for future updates.
+
+```diff
+- import Tabs from 'tabs-a11y';
++ import Tabs from '@sargadil/tabs';
+```
+
+```diff
+- <script src="https://unpkg.com/tabs-a11y/dist/js/tabs-a11y.umd.js"></script>
++ <script src="https://unpkg.com/@sargadil/tabs/dist/js/tabs.umd.js"></script>
+```
+
+```diff
+- import 'tabs-a11y/style.css';
++ import '@sargadil/tabs/style.css';
 ```
