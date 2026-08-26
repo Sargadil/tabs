@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- A package smoke test (`npm run test:package`) that runs `npm pack`, installs the
+  resulting tarball into a throwaway fixture project, and verifies the real publish
+  artifact: `require()` (CJS), `import` (ESM), the `./style.css` export, the shipped
+  TypeScript declarations, and the exact tarball file list. It runs in CI on every
+  push/PR and again before `npm publish` (via `prepublishOnly`), so a broken
+  `package.json`/`exports`/build wiring can no longer slip through as a working build
+  with a broken publish artifact.
 - Centralized configuration validation: the constructor now checks `contextID`,
   `options.orientation`, `options.activationMode`, `options.initSelectedItem`, and the required DOM
   structure (panels, per-panel titles, navigation, and custom nav/panel count matching) up front,
@@ -15,15 +22,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - All errors thrown by the library are now consistently prefixed with `[@sargadil/tabs]` (previously
   `[tabs plugin]` in some cases).
-
-### Fixed
-- Generated nav buttons now have `type="button"`, and custom-nav `<button>` elements
-  without an explicit `type` are given `type="button"` too, so tabs placed inside a
-  `<form>` no longer trigger an accidental submit.
-- README's configuration example showed `initSelectedItem: 1` while the actual default
-  is `0`; the example now matches the code.
-
-### Changed
 - The package description and README intro no longer claim unconditional "Full
   Accessibility" / WCAG compliance; they now describe the component as following the
   WAI-ARIA Tabs Pattern.
@@ -32,6 +30,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   click, on automatic keyboard activation, and on `selectTab()`), so the component hides
   and shows panels correctly even without the bundled CSS. The `tab-panel--open` class is
   kept in sync purely as a styling hook and behaves exactly as before.
+
+### Fixed
+- Generated nav buttons now have `type="button"`, and custom-nav `<button>` elements
+  without an explicit `type` are given `type="button"` too, so tabs placed inside a
+  `<form>` no longer trigger an accidental submit.
+- README's configuration example showed `initSelectedItem: 1` while the actual default
+  is `0`; the example now matches the code.
 
 ## [1.2.0] — 2026-08-26
 
