@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- A cancelable, bubbling `tabs:beforechange` CustomEvent
+  (`{ fromIndex, toIndex, fromTab, toTab, fromPanel, toPanel }`), dispatched on the main
+  container right before the selected tab changes — via click, keyboard, or `selectTab()`.
+  Calling `preventDefault()` on it blocks the transition entirely: `aria-selected`, the roving
+  `tabindex`, `hidden` panels, focus, and the selected index are all left exactly as they were,
+  and `tabs:change` does not fire. See [`tabs:beforechange`](README.md#tabsbeforechange-event).
 - A real-browser test suite (`npm run test:e2e`, [`e2e/`](e2e)) running on `@playwright/test`
   (dev dependency only) across Chromium, Firefox, and WebKit. Covers initialization, keyboard
   navigation in both orientations (including wrap-around), mouse click, manual activation mode,
