@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <title>Tabs e2e — RTL + disabled tabs (horizontal, automatic)</title>
+</head>
+<body>
+<main>
+<h1>Tabs e2e — RTL + disabled tabs</h1>
+<div class="tabs" id="tabs">
+    <div class="tabs__nav"></div>
+    <div class="tabs__panels">
+        <div class="tab-panel"><h2 class="tab-panel__title" aria-disabled="true">One</h2><div class="tab-panel__content">Panel one content</div></div>
+        <div class="tab-panel"><h2 class="tab-panel__title">Two</h2><div class="tab-panel__content">Panel two content</div></div>
+        <div class="tab-panel"><h2 class="tab-panel__title">Three</h2><div class="tab-panel__content">Panel three content</div></div>
+        <div class="tab-panel"><h2 class="tab-panel__title" aria-disabled="true">Four</h2><div class="tab-panel__content">Panel four content</div></div>
+    </div>
+</div>
+<script type="module">
+    import Tabs from '/dist/js/tabs.mjs';
+    window.tabsInstance = new Tabs({ options: { initSelectedItem: 1 } });
+</script>
+</main>
+</body>
+</html>
