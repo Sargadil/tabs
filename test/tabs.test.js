@@ -93,6 +93,61 @@ describe('default nav: WAI-ARIA structure', () => {
     });
 });
 
+describe('form submission safety', () => {
+    function withForm(html) {
+        return `<form id="host-form">${html}</form>`;
+    }
+
+    test('generated tab buttons have type="button"', () => {
+        const { Tabs, document } = setup();
+        new Tabs();
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+
+        buttons.forEach((button) => assert.equal(button.getAttribute('type'), 'button'));
+    });
+
+    test('clicking a generated tab inside a <form> does not submit it', () => {
+        const { Tabs, dom, document } = setup(withForm(DEFAULT_HTML));
+        new Tabs();
+        const form = document.getElementById('host-form');
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+        let submitted = false;
+
+        form.addEventListener('submit', (event) => {
+            submitted = true;
+            event.preventDefault();
+        });
+
+        click(buttons[1], dom);
+
+        assert.equal(submitted, false);
+    });
+
+    test('clicking a custom-nav tab inside a <form> does not submit it', () => {
+        const { Tabs, dom, document } = setup(withForm(CUSTOM_NAV_HTML));
+        new Tabs({
+            classes: {
+                tabsNavContainer: '.custom-tabs__nav',
+                tabsNavList: '.custom-tabs__nav-inner',
+                tabsNavButton: '.custom-tabs__nav-button',
+            },
+            options: { useCustomNav: true },
+        });
+        const form = document.getElementById('host-form');
+        const buttons = document.querySelectorAll('.custom-tabs__nav-button');
+        let submitted = false;
+
+        form.addEventListener('submit', (event) => {
+            submitted = true;
+            event.preventDefault();
+        });
+
+        click(buttons[1], dom);
+
+        assert.equal(submitted, false);
+    });
+});
+
 describe('custom nav', () => {
     test('adds role=tablist and ids without clobbering existing ones', () => {
         const { Tabs, document } = setup(CUSTOM_NAV_HTML);
@@ -111,6 +166,83 @@ describe('custom nav', () => {
 
         assert.equal(tablist.getAttribute('role'), 'tablist');
         assert.equal(panels[0].getAttribute('aria-labelledby'), buttons[0].id);
+    });
+
+    test('gives a <button> without an explicit type a type="button"', () => {
+        const { Tabs, document } = setup(CUSTOM_NAV_HTML);
+        new Tabs({
+            classes: {
+                tabsNavContainer: '.custom-tabs__nav',
+                tabsNavList: '.custom-tabs__nav-inner',
+                tabsNavButton: '.custom-tabs__nav-button',
+            },
+            options: { useCustomNav: true },
+        });
+
+        const buttons = document.querySelectorAll('.custom-tabs__nav-button');
+
+        assert.equal(buttons[0].getAttribute('type'), 'button');
+        assert.equal(buttons[1].getAttribute('type'), 'button');
+    });
+
+    test('leaves an explicit type on a custom <button> untouched', () => {
+        const html = `
+        <div class="tabs" id="tabs">
+            <div class="custom-tabs__nav">
+                <div class="custom-tabs__nav-inner">
+                    <button class="custom-tabs__nav-button" role="tab" type="submit">Tab 1</button>
+                    <button class="custom-tabs__nav-button" role="tab">Tab 2</button>
+                </div>
+            </div>
+            <div class="tabs__panels">
+                <div class="tab-panel"><h3 class="tab-panel__title">One</h3><div class="tab-panel__content">1</div></div>
+                <div class="tab-panel"><h3 class="tab-panel__title">Two</h3><div class="tab-panel__content">2</div></div>
+            </div>
+        </div>`;
+        const { Tabs, document } = setup(html);
+        new Tabs({
+            classes: {
+                tabsNavContainer: '.custom-tabs__nav',
+                tabsNavList: '.custom-tabs__nav-inner',
+                tabsNavButton: '.custom-tabs__nav-button',
+            },
+            options: { useCustomNav: true },
+        });
+
+        const buttons = document.querySelectorAll('.custom-tabs__nav-button');
+
+        assert.equal(buttons[0].getAttribute('type'), 'submit', 'explicit type must not be overwritten');
+        assert.equal(buttons[1].getAttribute('type'), 'button');
+    });
+
+    test('does not set a type attribute on a non-button custom nav element', () => {
+        const html = `
+        <div class="tabs" id="tabs">
+            <div class="custom-tabs__nav">
+                <div class="custom-tabs__nav-inner">
+                    <div class="custom-tabs__nav-button" role="tab" tabindex="0">Tab 1</div>
+                    <div class="custom-tabs__nav-button" role="tab" tabindex="-1">Tab 2</div>
+                </div>
+            </div>
+            <div class="tabs__panels">
+                <div class="tab-panel"><h3 class="tab-panel__title">One</h3><div class="tab-panel__content">1</div></div>
+                <div class="tab-panel"><h3 class="tab-panel__title">Two</h3><div class="tab-panel__content">2</div></div>
+            </div>
+        </div>`;
+        const { Tabs, document } = setup(html);
+        new Tabs({
+            classes: {
+                tabsNavContainer: '.custom-tabs__nav',
+                tabsNavList: '.custom-tabs__nav-inner',
+                tabsNavButton: '.custom-tabs__nav-button',
+            },
+            options: { useCustomNav: true },
+        });
+
+        const items = document.querySelectorAll('.custom-tabs__nav-button');
+
+        assert.equal(items[0].hasAttribute('type'), false);
+        assert.equal(items[1].hasAttribute('type'), false);
     });
 });
 

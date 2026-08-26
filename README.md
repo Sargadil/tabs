@@ -6,7 +6,7 @@
 [![license](https://img.shields.io/npm/l/@sargadil/tabs.svg)](./LICENSE)
 [![CI](https://github.com/Sargadil/tabs/actions/workflows/ci.yml/badge.svg)](https://github.com/Sargadil/tabs/actions/workflows/ci.yml)
 
-A package for building tabs that comply with WCAG accessibility guidelines. The tabs can be navigated using both a mouse and a keyboard. The package also includes various configuration options.
+Lightweight, dependency-free tabs following the [WAI-ARIA Tabs Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/). The tabs can be navigated using both a mouse and a keyboard. The package also includes various configuration options.
 
 > Formerly published as `tabs-a11y`. That package is deprecated in favor of this one — see
 > [Migrating from `tabs-a11y`](#migrating-from-tabs-a11y) below.
@@ -151,7 +151,7 @@ document.getElementById('tabs').addEventListener('tabs:change', (event) => {
     options: {
         useCustomNav: false,
         customNavTitles: [],
-        initSelectedItem: 1,
+        initSelectedItem: 0,
         removeTabPanelTitle: false,
         ariaLabel: '',
         orientation: 'horizontal',

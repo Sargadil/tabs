@@ -187,7 +187,7 @@ var e = class {
 		let e = this.#t.classes.tabsNavList.substring(1), t = this.#t.classes.tabsNavButton.substring(1), n = this.#t.options.ariaLabel, r = `<div class="${e}" role="tablist"${n ? ` aria-label="${n}"` : ""}${this.#t.options.orientation === "vertical" ? " aria-orientation=\"vertical\"" : ""}>`;
 		for (let e = 0; e < this.#e.tabPanelTitle.length; e++) {
 			let n = this.#c[e], i = n + "-tab", a = parseInt(this.#t.options.initSelectedItem) === e;
-			r += `<button id="${i}" class="${t}" role="tab" aria-selected="${a ? "true" : "false"}" aria-controls="${n}">${this.#F(e)}</button>`;
+			r += `<button type="button" id="${i}" class="${t}" role="tab" aria-selected="${a ? "true" : "false"}" aria-controls="${n}">${this.#F(e)}</button>`;
 		}
 		return r += "</div>", r;
 	}
@@ -198,7 +198,7 @@ var e = class {
 		}
 		for (let e = 0; e < this.#e.tabsNavButton.length; e++) {
 			let t = this.#e.tabsNavButton[e], n = this.#c[e], r = parseInt(this.#t.options.initSelectedItem) === e;
-			t.id || t.setAttribute("id", n + "-tab"), t.setAttribute("aria-controls", n), t.setAttribute("aria-selected", "false"), r && t.setAttribute("aria-selected", "true");
+			t.id || t.setAttribute("id", n + "-tab"), t.tagName === "BUTTON" && !t.hasAttribute("type") && t.setAttribute("type", "button"), t.setAttribute("aria-controls", n), t.setAttribute("aria-selected", "false"), r && t.setAttribute("aria-selected", "true");
 		}
 	}
 	#R() {

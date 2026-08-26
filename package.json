@@ -1,7 +1,7 @@
 {
   "name": "@sargadil/tabs",
   "version": "1.2.0",
-  "description": "Tabs with Full Accessibility ",
+  "description": "Lightweight, dependency-free tabs following the WAI-ARIA Tabs Pattern.",
   "keywords": [
     "tabs",
     "tab",
