@@ -51,7 +51,7 @@
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-branches=100 --test-coverage-functions=100",
     "test:package": "node scripts/package-smoke/run.js",
     "test:e2e": "playwright test",
-    "prepublishOnly": "npm run build && npm test && npm run test:package"
+    "prepublishOnly": "npm run build && npm run test:coverage && npm run test:package"
   },
   "author": "Bartosz Trajder",
   "license": "MIT",
