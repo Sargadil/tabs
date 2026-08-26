@@ -19,6 +19,7 @@
 
 const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
+const { swipe } = require('./support/swipe');
 
 async function expectNoViolations(page) {
     const results = await new AxeBuilder({ page }).analyze();
@@ -128,15 +129,7 @@ test.describe('axe: swipeable tabs', () => {
     });
 
     test('has no violations after a horizontal swipe switches the active tab', async ({ page }) => {
-        await page.locator('.tab-panel').first().evaluate((el) => {
-            const startEvent = new Event('touchstart', { bubbles: true });
-            startEvent.changedTouches = [{ screenX: 200, screenY: 100 }];
-            el.dispatchEvent(startEvent);
-
-            const endEvent = new Event('touchend', { bubbles: true });
-            endEvent.changedTouches = [{ screenX: 50, screenY: 105 }];
-            el.dispatchEvent(endEvent);
-        });
+        await swipe(page.locator('.tab-panel').first(), { x1: 200, y1: 100, x2: 50, y2: 105 });
 
         await expectNoViolations(page);
     });

@@ -875,7 +875,7 @@ describe('swipeable', () => {
         assert.equal(instance.getSelectedIndex(), 0);
     });
 
-    test('when enabled, a horizontal swipe changes tabs and wraps at the edges', () => {
+    test('when enabled, a horizontal swipe changes tabs (left selects next, right selects previous)', () => {
         const { Tabs, dom, document } = setup();
         const instance = new Tabs({ options: { swipeable: true } });
         const panels = document.querySelectorAll('#tabs [role="tabpanel"]');
