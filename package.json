@@ -49,11 +49,13 @@
     "dev:css": "sass --watch src/scss/styles.scss:dist/css/styles.min.css --no-source-map",
     "test": "node --test",
     "test:package": "node scripts/package-smoke/run.js",
+    "test:e2e": "playwright test",
     "prepublishOnly": "npm run build && npm test && npm run test:package"
   },
   "author": "Bartosz Trajder",
   "license": "MIT",
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "jsdom": "^30.0.1",
     "sass": "^1.103.1",
     "vite": "^8.2.2"
