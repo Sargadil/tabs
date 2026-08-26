@@ -5,24 +5,27 @@
     <title>Tabs e2e — multiple instances</title>
 </head>
 <body>
+<main>
+<h1>Tabs e2e — multiple instances</h1>
 <div class="tabs" id="tabs-a">
     <div class="tabs__nav"></div>
     <div class="tabs__panels">
-        <div class="tab-panel"><h3 class="tab-panel__title">A1</h3><div class="tab-panel__content">a1</div></div>
-        <div class="tab-panel"><h3 class="tab-panel__title">A2</h3><div class="tab-panel__content">a2</div></div>
+        <div class="tab-panel"><h2 class="tab-panel__title">A1</h2><div class="tab-panel__content">a1</div></div>
+        <div class="tab-panel"><h2 class="tab-panel__title">A2</h2><div class="tab-panel__content">a2</div></div>
     </div>
 </div>
 <div class="tabs" id="tabs-b">
     <div class="tabs__nav"></div>
     <div class="tabs__panels">
-        <div class="tab-panel"><h3 class="tab-panel__title">B1</h3><div class="tab-panel__content">b1</div></div>
-        <div class="tab-panel"><h3 class="tab-panel__title">B2</h3><div class="tab-panel__content">b2</div></div>
+        <div class="tab-panel"><h2 class="tab-panel__title">B1</h2><div class="tab-panel__content">b1</div></div>
+        <div class="tab-panel"><h2 class="tab-panel__title">B2</h2><div class="tab-panel__content">b2</div></div>
     </div>
 </div>
 <script type="module">
     import Tabs from '/dist/js/tabs.mjs';
-    window.tabsInstanceA = new Tabs({ contextID: 'tabs-a' });
-    window.tabsInstanceB = new Tabs({ contextID: 'tabs-b' });
+    window.tabsInstanceA = new Tabs({ contextID: 'tabs-a', options: { ariaLabel: 'Group A' } });
+    window.tabsInstanceB = new Tabs({ contextID: 'tabs-b', options: { ariaLabel: 'Group B' } });
 </script>
+</main>
 </body>
 </html>
