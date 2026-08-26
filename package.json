@@ -47,7 +47,9 @@
     "build": "npm run build:js && npm run build:types && npm run build:css",
     "dev:js": "vite build --watch",
     "dev:css": "sass --watch src/scss/styles.scss:dist/css/styles.min.css --no-source-map",
-    "test": "node --test"
+    "test": "node --test",
+    "test:package": "node scripts/package-smoke/run.js",
+    "prepublishOnly": "npm run build && npm test && npm run test:package"
   },
   "author": "Bartosz Trajder",
   "license": "MIT",
