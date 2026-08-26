@@ -117,10 +117,26 @@ const tabs = new Tabs();
 tabs.getSelectedIndex(); // 0
 ```
 
+### `tabs:beforechange` event
+Dispatched (bubbling, cancelable) on the main container element right before the selected tab
+changes, whether triggered by mouse, keyboard, or `selectTab()`. Call `preventDefault()` on it to
+block the transition entirely — `aria-selected`, `tabindex`, the `hidden` panels, focus, and the
+selected index are all left exactly as they were, and `tabs:change` does not fire.
+
+```javascript
+document.getElementById('tabs').addEventListener('tabs:beforechange', (event) => {
+    const { fromIndex, toIndex, fromTab, toTab, fromPanel, toPanel } = event.detail;
+
+    if (toIndex === 2) {
+        event.preventDefault(); // keep the current tab selected
+    }
+});
+```
+
 ### `tabs:change` event
 Dispatched (bubbling) on the main container element whenever the selected tab changes,
-whether triggered by mouse, keyboard, or `selectTab()`. Useful for analytics or for
-lazy-loading panel content.
+whether triggered by mouse, keyboard, or `selectTab()` — and only when the transition wasn't
+canceled by a `tabs:beforechange` listener. Useful for analytics or for lazy-loading panel content.
 
 ```javascript
 document.getElementById('tabs').addEventListener('tabs:change', (event) => {

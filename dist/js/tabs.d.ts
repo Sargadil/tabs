@@ -37,9 +37,21 @@ export interface TabsChangeEventDetail {
 
 export type TabsChangeEvent = CustomEvent<TabsChangeEventDetail>;
 
+export interface TabsBeforeChangeEventDetail {
+    fromIndex: number;
+    toIndex: number;
+    fromTab: HTMLElement;
+    toTab: HTMLElement;
+    fromPanel: HTMLElement;
+    toPanel: HTMLElement;
+}
+
+export type TabsBeforeChangeEvent = CustomEvent<TabsBeforeChangeEventDetail>;
+
 declare global {
     interface HTMLElementEventMap {
         'tabs:change': TabsChangeEvent;
+        'tabs:beforechange': TabsBeforeChangeEvent;
     }
 }
 
