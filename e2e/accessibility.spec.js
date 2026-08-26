@@ -118,6 +118,30 @@ test.describe('axe: vertical tabs', () => {
     });
 });
 
+test.describe('axe: swipeable tabs', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto('/e2e/fixtures/swipeable.html');
+    });
+
+    test('has no violations on initial render', async ({ page }) => {
+        await expectNoViolations(page);
+    });
+
+    test('has no violations after a horizontal swipe switches the active tab', async ({ page }) => {
+        await page.locator('.tab-panel').first().evaluate((el) => {
+            const startEvent = new Event('touchstart', { bubbles: true });
+            startEvent.changedTouches = [{ screenX: 200, screenY: 100 }];
+            el.dispatchEvent(startEvent);
+
+            const endEvent = new Event('touchend', { bubbles: true });
+            endEvent.changedTouches = [{ screenX: 50, screenY: 105 }];
+            el.dispatchEvent(endEvent);
+        });
+
+        await expectNoViolations(page);
+    });
+});
+
 test.describe('axe: custom navigation markup', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/e2e/fixtures/custom-nav.html');

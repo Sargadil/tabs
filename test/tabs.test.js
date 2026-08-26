@@ -74,6 +74,17 @@ describe('default nav: WAI-ARIA structure', () => {
         assert.equal(panels[1].getAttribute('aria-labelledby'), buttons[1].id);
     });
 
+    test('customNavTitles overrides the generated nav button text', () => {
+        const { Tabs, document } = setup();
+        new Tabs({ options: { customNavTitles: ['First', 'Second', 'Third'] } });
+
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+
+        assert.equal(buttons[0].textContent, 'First');
+        assert.equal(buttons[1].textContent, 'Second');
+        assert.equal(buttons[2].textContent, 'Third');
+    });
+
     test('missing .tab-panel throws a friendly error', () => {
         const { Tabs } = setup('<div class="tabs" id="tabs"><div class="tabs__nav"></div><div class="tabs__panels"></div></div>');
 
@@ -442,6 +453,77 @@ describe('custom nav', () => {
         assert.equal(items[0].hasAttribute('type'), false);
         assert.equal(items[1].hasAttribute('type'), false);
     });
+
+    test('ariaLabel and vertical orientation are applied to the custom tablist container too', () => {
+        const { Tabs, document } = setup(CUSTOM_NAV_HTML);
+        new Tabs({
+            classes: {
+                tabsNavContainer: '.custom-tabs__nav',
+                tabsNavList: '.custom-tabs__nav-inner',
+                tabsNavButton: '.custom-tabs__nav-button',
+            },
+            options: { useCustomNav: true, ariaLabel: 'Sections', orientation: 'vertical' },
+        });
+
+        const tablist = document.querySelector('.custom-tabs__nav-inner');
+
+        assert.equal(tablist.getAttribute('aria-label'), 'Sections');
+        assert.equal(tablist.getAttribute('aria-orientation'), 'vertical');
+    });
+});
+
+describe('removeTabPanelTitle option', () => {
+    test('default (false): title elements stay in the panel', () => {
+        const { Tabs, document } = setup();
+        new Tabs();
+
+        const titles = document.querySelectorAll('.tab-panel__title');
+
+        assert.equal(titles.length, 3);
+    });
+
+    test('true: title elements are removed from every panel after nav generation', () => {
+        const { Tabs, document } = setup();
+        new Tabs({ options: { removeTabPanelTitle: true } });
+
+        const titles = document.querySelectorAll('.tab-panel__title');
+        const panels = document.querySelectorAll('.tab-panel');
+
+        assert.equal(titles.length, 0);
+        assert.equal(panels.length, 3, 'the panels themselves must survive, only the title inside is removed');
+    });
+
+    test('true: nav buttons still get the title text, since removal happens after nav generation', () => {
+        // jsdom does not implement `innerText` (the title-text fallback used when no
+        // `data-nav-title` is set), so this exercises the `data-nav-title` path — the
+        // `innerText` fallback itself is covered in a real browser, see
+        // e2e/public-api.spec.js.
+        const html = `
+        <div class="tabs" id="tabs">
+            <div class="tabs__nav"></div>
+            <div class="tabs__panels">
+                <div class="tab-panel"><h3 class="tab-panel__title" data-nav-title="One">First panel title</h3><div class="tab-panel__content">1</div></div>
+                <div class="tab-panel"><h3 class="tab-panel__title" data-nav-title="Two">Second panel title</h3><div class="tab-panel__content">2</div></div>
+            </div>
+        </div>`;
+        const { Tabs, document } = setup(html);
+        new Tabs({ options: { removeTabPanelTitle: true } });
+
+        const buttons = document.querySelectorAll('[role="tab"]');
+
+        assert.equal(buttons[0].textContent, 'One');
+        assert.equal(buttons[1].textContent, 'Two');
+    });
+
+    test('true: panel content other than the title is left untouched', () => {
+        const { Tabs, document } = setup();
+        new Tabs({ options: { removeTabPanelTitle: true } });
+
+        const content = document.querySelectorAll('.tab-panel__content');
+
+        assert.equal(content.length, 3);
+        assert.equal(content[0].textContent, '1');
+    });
 });
 
 describe('keyboard navigation', () => {
@@ -469,6 +551,29 @@ describe('keyboard navigation', () => {
         const zeroCount = Array.from(buttons).filter((b) => b.tabIndex === 0).length;
         assert.equal(zeroCount, 1);
         assert.equal(buttons[2].tabIndex, 0);
+    });
+
+    test('ArrowLeft selects the previous tab, wrapping from the first tab to the last', () => {
+        const { Tabs, dom, document } = setup();
+        const instance = new Tabs();
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+
+        click(buttons[1], dom);
+        keydown(buttons[1], dom, 'ArrowLeft');
+        assert.equal(instance.getSelectedIndex(), 0, 'ArrowLeft from tab 1 selects tab 0');
+
+        keydown(buttons[0], dom, 'ArrowLeft');
+        assert.equal(instance.getSelectedIndex(), 2, 'ArrowLeft from the first tab wraps to the last');
+    });
+
+    test('ArrowRight wraps from the last tab back to the first', () => {
+        const { Tabs, dom, document } = setup();
+        const instance = new Tabs();
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+
+        click(buttons[2], dom);
+        keydown(buttons[2], dom, 'ArrowRight');
+        assert.equal(instance.getSelectedIndex(), 0, 'ArrowRight from the last tab wraps to the first');
     });
 });
 
@@ -504,6 +609,34 @@ describe('manual activation mode', () => {
         click(buttons[1], dom);
         assert.equal(instance.getSelectedIndex(), 1);
     });
+
+    test('ArrowLeft moves focus to the previous tab, wrapping at the start, without selecting', () => {
+        const { Tabs, dom, document } = setup();
+        const instance = new Tabs({ options: { activationMode: 'manual' } });
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+
+        keydown(buttons[0], dom, 'ArrowLeft');
+        assert.equal(document.activeElement, buttons[2], 'ArrowLeft from the first tab wraps focus to the last');
+        assert.equal(instance.getSelectedIndex(), 0, 'focus move alone must not select');
+
+        keydown(buttons[2], dom, 'ArrowLeft');
+        assert.equal(document.activeElement, buttons[1]);
+        assert.equal(instance.getSelectedIndex(), 0);
+    });
+
+    test('Home/End move focus to the first/last tab without selecting', () => {
+        const { Tabs, dom, document } = setup();
+        const instance = new Tabs({ options: { activationMode: 'manual' } });
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+
+        keydown(buttons[0], dom, 'End');
+        assert.equal(document.activeElement, buttons[2]);
+        assert.equal(instance.getSelectedIndex(), 0, 'focus move alone must not select');
+
+        keydown(buttons[2], dom, 'Home');
+        assert.equal(document.activeElement, buttons[0]);
+        assert.equal(instance.getSelectedIndex(), 0);
+    });
 });
 
 describe('public API', () => {
@@ -528,6 +661,18 @@ describe('public API', () => {
         click(buttons[1], dom);
 
         assert.equal(instance.getSelectedIndex(), 0, 'click after destroy() must be inert');
+    });
+
+    test('destroy() also removes touch listeners when swipeable is enabled', () => {
+        const { Tabs, dom, document } = setup();
+        const instance = new Tabs({ options: { swipeable: true } });
+        const panels = document.querySelectorAll('#tabs [role="tabpanel"]');
+
+        instance.destroy();
+        touch(panels[0], dom, 'touchstart', 200, 100);
+        touch(panels[0], dom, 'touchend', 50, 105); // would swipe to the next tab if still wired up
+
+        assert.equal(instance.getSelectedIndex(), 0, 'swipe after destroy() must be inert');
     });
 
     test('tabs:change fires with {index, tab, panel} on every real switch', () => {
@@ -756,5 +901,20 @@ describe('swipeable', () => {
         touch(panels[0], dom, 'touchstart', 100, 100);
         touch(panels[0], dom, 'touchend', 90, 100); // below threshold
         assert.equal(instance.getSelectedIndex(), 0);
+    });
+
+    test('swipe wraps at the edges', () => {
+        const { Tabs, dom, document } = setup();
+        const instance = new Tabs({ options: { swipeable: true } });
+        const panels = document.querySelectorAll('#tabs [role="tabpanel"]');
+
+        instance.selectTab(2); // last tab
+        touch(panels[2], dom, 'touchstart', 200, 100);
+        touch(panels[2], dom, 'touchend', 50, 105); // swipe left -> next, wraps to first
+        assert.equal(instance.getSelectedIndex(), 0);
+
+        touch(panels[0], dom, 'touchstart', 50, 100);
+        touch(panels[0], dom, 'touchend', 200, 105); // swipe right -> previous, wraps to last
+        assert.equal(instance.getSelectedIndex(), 2);
     });
 });
