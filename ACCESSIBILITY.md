@@ -97,11 +97,14 @@ real assistive technology** — see [Manual assistive technology test matrix](#m
   Cover the ARIA attributes set on init, `hidden` as the source of truth for every interaction
   path (click, automatic keyboard activation, manual activation, `selectTab()`), roving
   `tabindex`, orientation, configuration validation, and that the component still resolves to
-  the correct visible panel with no stylesheet loaded at all.
+  the correct visible panel with no stylesheet loaded at all. CI and `prepublishOnly` run
+  `npm run test:coverage` instead, which runs the same suite gated on 100% branch/function
+  coverage.
 - **Browser tests** (`npm run test:e2e`, [`e2e/`](./e2e)) — run with Playwright across Chromium,
   Firefox, and WebKit. Cover initialization, keyboard navigation in both orientations, mouse
   click, manual activation, multiple instances on one page, `options.swipeable`
-  ([`e2e/swipe.spec.js`](./e2e/swipe.spec.js)), and the public API
+  ([`e2e/swipe.spec.js`](./e2e/swipe.spec.js)), `options.removeTabPanelTitle`
+  ([`e2e/initialization.spec.js`](./e2e/initialization.spec.js)), and the public API
   (`selectTab()`/`getSelectedIndex()`/`destroy()`/`tabs:change`).
 - **axe-core scans** (part of `npm run test:e2e`, [`e2e/accessibility.spec.js`](./e2e/accessibility.spec.js))
   — run via `@axe-core/playwright` against the default, manual, vertical, custom-nav, swipeable,

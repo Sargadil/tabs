@@ -9,8 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A real-browser test suite (`npm run test:e2e`, [`e2e/`](e2e)) running on `@playwright/test`
   (dev dependency only) across Chromium, Firefox, and WebKit. Covers initialization, keyboard
   navigation in both orientations (including wrap-around), mouse click, manual activation mode,
-  `options.swipeable`, multiple instances on one page, and the public API
-  (`selectTab()`/`getSelectedIndex()`/`destroy()`/`tabs:change`). Runs in CI on every push/PR.
+  `options.swipeable`, `options.removeTabPanelTitle`, multiple instances on one page, and the
+  public API (`selectTab()`/`getSelectedIndex()`/`destroy()`/`tabs:change`). Runs in CI on every
+  push/PR.
 - Automated accessibility scans (`@axe-core/playwright`, part of `npm run test:e2e`) covering
   default tabs, manual activation, vertical tabs, custom navigation, swipeable, and multiple tab
   groups on one page — scanned after initialization, after a click, after keyboard interaction,
