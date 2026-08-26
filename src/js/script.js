@@ -585,7 +585,7 @@ class Tabs {
             let tab_id = tab_panel_id + '-tab';
             let is_selected = parseInt(this.#configs.options.initSelectedItem) === i;
 
-            html += `<button id="${tab_id}" class="${tab_nav_btn_selector}" role="tab" aria-selected="${is_selected ? 'true' : 'false'}" aria-controls="${tab_panel_id}">${this.#getNavTitle(i)}</button>`
+            html += `<button type="button" id="${tab_id}" class="${tab_nav_btn_selector}" role="tab" aria-selected="${is_selected ? 'true' : 'false'}" aria-controls="${tab_panel_id}">${this.#getNavTitle(i)}</button>`
         }
 
         html += '</div>';
@@ -594,6 +594,10 @@ class Tabs {
 
     /**
      * Prepared custom nav buttons by adding aria attributes.
+     *
+     * If a nav element is a `<button>` without an explicit `type`, it is
+     * given `type="button"` so it can't accidentally submit an enclosing
+     * `<form>`. Elements other than `<button>` are left untouched.
      */
     #preparedCustomNavButton() {
         if (this.#objectsHTML['tabsNavList'].length > 0) {
@@ -617,6 +621,10 @@ class Tabs {
 
             if (!button.id) {
                 button.setAttribute('id', tab_panel_id + '-tab');
+            }
+
+            if (button.tagName === 'BUTTON' && !button.hasAttribute('type')) {
+                button.setAttribute('type', 'button');
             }
 
             button.setAttribute('aria-controls', tab_panel_id);

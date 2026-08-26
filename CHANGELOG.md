@@ -5,7 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Generated nav buttons now have `type="button"`, and custom-nav `<button>` elements
+  without an explicit `type` are given `type="button"` too, so tabs placed inside a
+  `<form>` no longer trigger an accidental submit.
+- README's configuration example showed `initSelectedItem: 1` while the actual default
+  is `0`; the example now matches the code.
+
 ### Changed
+- The package description and README intro no longer claim unconditional "Full
+  Accessibility" / WCAG compliance; they now describe the component as following the
+  WAI-ARIA Tabs Pattern.
 - Inactive tab panels now get the native `hidden` attribute; the active panel never does.
   `hidden` is the semantic source of truth for panel visibility (set on initialization, on
   click, on automatic keyboard activation, and on `selectTab()`), so the component hides
