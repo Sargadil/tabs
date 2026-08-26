@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Automated accessibility scans (`@axe-core/playwright`, part of `npm run test:e2e`) covering
+  default tabs, manual activation, vertical tabs, custom navigation, and multiple tab groups on
+  one page — scanned after initialization, after a click, and after keyboard interaction,
+  including a dedicated dynamic-state check after repeated tab switching. Zero axe violations is
+  not the same as full WCAG compliance; automated scans catch a subset of issues and don't
+  replace manual screen reader testing.
 - A package smoke test (`npm run test:package`) that runs `npm pack`, installs the
   resulting tarball into a throwaway fixture project, and verifies the real publish
   artifact: `require()` (CJS), `import` (ESM), the `./style.css` export, the shipped
