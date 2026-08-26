@@ -980,6 +980,66 @@ describe('RTL keyboard navigation', () => {
     });
 });
 
+describe('RTL + disabled tabs interaction', () => {
+    // First ("One") and last ("Four") disabled, same shape as DISABLED_EDGES_HTML in the
+    // "disabled tabs" suite, so Home/End/wrap-around all have to skip past a disabled edge
+    // to reach an enabled tab — now combined with a reversed RTL key mapping.
+    const RTL_DISABLED_EDGES_HTML = `
+    <div class="tabs" id="tabs">
+        <div class="tabs__nav"></div>
+        <div class="tabs__panels">
+            <div class="tab-panel"><h3 class="tab-panel__title" aria-disabled="true">One</h3><div class="tab-panel__content">1</div></div>
+            <div class="tab-panel"><h3 class="tab-panel__title">Two</h3><div class="tab-panel__content">2</div></div>
+            <div class="tab-panel"><h3 class="tab-panel__title">Three</h3><div class="tab-panel__content">3</div></div>
+            <div class="tab-panel"><h3 class="tab-panel__title" aria-disabled="true">Four</h3><div class="tab-panel__content">4</div></div>
+        </div>
+    </div>
+    `;
+
+    function setupRTLDisabled(options = {}) {
+        const { Tabs, dom, document } = setup(RTL_DISABLED_EDGES_HTML);
+        document.documentElement.setAttribute('dir', 'rtl');
+        const instance = new Tabs({ options: { initSelectedItem: 1, ...options } });
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+        return { instance, dom, document, buttons };
+    }
+
+    test('automatic mode: ArrowLeft (next in RTL) and ArrowRight (previous in RTL) both skip disabled edges, wrapping around', () => {
+        const { instance, dom, buttons } = setupRTLDisabled();
+
+        keydown(buttons[1], dom, 'ArrowLeft'); // RTL "next": 1 -> 2 (Three)
+        assert.equal(instance.getSelectedIndex(), 2, 'ArrowLeft from Two must select Three in RTL');
+
+        keydown(buttons[2], dom, 'ArrowLeft'); // RTL "next": 2 -> skip disabled 3, wrap, skip disabled 0, land on 1
+        assert.equal(instance.getSelectedIndex(), 1, 'ArrowLeft from Three must wrap past both disabled edges to Two in RTL');
+
+        keydown(buttons[1], dom, 'ArrowRight'); // RTL "previous": 1 -> skip disabled 0, wrap, skip disabled 3, land on 2
+        assert.equal(instance.getSelectedIndex(), 2, 'ArrowRight from Two must wrap past both disabled edges to Three in RTL');
+    });
+
+    test('automatic mode: Home/End skip disabled edges under RTL (unaffected by direction)', () => {
+        const { instance, dom, buttons } = setupRTLDisabled();
+
+        keydown(buttons[1], dom, 'Home');
+        assert.equal(instance.getSelectedIndex(), 1, 'Home must skip disabled tab 0 and land on Two, even under RTL');
+
+        keydown(buttons[1], dom, 'End');
+        assert.equal(instance.getSelectedIndex(), 2, 'End must skip disabled tab 3 and land on Three, even under RTL');
+    });
+
+    test('manual mode: ArrowLeft/ArrowRight move focus (not selection) past disabled edges under RTL', () => {
+        const { instance, dom, document, buttons } = setupRTLDisabled({ activationMode: 'manual' });
+
+        keydown(buttons[1], dom, 'ArrowLeft'); // RTL "next": focus 1 -> 2
+        assert.equal(document.activeElement, buttons[2], 'ArrowLeft must move focus to Three in RTL manual mode');
+        assert.equal(instance.getSelectedIndex(), 1, 'focus move alone must not select');
+
+        keydown(buttons[2], dom, 'ArrowLeft'); // RTL "next": focus 2 -> skip disabled 3, wrap, skip disabled 0, land on 1
+        assert.equal(document.activeElement, buttons[1], 'ArrowLeft must wrap past both disabled edges to Two in RTL manual mode');
+        assert.equal(instance.getSelectedIndex(), 1, 'still only the initial tab is selected');
+    });
+});
+
 describe('multiple instances on one page', () => {
     test('default tabPanelIdPrefix does not collide across instances', () => {
         const html = `
@@ -1360,6 +1420,20 @@ describe('disabled tabs', () => {
 
             click(buttons[2], dom); // aria-disabled <div>
             assert.equal(instance.getSelectedIndex(), 0);
+        });
+
+        test('does not dispatch tabs:beforechange for a click blocked by disabled', () => {
+            const { Tabs, dom, document } = setup(DISABLED_MIDDLE_HTML);
+            new Tabs();
+            const container = document.getElementById('tabs');
+            const buttons = document.querySelectorAll('#tabs [role="tab"]');
+            let before_change_fired = false;
+
+            container.addEventListener('tabs:beforechange', () => { before_change_fired = true; });
+
+            click(buttons[1], dom);
+
+            assert.equal(before_change_fired, false, 'the disabled check must short-circuit before tabs:beforechange is dispatched');
         });
     });
 
