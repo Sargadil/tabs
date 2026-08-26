@@ -44,6 +44,13 @@ declare global {
 }
 
 export default class Tabs {
+    /**
+     * Throws a `[@sargadil/tabs] ...` error if the configuration or the
+     * required DOM structure is invalid (e.g. an unknown contextID, an
+     * invalid orientation/activationMode, an out-of-range
+     * initSelectedItem, missing panels/navigation/titles, or a custom
+     * navigation/panel count mismatch).
+     */
     constructor(configs?: TabsConfig);
 
     /**

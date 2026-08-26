@@ -201,6 +201,23 @@ const container = document.querySelector('.my-tabs');
 new Tabs({ contextID: container });
 ```
 
+### Configuration validation
+
+The constructor validates its configuration and the required DOM structure up front, and throws a
+descriptive `[@sargadil/tabs] ...` error — naming the offending option or selector — instead of an
+unrelated low-level exception. This covers:
+
+- `contextID` (must be a string or an `HTMLElement`, and must resolve to an existing element),
+- `options.orientation` (must be `'horizontal'` or `'vertical'`),
+- `options.activationMode` (must be `'automatic'` or `'manual'`),
+- `options.initSelectedItem` (must be an integer, `>= 0`, and less than the number of tabs),
+- required DOM structures (at least one `.tab-panel`, a title element per panel, and — for the
+  default nav — a `.tabs__nav` container),
+- custom navigation (`options.useCustomNav: true`) having at least one nav element, with its count
+  matching the number of panels.
+
+There's no silent recovery from an invalid configuration — fix the reported field and re-run.
+
 ## More examples
 
 **[See every option in action, live, with the code for each one →](https://sargadil.github.io/tabs/)**

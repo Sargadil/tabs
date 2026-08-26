@@ -40,12 +40,96 @@ class Tabs {
 
     constructor(configs) {
         this.#configs = this.#deepMerge(this.#configs, configs);
+        this.#validateConfig();
         this.#initElements();
+        this.#validateDOM();
         this.#generatePanelIds();
         this.#initTabs();
 
         if (this.#configs.options.removeTabPanelTitle) {
             this.#removeTabPanelTitle();
+        }
+    }
+
+    /**
+     * Throw a public configuration/DOM error, consistently prefixed so
+     * callers get a readable, actionable message instead of a raw
+     * low-level exception (e.g. "Cannot read properties of undefined").
+     *
+     * @param {string} message
+     *   Error message, without the package prefix.
+     */
+    #throwError(message) {
+        throw new Error(`[@sargadil/tabs] ${message}`);
+    }
+
+    /**
+     * Validate configuration values that don't require DOM access yet
+     * (contextID's type, orientation, activationMode, initSelectedItem's
+     * shape). Centralizing these checks here means every constructor
+     * run fails fast, on the same rules, with the same error format.
+     */
+    #validateConfig() {
+        const context_id = this.#configs.contextID;
+        const options = this.#configs.options;
+
+        if (typeof context_id !== 'string' && !(context_id instanceof HTMLElement)) {
+            this.#throwError(`"contextID" must be a string or an HTMLElement. Received ${typeof context_id}.`);
+        }
+
+        if (options.orientation !== 'horizontal' && options.orientation !== 'vertical') {
+            this.#throwError(`"orientation" must be "horizontal" or "vertical". Received ${JSON.stringify(options.orientation)}.`);
+        }
+
+        if (options.activationMode !== 'automatic' && options.activationMode !== 'manual') {
+            this.#throwError(`"activationMode" must be "automatic" or "manual". Received ${JSON.stringify(options.activationMode)}.`);
+        }
+
+        if (!Number.isInteger(options.initSelectedItem) || options.initSelectedItem < 0) {
+            this.#throwError(`"initSelectedItem" must be an integer >= 0. Received ${JSON.stringify(options.initSelectedItem)}.`);
+        }
+    }
+
+    /**
+     * Validate the DOM structures required for a working instance, once
+     * the context element and its child collections have been queried
+     * by #initElements(). Centralizing these checks here avoids
+     * scattering identical presence checks across #insertNav(),
+     * #prepareTabContent(), etc.
+     */
+    #validateDOM() {
+        const classes = this.#configs.classes;
+        const options = this.#configs.options;
+        const panel_count = this.#objectsHTML['tabPanel'].length;
+
+        if (panel_count === 0) {
+            this.#throwError(`No tab panels were found. Expected at least one element matching "${classes.tabPanel}".`);
+        }
+
+        if (options.initSelectedItem >= panel_count) {
+            this.#throwError(`initSelectedItem ${options.initSelectedItem} is out of range. Found ${panel_count} tabs.`);
+        }
+
+        if (options.useCustomNav) {
+            const tab_count = this.#objectsHTML['tabsNavButton'].length;
+
+            if (tab_count === 0) {
+                this.#throwError(`No custom navigation elements were found. Expected at least one element matching "${classes.tabsNavButton}" (options.useCustomNav is true).`);
+            }
+
+            if (tab_count !== panel_count) {
+                this.#throwError(`Custom navigation has ${tab_count} tab(s) but there are ${panel_count} panel(s). The counts must match.`);
+            }
+        } else {
+            if (this.#objectsHTML['tabsNavContainer'].length === 0) {
+                this.#throwError(`Tab navigation container was not found. Expected an element matching "${classes.tabsNavContainer}".`);
+            }
+
+            const title_count = this.#objectsHTML['tabPanelTitle'].length;
+
+            if (title_count !== panel_count) {
+                this.#throwError(`Expected ${panel_count} tab panel title(s) matching "${classes.tabPanelTitle}" (one per panel) but found ${title_count}. Each panel needs a title element; options.customNavTitles only overrides its displayed text.`);
+            }
         }
     }
 
@@ -94,7 +178,7 @@ class Tabs {
         const new_tab = tab_buttons[index];
 
         if (!new_tab) {
-            throw new Error(`[tabs plugin] selectTab: no tab exists at index ${index}.`);
+            this.#throwError(`selectTab: no tab exists at index ${index}.`);
         }
 
         const old_tab = tab_buttons[this.getSelectedIndex()];
@@ -113,7 +197,7 @@ class Tabs {
         for (let i = 0; i < tab_buttons.length; i++) {
             const tab_panel = document.getElementById(tab_buttons[i].getAttribute('aria-controls'));
 
-            tab_buttons[i].tabIndex = parseInt(this.#configs.options.initSelectedItem) === i ? 0 : -1;
+            tab_buttons[i].tabIndex = this.#configs.options.initSelectedItem === i ? 0 : -1;
             tab_buttons[i].addEventListener('keydown', this.#boundOnKeyDown);
             tab_buttons[i].addEventListener('click', this.#boundOnClick);
         }
@@ -442,16 +526,12 @@ class Tabs {
      * The `tab-panel--open` class is kept in sync purely as a styling hook.
      */
     #prepareTabContent() {
-        if (this.#objectsHTML['tabPanel'].length === 0) {
-            throw new Error(`[tabs plugin] tab panels should exist.`);
-        }
-
         const tab_buttons = this.#objectsHTML['tabsNavBtn'];
 
         this.#objectsHTML['tabPanel'].forEach((item, index) => {
             const tab_panel_id = this.#panelIds[index];
             const open_class_selector = this.#configs.selectors.tabPanelOpen;
-            const tab_panel_open_index = parseInt(this.#configs.options.initSelectedItem);
+            const tab_panel_open_index = this.#configs.options.initSelectedItem;
             const is_selected = tab_panel_open_index === index;
 
             item.setAttribute('id', tab_panel_id);
@@ -517,10 +597,6 @@ class Tabs {
      */
     #insertNav() {
         if (!this.#configs.options.useCustomNav) {
-            if (this.#objectsHTML['tabsNavContainer'].length === 0) {
-                throw new Error(`[tabs plugin] tabsNavContainer element should exist.`);
-            }
-
             this.#objectsHTML['tabsNavContainer'][0].innerHTML = this.#createNav();
         } else {
             this.#preparedCustomNavButton();
@@ -583,7 +659,7 @@ class Tabs {
         for (let i = 0; i < this.#objectsHTML['tabPanelTitle'].length; i++) {
             let tab_panel_id = this.#panelIds[i];
             let tab_id = tab_panel_id + '-tab';
-            let is_selected = parseInt(this.#configs.options.initSelectedItem) === i;
+            let is_selected = this.#configs.options.initSelectedItem === i;
 
             html += `<button type="button" id="${tab_id}" class="${tab_nav_btn_selector}" role="tab" aria-selected="${is_selected ? 'true' : 'false'}" aria-controls="${tab_panel_id}">${this.#getNavTitle(i)}</button>`
         }
@@ -617,7 +693,7 @@ class Tabs {
         for (let i = 0; i < this.#objectsHTML['tabsNavButton'].length; i++) {
             const button = this.#objectsHTML['tabsNavButton'][i];
             let tab_panel_id = this.#panelIds[i];
-            let is_selected = parseInt(this.#configs.options.initSelectedItem) === i;
+            let is_selected = this.#configs.options.initSelectedItem === i;
 
             if (!button.id) {
                 button.setAttribute('id', tab_panel_id + '-tab');
@@ -685,7 +761,7 @@ class Tabs {
         const context = context_id instanceof HTMLElement ? context_id : document.getElementById(context_id);
 
         if (!context) {
-            throw new Error(`[tabs plugin] contextID does not exist in html structure.`);
+            this.#throwError(`Context element was not found. Expected an element with id "${context_id}".`);
         }
 
         this.#context = context;
