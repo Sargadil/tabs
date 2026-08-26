@@ -60,8 +60,9 @@ export default class Tabs {
      * Throws a `[@sargadil/tabs] ...` error if the configuration or the
      * required DOM structure is invalid (e.g. an unknown contextID, an
      * invalid orientation/activationMode, an out-of-range
-     * initSelectedItem, missing panels/navigation/titles, or a custom
-     * navigation/panel count mismatch).
+     * initSelectedItem, missing panels/navigation/titles, a custom
+     * navigation/panel count mismatch, every tab being disabled, or
+     * initSelectedItem pointing at a disabled tab).
      */
     constructor(configs?: TabsConfig);
 
@@ -78,7 +79,9 @@ export default class Tabs {
     getSelectedIndex(): number;
 
     /**
-     * Select a tab by index. Throws if no tab exists at that index.
+     * Select a tab by index. Throws if no tab exists at that index, or
+     * if the tab at that index is disabled (native `disabled` or
+     * `aria-disabled="true"`).
      */
     selectTab(index: number): void;
 }
