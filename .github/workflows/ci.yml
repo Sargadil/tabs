@@ -25,3 +25,7 @@ jobs:
       - run: npm test
 
       - run: npm run test:package
+
+      - run: npx playwright install --with-deps chromium firefox webkit
+
+      - run: npm run test:e2e
