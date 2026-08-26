@@ -90,6 +90,33 @@ In both modes, `aria-selected`, the roving `tabindex`, and panel `hidden` state 
 consistent with each other — there is no intermediate state where, for example, `aria-selected`
 has changed but the panel hasn't (or vice versa).
 
+## Disabled tabs
+
+A tab is disabled the same way any native `<button>` or custom `role="tab"` element would be —
+native `disabled` (preferred whenever the library renders the element itself, i.e. the default
+nav) or `aria-disabled="true"` (for a custom-nav tab that isn't a `<button>`). No library-specific
+attribute (e.g. `data-disabled`) is used.
+
+A disabled tab is excluded from every interaction path:
+
+- click, `Enter`, and `Space` do not activate it,
+- `ArrowLeft`/`ArrowRight`/`ArrowUp`/`ArrowDown` skip over it, including when wrapping around,
+- `Home`/`End` skip it in favor of the first/last *enabled* tab,
+- `selectTab()` throws instead of selecting it.
+
+It still participates in the roving `tabindex` as a non-target — i.e. it's simply never assigned
+`tabindex="0"` — and a native `disabled` button is additionally removed from the sequential focus
+order and the "enabled" accessibility state by the browser itself, independent of anything this
+library does.
+
+The constructor rejects two configurations that would otherwise leave the widget in a broken
+state: `options.initSelectedItem` pointing at a disabled tab, and every tab being disabled (a
+tablist needs at least one selectable tab). See [Disabled tabs in the
+README](./README.md#disabled-tabs) for the exact error messages and markup examples.
+
+Disabling/enabling a tab after construction is not automatically picked up by the running
+instance — this is tracked separately as a future `refresh()` (ROADMAP-11), not implemented here.
+
 ## Automated testing
 
 Three layers of automated tests exist. **None of them are a substitute for manual testing with
@@ -100,22 +127,28 @@ real assistive technology** — see [Manual assistive technology test matrix](#m
   path (click, automatic keyboard activation, manual activation, `selectTab()`), roving
   `tabindex`, orientation, configuration validation, the cancelable `tabs:beforechange` event
   (detail contract, event order, and that canceling it via click/keyboard/`selectTab()` leaves
-  focus/ARIA/`hidden`/selection untouched and suppresses `tabs:change`), and that the component
-  still resolves to the correct visible panel with no stylesheet loaded at all. CI and
-  `prepublishOnly` run `npm run test:coverage` instead, which runs the same suite gated on 100%
-  branch/function coverage.
+  focus/ARIA/`hidden`/selection untouched and suppresses `tabs:change`), disabled tabs (native
+  `disabled` and `aria-disabled`, in default and custom nav, in both activation modes — click,
+  arrow-key/Home/End skipping with wrap-around, `selectTab()`, and the two constructor validation
+  errors), and that the component still resolves to the correct visible panel with no stylesheet
+  loaded at all. CI and `prepublishOnly` run `npm run test:coverage` instead, which runs the same
+  suite gated on 100% branch/function coverage.
 - **Browser tests** (`npm run test:e2e`, [`e2e/`](./e2e)) — run with Playwright across Chromium,
   Firefox, and WebKit. Cover initialization, keyboard navigation in both orientations, mouse
   click, manual activation, multiple instances on one page, `options.swipeable`
   ([`e2e/swipe.spec.js`](./e2e/swipe.spec.js)), `options.removeTabPanelTitle`
   ([`e2e/initialization.spec.js`](./e2e/initialization.spec.js)), canceling `tabs:beforechange`
   ([`e2e/before-change.spec.js`](./e2e/before-change.spec.js)) — including that a real browser's
-  mousedown-focuses-the-target behavior is correctly unwound on a canceled click — and the public
-  API (`selectTab()`/`getSelectedIndex()`/`destroy()`/`tabs:beforechange`/`tabs:change`).
+  mousedown-focuses-the-target behavior is correctly unwound on a canceled click — disabled tabs
+  in default and custom nav and in manual mode ([`e2e/disabled-tabs.spec.js`](./e2e/disabled-tabs.spec.js)),
+  including that a real click event arriving via `dispatchEvent` (the closest a test can get to a
+  native disabled `<button>`, which Playwright's own actionability checks otherwise refuse to
+  click) is still correctly ignored — and the public API
+  (`selectTab()`/`getSelectedIndex()`/`destroy()`/`tabs:beforechange`/`tabs:change`).
 - **axe-core scans** (part of `npm run test:e2e`, [`e2e/accessibility.spec.js`](./e2e/accessibility.spec.js))
   — run via `@axe-core/playwright` against the default, manual, vertical, custom-nav, swipeable,
-  and multiple-instance fixtures, both on initial render and after interaction (click, keyboard,
-  swipe).
+  disabled-tabs, and multiple-instance fixtures, both on initial render and after interaction
+  (click, keyboard, swipe).
 
 axe-core only detects a subset of accessibility issues — [roughly a third of WCAG success
 criteria are automatically testable at all](https://github.com/dequelabs/axe-core#user-content-what-does-axe-core-detect).
@@ -137,10 +170,6 @@ only be established by the manual testing below.
 - **RTL is not yet handled.** `ArrowLeft`/`ArrowRight` currently always map to previous/next
   regardless of document or element direction; correct RTL behavior is tracked separately
   (ROADMAP-8) and not implemented yet.
-- **Disabled tabs are not yet a first-class concept.** There is no built-in support for
-  `disabled`/`aria-disabled` tabs that keyboard navigation and `selectTab()` correctly skip
-  (tracked separately, ROADMAP-10). Do not rely on disabling a tab via `disabled`/
-  `aria-disabled` today — it is not wired into navigation or `selectTab()`.
 - **Swipe gestures (`options.swipeable`) have no ARIA surface of their own.** They're an
   additional touch-only input path on top of the fully keyboard-accessible tablist, not a
   replacement for it, so they don't change anything in the tables above.

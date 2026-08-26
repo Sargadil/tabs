@@ -131,6 +131,72 @@ class Tabs {
                 this.#throwError(`Expected ${panel_count} tab panel title(s) matching "${classes.tabPanelTitle}" (one per panel) but found ${title_count}. Each panel needs a title element; options.customNavTitles only overrides its displayed text.`);
             }
         }
+
+        this.#validateDisabledTabs(panel_count);
+    }
+
+    /**
+     * Validate that at least one tab is enabled, and that
+     * options.initSelectedItem doesn't point at a disabled one. Runs
+     * after the structural checks above, so it's safe to index into
+     * tabPanelTitle/tabsNavButton by panel index here.
+     *
+     * @param {number} panel_count
+     *   Number of tab panels.
+     */
+    #validateDisabledTabs(panel_count) {
+        const options = this.#configs.options;
+        let has_enabled_tab = false;
+
+        for (let i = 0; i < panel_count; i++) {
+            if (!this.#isSourceDisabled(i)) {
+                has_enabled_tab = true;
+                break;
+            }
+        }
+
+        if (!has_enabled_tab) {
+            this.#throwError('At least one enabled tab is required.');
+        }
+
+        if (this.#isSourceDisabled(options.initSelectedItem)) {
+            this.#throwError(`initSelectedItem ${options.initSelectedItem} is disabled. Choose an enabled tab as the initial tab.`);
+        }
+    }
+
+    /**
+     * Whether the tab at panel index `index` is disabled, read from the
+     * as-authored DOM before nav generation. Custom nav reads the
+     * author's own tab element directly (it already exists); the
+     * default nav reads `aria-disabled="true"` from the panel's title
+     * element, since no tab element exists yet to carry it — the
+     * generated `<button>` gets a native `disabled` attribute from this
+     * flag once it's created (see #createNav()).
+     *
+     * @param {number} index
+     *   Panel index.
+     *
+     * @returns {boolean}
+     */
+    #isSourceDisabled(index) {
+        if (this.#configs.options.useCustomNav) {
+            return this.#isTabDisabled(this.#objectsHTML['tabsNavButton'][index]);
+        }
+
+        return this.#objectsHTML['tabPanelTitle'][index].getAttribute('aria-disabled') === 'true';
+    }
+
+    /**
+     * Whether a tab element is disabled: native `disabled` (buttons,
+     * preferred) or `aria-disabled="true"` (custom non-button tabs).
+     *
+     * @param {HTMLElement} tab
+     *   Tab element.
+     *
+     * @returns {boolean}
+     */
+    #isTabDisabled(tab) {
+        return tab.disabled === true || tab.getAttribute('aria-disabled') === 'true';
     }
 
     /**
@@ -179,6 +245,10 @@ class Tabs {
 
         if (!new_tab) {
             this.#throwError(`selectTab: no tab exists at index ${index}.`);
+        }
+
+        if (this.#isTabDisabled(new_tab)) {
+            this.#throwError(`Cannot select disabled tab at index ${index}.`);
         }
 
         const old_tab = tab_buttons[this.getSelectedIndex()];
@@ -266,6 +336,11 @@ class Tabs {
      */
     #onClick(event) {
         const new_tab = event.currentTarget;
+
+        if (this.#isTabDisabled(new_tab)) {
+            return;
+        }
+
         const old_tab = this.#context.querySelector('[aria-selected = "true"]');
 
         this.#setSelectedTab(old_tab, new_tab);
@@ -279,6 +354,11 @@ class Tabs {
      */
     #onKeyDown(event) {
         const target = event.currentTarget;
+
+        if (this.#isTabDisabled(target)) {
+            return;
+        }
+
         const is_vertical = this.#configs.options.orientation === 'vertical';
         const is_manual = this.#configs.options.activationMode === 'manual';
         const previous_key = is_vertical ? 'ArrowUp' : 'ArrowLeft';
@@ -347,7 +427,7 @@ class Tabs {
      */
     #setSelectedToFirstTab(target) {
         const tab_buttons = this.#objectsHTML['tabsNavBtn'];
-        const new_current_tab = tab_buttons[0];
+        const new_current_tab = this.#getFirstEnabledTab(tab_buttons);
 
         this.#setSelectedTab(target, new_current_tab);
     }
@@ -360,7 +440,7 @@ class Tabs {
      */
     #setSelectedToLastTab(target) {
         const tab_buttons = this.#objectsHTML['tabsNavBtn'];
-        const new_current_tab = tab_buttons[tab_buttons.length - 1];
+        const new_current_tab = this.#getLastEnabledTab(tab_buttons);
 
         this.#setSelectedTab(target, new_current_tab);
     }
@@ -404,7 +484,7 @@ class Tabs {
      */
     #moveFocusToFirstTab(target) {
         const tab_buttons = this.#objectsHTML['tabsNavBtn'];
-        const new_current_tab = tab_buttons[0];
+        const new_current_tab = this.#getFirstEnabledTab(tab_buttons);
 
         this.#moveFocusTo(target, new_current_tab);
     }
@@ -418,7 +498,7 @@ class Tabs {
      */
     #moveFocusToLastTab(target) {
         const tab_buttons = this.#objectsHTML['tabsNavBtn'];
-        const new_current_tab = tab_buttons[tab_buttons.length - 1];
+        const new_current_tab = this.#getLastEnabledTab(tab_buttons);
 
         this.#moveFocusTo(target, new_current_tab);
     }
@@ -565,7 +645,8 @@ class Tabs {
     }
 
     /**
-     * Get previous tab element.
+     * Get previous tab element, skipping disabled tabs and wrapping
+     * around from the first tab to the last.
      *
      * @param {number} current_tab_index
      *   Current tab index.
@@ -574,14 +655,15 @@ class Tabs {
      *   Nav buttons.
      *
      * @returns HTMLElement
-     *   Return previous tab.
+     *   Return previous enabled tab.
      */
     #getPreviousTab(current_tab_index, tab_buttons) {
-        return (current_tab_index > 0) ? tab_buttons[current_tab_index - 1] : tab_buttons[tab_buttons.length - 1];
+        return this.#getAdjacentEnabledTab(tab_buttons, current_tab_index, -1);
     }
 
     /**
-     * Get next tab element.
+     * Get next tab element, skipping disabled tabs and wrapping around
+     * from the last tab to the first.
      *
      * @param {number} current_tab_index
      *   Current tab index.
@@ -590,10 +672,64 @@ class Tabs {
      *   Nav buttons.
      *
      * @returns HTMLElement
-     *   Return next tab.
+     *   Return next enabled tab.
      */
     #getNextTab(current_tab_index, tab_buttons) {
-        return (current_tab_index < tab_buttons.length - 1) ? tab_buttons[current_tab_index + 1] : tab_buttons[0];
+        return this.#getAdjacentEnabledTab(tab_buttons, current_tab_index, 1);
+    }
+
+    /**
+     * Walk the tablist from `start_index` in `direction` (-1 or 1),
+     * wrapping around, and return the first enabled tab encountered.
+     * Constructor validation guarantees at least one enabled tab
+     * exists, so this always terminates.
+     *
+     * @param {NodeList} tab_buttons
+     *   Nav buttons.
+     *
+     * @param {number} start_index
+     *   Index to start searching from (exclusive).
+     *
+     * @param {number} direction
+     *   -1 for previous, 1 for next.
+     *
+     * @returns {HTMLElement}
+     */
+    #getAdjacentEnabledTab(tab_buttons, start_index, direction) {
+        const count = tab_buttons.length;
+        let index = start_index;
+
+        do {
+            index = (index + direction + count) % count;
+        } while (this.#isTabDisabled(tab_buttons[index]));
+
+        return tab_buttons[index];
+    }
+
+    /**
+     * Get the first enabled tab. Constructor validation guarantees at
+     * least one enabled tab exists.
+     *
+     * @param {NodeList} tab_buttons
+     *   Nav buttons.
+     *
+     * @returns {HTMLElement}
+     */
+    #getFirstEnabledTab(tab_buttons) {
+        return Array.from(tab_buttons).find((tab) => !this.#isTabDisabled(tab));
+    }
+
+    /**
+     * Get the last enabled tab. Constructor validation guarantees at
+     * least one enabled tab exists.
+     *
+     * @param {NodeList} tab_buttons
+     *   Nav buttons.
+     *
+     * @returns {HTMLElement}
+     */
+    #getLastEnabledTab(tab_buttons) {
+        return Array.from(tab_buttons).reverse().find((tab) => !this.#isTabDisabled(tab));
     }
 
     /**
@@ -736,8 +872,9 @@ class Tabs {
             let tab_panel_id = this.#panelIds[i];
             let tab_id = tab_panel_id + '-tab';
             let is_selected = this.#configs.options.initSelectedItem === i;
+            let disabled_attr = this.#isSourceDisabled(i) ? ' disabled' : '';
 
-            html += `<button type="button" id="${tab_id}" class="${tab_nav_btn_selector}" role="tab" aria-selected="${is_selected ? 'true' : 'false'}" aria-controls="${tab_panel_id}">${this.#getNavTitle(i)}</button>`
+            html += `<button type="button" id="${tab_id}" class="${tab_nav_btn_selector}" role="tab" aria-selected="${is_selected ? 'true' : 'false'}" aria-controls="${tab_panel_id}"${disabled_attr}>${this.#getNavTitle(i)}</button>`
         }
 
         html += '</div>';

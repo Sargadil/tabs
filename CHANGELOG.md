@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Disabled tabs, following standard HTML/ARIA semantics with no library-specific attribute: the
+  default nav renders a disabled panel's tab as a native `<button disabled>` (read from
+  `aria-disabled="true"` on the panel's `.tab-panel__title`, since no tab element exists yet at
+  generation time), and custom navigation (`options.useCustomNav: true`) reads whatever the author
+  already marked — native `disabled` or `aria-disabled="true"`. A disabled tab does not activate
+  on click, `Enter`, or `Space`, is skipped by arrow-key and `Home`/`End` navigation (including
+  wrap-around), and cannot be selected via `selectTab()` (throws
+  `Cannot select disabled tab at index N.`). The constructor throws if `options.initSelectedItem`
+  points at a disabled tab, or if every tab is disabled (`At least one enabled tab is required.`).
+  See [Disabled tabs](README.md#disabled-tabs).
 - A cancelable, bubbling `tabs:beforechange` CustomEvent
   (`{ fromIndex, toIndex, fromTab, toTab, fromPanel, toPanel }`), dispatched on the main
   container right before the selected tab changes — via click, keyboard, or `selectTab()`.

@@ -100,7 +100,8 @@ tabs.destroy();
 ```
 
 ### `selectTab(index)`
-Programmatically select a tab by index (0-based). Throws if no tab exists at that index.
+Programmatically select a tab by index (0-based). Throws if no tab exists at that index, or if
+the tab at that index is [disabled](#disabled-tabs).
 
 ```javascript
 const tabs = new Tabs();
@@ -230,16 +231,61 @@ unrelated low-level exception. This covers:
 - required DOM structures (at least one `.tab-panel`, a title element per panel, and — for the
   default nav — a `.tabs__nav` container),
 - custom navigation (`options.useCustomNav: true`) having at least one nav element, with its count
-  matching the number of panels.
+  matching the number of panels,
+- at least one tab must not be [disabled](#disabled-tabs),
+- `options.initSelectedItem` must not point at a disabled tab.
 
 There's no silent recovery from an invalid configuration — fix the reported field and re-run.
+
+## Disabled tabs
+
+A tab can be disabled using the same mechanism a native `<button>` or a custom `role="tab"`
+element would already use — there's no library-specific attribute to learn.
+
+For the **default nav**, mark the panel's title with `aria-disabled="true"`; the generated tab
+becomes a real `<button disabled>` (native `disabled` is preferred over ARIA whenever the library
+controls the element it renders):
+
+```html
+<div class="tab-panel">
+    <h3 class="tab-panel__title" aria-disabled="true">Billing</h3>
+    <div class="tab-panel__content">…</div>
+</div>
+```
+
+For **custom navigation** (`options.useCustomNav: true`), disable the tab element the same way you
+would outside of `@sargadil/tabs` — the library only reads what's already there:
+
+```html
+<button class="custom-tabs__nav-button" role="tab" disabled>Billing</button>
+<div class="custom-tabs__nav-button" role="tab" tabindex="-1" aria-disabled="true">Settings</div>
+```
+
+A disabled tab, regardless of which of the two mechanisms above marked it:
+
+- does not activate on click, `Enter`, or `Space`,
+- is skipped by `ArrowLeft`/`ArrowRight`/`ArrowUp`/`ArrowDown` (including wrap-around),
+- is skipped by `Home`/`End`,
+- cannot be selected with `selectTab()` — it throws
+  `[@sargadil/tabs] Cannot select disabled tab at index 2.` instead.
+
+Two configurations are rejected at construction time, with the same friendly error format as the
+rest of [configuration validation](#configuration-validation):
+
+- `options.initSelectedItem` pointing at a disabled tab —
+  `[@sargadil/tabs] initSelectedItem 2 is disabled. Choose an enabled tab as the initial tab.`,
+- every tab being disabled — `[@sargadil/tabs] At least one enabled tab is required.`.
+
+Toggling a tab's disabled state after construction (e.g. in response to app state) is not
+automatically picked up — re-create the instance, or wait for a future `refresh()`.
 
 ## Accessibility
 
 `@sargadil/tabs` implements the [WAI-ARIA Tabs Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/):
 `tablist`/`tab`/`tabpanel` roles, `aria-selected`/`aria-controls`/`aria-labelledby`, a roving
 `tabindex`, and native `hidden` panels, with full keyboard support (arrow keys, `Home`/`End`,
-`Enter`/`Space`) in both automatic and manual activation modes.
+`Enter`/`Space`) in both automatic and manual activation modes, including correctly skipping
+[disabled tabs](#disabled-tabs).
 
 **[Read the full accessibility contract in `ACCESSIBILITY.md` →](./ACCESSIBILITY.md)** — exact
 ARIA/keyboard tables, what the automated test suite (unit tests, Playwright, axe-core) does and
