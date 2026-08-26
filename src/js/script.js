@@ -436,6 +436,10 @@ class Tabs {
 
     /**
      * Prepared tab content by adding appropriate attributes.
+     *
+     * `hidden` is the semantic source of truth for panel visibility: it
+     * hides inactive panels natively, without depending on bundled CSS.
+     * The `tab-panel--open` class is kept in sync purely as a styling hook.
      */
     #prepareTabContent() {
         if (this.#objectsHTML['tabPanel'].length === 0) {
@@ -447,24 +451,30 @@ class Tabs {
         this.#objectsHTML['tabPanel'].forEach((item, index) => {
             const tab_panel_id = this.#panelIds[index];
             const open_class_selector = this.#configs.selectors.tabPanelOpen;
-            const tab_panel_open_index = this.#configs.options.initSelectedItem
+            const tab_panel_open_index = parseInt(this.#configs.options.initSelectedItem);
+            const is_selected = tab_panel_open_index === index;
 
             item.setAttribute('id', tab_panel_id);
             item.setAttribute('tabindex', '0');
             item.setAttribute('role', 'tabpanel');
+            item.hidden = !is_selected;
 
             if (tab_buttons[index]) {
                 item.setAttribute('aria-labelledby', tab_buttons[index].id);
             }
 
-            if (tab_panel_open_index === index) {
+            if (is_selected) {
                 item.classList.add(open_class_selector);
             }
         });
     }
 
     /**
-     * Toggle open tab panel css class.
+     * Toggle tab panel visibility.
+     *
+     * Sets `hidden` on the outgoing/incoming panel as the source of truth
+     * for their visibility, and keeps the `tab-panel--open` class in sync
+     * as a styling hook. `hidden` is never delayed for animation purposes.
      *
      * @param {string} old_panel_tab_id
      *   Old panel tab id name.
@@ -474,9 +484,14 @@ class Tabs {
      */
     #toggleTabContent(old_panel_tab_id, new_panel_tab_id) {
         const open_selector = this.#configs.selectors.tabPanelOpen;
+        const old_panel = document.getElementById(old_panel_tab_id);
+        const new_panel = document.getElementById(new_panel_tab_id);
 
-        document.getElementById(old_panel_tab_id).classList.remove(open_selector);
-        document.getElementById(new_panel_tab_id).classList.add(open_selector);
+        old_panel.classList.remove(open_selector);
+        old_panel.hidden = true;
+
+        new_panel.classList.add(open_selector);
+        new_panel.hidden = false;
     }
 
     /**

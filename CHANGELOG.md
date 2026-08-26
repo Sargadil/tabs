@@ -3,6 +3,15 @@
 All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+- Inactive tab panels now get the native `hidden` attribute; the active panel never does.
+  `hidden` is the semantic source of truth for panel visibility (set on initialization, on
+  click, on automatic keyboard activation, and on `selectTab()`), so the component hides
+  and shows panels correctly even without the bundled CSS. The `tab-panel--open` class is
+  kept in sync purely as a styling hook and behaves exactly as before.
+
 ## [1.2.0] — 2026-08-26
 
 ### Changed

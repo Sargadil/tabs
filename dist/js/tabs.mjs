@@ -155,13 +155,13 @@ var e = class {
 		if (this.#e.tabPanel.length === 0) throw Error("[tabs plugin] tab panels should exist.");
 		let e = this.#e.tabsNavBtn;
 		this.#e.tabPanel.forEach((t, n) => {
-			let r = this.#c[n], i = this.#t.selectors.tabPanelOpen, a = this.#t.options.initSelectedItem;
-			t.setAttribute("id", r), t.setAttribute("tabindex", "0"), t.setAttribute("role", "tabpanel"), e[n] && t.setAttribute("aria-labelledby", e[n].id), a === n && t.classList.add(i);
+			let r = this.#c[n], i = this.#t.selectors.tabPanelOpen, a = parseInt(this.#t.options.initSelectedItem) === n;
+			t.setAttribute("id", r), t.setAttribute("tabindex", "0"), t.setAttribute("role", "tabpanel"), t.hidden = !a, e[n] && t.setAttribute("aria-labelledby", e[n].id), a && t.classList.add(i);
 		});
 	}
 	#j(e, t) {
-		let n = this.#t.selectors.tabPanelOpen;
-		document.getElementById(e).classList.remove(n), document.getElementById(t).classList.add(n);
+		let n = this.#t.selectors.tabPanelOpen, r = document.getElementById(e), i = document.getElementById(t);
+		r.classList.remove(n), r.hidden = !0, i.classList.add(n), i.hidden = !1;
 	}
 	#M(e, t) {
 		return Array.from(e).findIndex((e) => e.getAttribute("aria-controls") === t.getAttribute("aria-controls"));

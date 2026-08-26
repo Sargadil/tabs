@@ -172,7 +172,7 @@ document.getElementById('tabs').addEventListener('tabs:change', (event) => {
 | classes.tabPanel            | string  | Single tab panel css class.                                                                                                     |
 | classes.tabPanelTitle       | string  | Single tab title panel css class. This text will be copy to navigation button.                                                  |
 | selectors.tabPanelIdPrefix  | string  | Selector that will be used as ID prefix to add correct aria structure for accessibility. Safe to leave at the default even with multiple `Tabs` instances on the same page — a numeric suffix is added automatically if it would otherwise collide. |
-| selectors.tabPanelOpen      | string  | Selector that will be used as css class to indicate open tab panel.                                                             |
+| selectors.tabPanelOpen      | string  | CSS class added to the active panel as a styling hook. Panel visibility itself is controlled by the native `hidden` attribute, not this class, so the component works correctly even without the bundled CSS. |
 | options.useCustomNav        | boolean | Indicate if should use custom tabs navigation. Important note is that you have to put your css classes to configuration object. |
 | options.customNavTitles     | array   | Array with custom titles.                                                                                                       |
 | options.initSelectedItem    | number  | Indicate which tab should be open on initial state. Count start from 0.                                                         |
