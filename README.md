@@ -218,6 +218,17 @@ unrelated low-level exception. This covers:
 
 There's no silent recovery from an invalid configuration — fix the reported field and re-run.
 
+## Accessibility
+
+`@sargadil/tabs` implements the [WAI-ARIA Tabs Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/):
+`tablist`/`tab`/`tabpanel` roles, `aria-selected`/`aria-controls`/`aria-labelledby`, a roving
+`tabindex`, and native `hidden` panels, with full keyboard support (arrow keys, `Home`/`End`,
+`Enter`/`Space`) in both automatic and manual activation modes.
+
+**[Read the full accessibility contract in `ACCESSIBILITY.md` →](./ACCESSIBILITY.md)** — exact
+ARIA/keyboard tables, what the automated test suite (unit tests, Playwright, axe-core) does and
+does not cover, known limitations, and the manual assistive technology test matrix.
+
 ## More examples
 
 **[See every option in action, live, with the code for each one →](https://sargadil.github.io/tabs/)**
