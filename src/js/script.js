@@ -361,8 +361,9 @@ class Tabs {
 
         const is_vertical = this.#configs.options.orientation === 'vertical';
         const is_manual = this.#configs.options.activationMode === 'manual';
-        const previous_key = is_vertical ? 'ArrowUp' : 'ArrowLeft';
-        const next_key = is_vertical ? 'ArrowDown' : 'ArrowRight';
+        const is_rtl = !is_vertical && this.#isRTL(target);
+        const previous_key = is_vertical ? 'ArrowUp' : (is_rtl ? 'ArrowRight' : 'ArrowLeft');
+        const next_key = is_vertical ? 'ArrowDown' : (is_rtl ? 'ArrowLeft' : 'ArrowRight');
         let flag = false;
 
         switch (event.key) {
@@ -388,6 +389,27 @@ class Tabs {
             event.stopPropagation();
             event.preventDefault();
         }
+    }
+
+    /**
+     * Whether `element`'s reading direction is right-to-left, per the
+     * cascaded CSS `direction` property. `direction` is exactly what the
+     * UA stylesheet derives from `dir="rtl"` on `<html>` or any closer
+     * ancestor (e.g. a wrapper around just this tablist), so reading it
+     * here — instead of adding an `options.rtl` flag — keeps the page's
+     * own markup as the single source of truth for direction.
+     *
+     * Only meaningful for horizontal orientation: vertical arrow keys
+     * (Up/Down) don't have a left/right reading direction to flip.
+     *
+     * @param {HTMLElement} element
+     *   Element to read the computed direction of (typically the
+     *   focused tab).
+     *
+     * @returns {boolean}
+     */
+    #isRTL(element) {
+        return element.ownerDocument.defaultView.getComputedStyle(element).direction === 'rtl';
     }
 
     /**

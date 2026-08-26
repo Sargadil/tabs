@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- RTL support for horizontal tabs: `ArrowLeft`/`ArrowRight` now reverse (next/previous instead of
+  previous/next) when the focused tab's direction, per the cascaded CSS `direction` property, is
+  right-to-left. Direction is read from the DOM — via `dir="rtl"` on `<html>` or any closer
+  ancestor — with no `options.rtl` flag to set. Vertical orientation (`ArrowUp`/`ArrowDown`),
+  `Home`/`End`, and wrap-around are all unaffected by direction. See
+  [RTL support](README.md#rtl-support).
 - Disabled tabs, following standard HTML/ARIA semantics with no library-specific attribute: the
   default nav renders a disabled panel's tab as a native `<button disabled>` (read from
   `aria-disabled="true"` on the panel's `.tab-panel__title`, since no tab element exists yet at
@@ -24,7 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and `tabs:change` does not fire. See [`tabs:beforechange`](README.md#tabsbeforechange-event).
 - A real-browser test suite (`npm run test:e2e`, [`e2e/`](e2e)) running on `@playwright/test`
   (dev dependency only) across Chromium, Firefox, and WebKit. Covers initialization, keyboard
-  navigation in both orientations (including wrap-around), mouse click, manual activation mode,
+  navigation in both orientations (including wrap-around and RTL), mouse click, manual activation mode,
   `options.swipeable`, `options.removeTabPanelTitle`, multiple instances on one page, and the
   public API (`selectTab()`/`getSelectedIndex()`/`destroy()`/`tabs:change`). Runs in CI on every
   push/PR.

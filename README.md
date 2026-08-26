@@ -195,7 +195,7 @@ document.getElementById('tabs').addEventListener('tabs:change', (event) => {
 | options.initSelectedItem    | number  | Indicate which tab should be open on initial state. Count start from 0.                                                         |
 | options.removeTabPanelTitle | boolean | Indicate if we should remove title from tab panel that will be moved to navigation tab buttons.                                 |
 | options.ariaLabel           | string  | Accessible name (`aria-label`) for the tablist, e.g. `"Product details"`. Recommended when a page has more than one tab group.  |
-| options.orientation         | string  | `'horizontal'` (default, `ArrowLeft`/`ArrowRight`) or `'vertical'` (`ArrowUp`/`ArrowDown`, sets `aria-orientation="vertical"`).  |
+| options.orientation         | string  | `'horizontal'` (default, `ArrowLeft`/`ArrowRight`, direction-aware — see [RTL support](#rtl-support)) or `'vertical'` (`ArrowUp`/`ArrowDown`, sets `aria-orientation="vertical"`).  |
 | options.activationMode      | string  | `'automatic'` (default) selects a tab as soon as it receives focus. `'manual'` moves focus with the arrow keys/Home/End without selecting; the focused tab is only activated on click, Enter, or Space. |
 | options.swipeable           | boolean | `false` by default. When `true`, swiping left/right on a panel (touchscreens) moves to the next/previous tab. |
 
@@ -236,6 +236,34 @@ unrelated low-level exception. This covers:
 - `options.initSelectedItem` must not point at a disabled tab.
 
 There's no silent recovery from an invalid configuration — fix the reported field and re-run.
+
+## RTL support
+
+Horizontal tabs (`options.orientation: 'horizontal'`, the default) automatically reverse
+`ArrowLeft`/`ArrowRight` in a right-to-left context, so the key that visually points toward the
+next tab always selects it, regardless of language:
+
+| | `ArrowLeft` | `ArrowRight` |
+|---|---|---|
+| LTR (default) | Previous tab | Next tab |
+| RTL | Next tab | Previous tab |
+
+Direction is detected from the DOM — there is no `options.rtl` flag to set. Either of the
+following is enough:
+
+```html
+<html dir="rtl">
+```
+
+```html
+<div dir="rtl">
+    <div class="tabs" id="tabs">…</div>
+</div>
+```
+
+`Home`/`End` (first/last tab) and wrap-around behavior are unaffected by direction. Vertical
+orientation (`ArrowUp`/`ArrowDown`) is also unaffected — a top-to-bottom list doesn't have a
+left/right reading direction to flip.
 
 ## Disabled tabs
 
@@ -284,8 +312,8 @@ automatically picked up — re-create the instance, or wait for a future `refres
 `@sargadil/tabs` implements the [WAI-ARIA Tabs Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/):
 `tablist`/`tab`/`tabpanel` roles, `aria-selected`/`aria-controls`/`aria-labelledby`, a roving
 `tabindex`, and native `hidden` panels, with full keyboard support (arrow keys, `Home`/`End`,
-`Enter`/`Space`) in both automatic and manual activation modes, including correctly skipping
-[disabled tabs](#disabled-tabs).
+`Enter`/`Space`) in both automatic and manual activation modes, including [RTL](#rtl-support) and
+correctly skipping [disabled tabs](#disabled-tabs).
 
 **[Read the full accessibility contract in `ACCESSIBILITY.md` →](./ACCESSIBILITY.md)** — exact
 ARIA/keyboard tables, what the automated test suite (unit tests, Playwright, axe-core) does and
