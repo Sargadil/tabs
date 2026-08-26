@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- Centralized configuration validation: the constructor now checks `contextID`,
+  `options.orientation`, `options.activationMode`, `options.initSelectedItem`, and the required DOM
+  structure (panels, per-panel titles, navigation, and custom nav/panel count matching) up front,
+  throwing a descriptive `[@sargadil/tabs] ...` error naming the offending field instead of an
+  unrelated low-level exception. See [Configuration validation](README.md#configuration-validation).
+
+### Changed
+- All errors thrown by the library are now consistently prefixed with `[@sargadil/tabs]` (previously
+  `[tabs plugin]` in some cases).
+
 ### Fixed
 - Generated nav buttons now have `type="button"`, and custom-nav `<button>` elements
   without an explicit `type` are given `type="button"` too, so tabs placed inside a
