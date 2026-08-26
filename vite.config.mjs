@@ -7,9 +7,9 @@ export default defineConfig({
       name: 'Tabs',
       formats: ['es', 'cjs', 'umd'],
       fileName: (format) => {
-        if (format === 'es') return 'tabs-a11y.mjs';
-        if (format === 'cjs') return 'tabs-a11y.cjs';
-        return `tabs-a11y.${format}.js`;
+        if (format === 'es') return 'tabs.mjs';
+        if (format === 'cjs') return 'tabs.cjs';
+        return `tabs.${format}.js`;
       },
     },
     outDir: 'dist/js',
