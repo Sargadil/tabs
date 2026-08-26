@@ -52,3 +52,23 @@ test.describe('initialization', () => {
         await expect(panels.nth(2)).toHaveAttribute('hidden', '');
     });
 });
+
+test.describe('options.removeTabPanelTitle', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto('/e2e/fixtures/remove-tab-panel-title.html');
+    });
+
+    test('nav buttons get the title text read from the panel, then the title element is removed', async ({ page }) => {
+        const tabs = page.getByRole('tab');
+
+        // Real-browser-only check: the nav label comes from `Element.innerText`,
+        // which jsdom does not implement (see test/tabs.test.js for the jsdom-safe
+        // `data-nav-title` coverage of this same option).
+        await expect(tabs.nth(0)).toHaveText('One');
+        await expect(tabs.nth(1)).toHaveText('Two');
+        await expect(tabs.nth(2)).toHaveText('Three');
+
+        await expect(page.locator('.tab-panel__title')).toHaveCount(0);
+        await expect(page.locator('.tab-panel__content')).toHaveCount(3);
+    });
+});

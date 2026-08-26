@@ -100,11 +100,13 @@ real assistive technology** — see [Manual assistive technology test matrix](#m
   the correct visible panel with no stylesheet loaded at all.
 - **Browser tests** (`npm run test:e2e`, [`e2e/`](./e2e)) — run with Playwright across Chromium,
   Firefox, and WebKit. Cover initialization, keyboard navigation in both orientations, mouse
-  click, manual activation, multiple instances on one page, and the public API
+  click, manual activation, multiple instances on one page, `options.swipeable`
+  ([`e2e/swipe.spec.js`](./e2e/swipe.spec.js)), and the public API
   (`selectTab()`/`getSelectedIndex()`/`destroy()`/`tabs:change`).
 - **axe-core scans** (part of `npm run test:e2e`, [`e2e/accessibility.spec.js`](./e2e/accessibility.spec.js))
-  — run via `@axe-core/playwright` against the default, manual, vertical, custom-nav, and
-  multiple-instance fixtures, both on initial render and after interaction (click, keyboard).
+  — run via `@axe-core/playwright` against the default, manual, vertical, custom-nav, swipeable,
+  and multiple-instance fixtures, both on initial render and after interaction (click, keyboard,
+  swipe).
 
 axe-core only detects a subset of accessibility issues — [roughly a third of WCAG success
 criteria are automatically testable at all](https://github.com/dequelabs/axe-core#user-content-what-does-axe-core-detect).

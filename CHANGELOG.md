@@ -6,12 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- A real-browser test suite (`npm run test:e2e`, [`e2e/`](e2e)) running on `@playwright/test`
+  (dev dependency only) across Chromium, Firefox, and WebKit. Covers initialization, keyboard
+  navigation in both orientations (including wrap-around), mouse click, manual activation mode,
+  `options.swipeable`, multiple instances on one page, and the public API
+  (`selectTab()`/`getSelectedIndex()`/`destroy()`/`tabs:change`). Runs in CI on every push/PR.
 - Automated accessibility scans (`@axe-core/playwright`, part of `npm run test:e2e`) covering
-  default tabs, manual activation, vertical tabs, custom navigation, and multiple tab groups on
-  one page — scanned after initialization, after a click, and after keyboard interaction,
-  including a dedicated dynamic-state check after repeated tab switching. Zero axe violations is
-  not the same as full WCAG compliance; automated scans catch a subset of issues and don't
-  replace manual screen reader testing.
+  default tabs, manual activation, vertical tabs, custom navigation, swipeable, and multiple tab
+  groups on one page — scanned after initialization, after a click, after keyboard interaction,
+  and after a swipe, including a dedicated dynamic-state check after repeated tab switching. Zero
+  axe violations is not the same as full WCAG compliance; automated scans catch a subset of
+  issues and don't replace manual screen reader testing.
+- [`ACCESSIBILITY.md`](ACCESSIBILITY.md), documenting the actual ARIA structure, the keyboard
+  contract for every orientation/activation-mode combination, what each automated test layer
+  does and does not verify, known limitations, and a manual assistive-technology test matrix
+  that only a human tester may mark `PASS`/`FAIL`.
+- `npm run test:coverage`, gating unit tests on 100% branch and function coverage (Node's
+  built-in `--experimental-test-coverage`, no added dependency). Runs in CI in place of
+  `npm test`.
 - A package smoke test (`npm run test:package`) that runs `npm pack`, installs the
   resulting tarball into a throwaway fixture project, and verifies the real publish
   artifact: `require()` (CJS), `import` (ESM), the `./style.css` export, the shipped
