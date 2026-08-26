@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Tabs e2e — disabled tabs (manual activation)</title>
+</head>
+<body>
+<main>
+<h1>Tabs e2e — disabled tabs, manual activation</h1>
+<div class="tabs" id="tabs">
+    <div class="tabs__nav"></div>
+    <div class="tabs__panels">
+        <div class="tab-panel"><h2 class="tab-panel__title">One</h2><div class="tab-panel__content">Panel one content</div></div>
+        <div class="tab-panel"><h2 class="tab-panel__title" aria-disabled="true">Two</h2><div class="tab-panel__content">Panel two content</div></div>
+        <div class="tab-panel"><h2 class="tab-panel__title">Three</h2><div class="tab-panel__content">Panel three content</div></div>
+    </div>
+</div>
+<script type="module">
+    import Tabs from '/dist/js/tabs.mjs';
+    window.tabsInstance = new Tabs({ options: { activationMode: 'manual' } });
+</script>
+</main>
+</body>
+</html>

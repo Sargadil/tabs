@@ -158,6 +158,42 @@ test.describe('axe: custom navigation markup', () => {
     });
 });
 
+test.describe('axe: disabled tabs (default nav)', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto('/e2e/fixtures/disabled.html');
+    });
+
+    test('has no violations on initial render', async ({ page }) => {
+        await expectNoViolations(page);
+    });
+
+    test('has no violations after arrow-key navigation skips disabled tabs', async ({ page }) => {
+        await page.getByRole('tab').nth(1).focus();
+        await page.keyboard.press('ArrowRight');
+        await page.keyboard.press('End');
+        await page.keyboard.press('Home');
+
+        await expectNoViolations(page);
+    });
+});
+
+test.describe('axe: disabled tabs (custom navigation, native + aria-disabled)', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto('/e2e/fixtures/disabled-custom-nav.html');
+    });
+
+    test('has no violations on initial render', async ({ page }) => {
+        await expectNoViolations(page);
+    });
+
+    test('has no violations after keyboard navigation skips both disabled tabs', async ({ page }) => {
+        await page.getByRole('tab').nth(0).focus();
+        await page.keyboard.press('ArrowRight');
+
+        await expectNoViolations(page);
+    });
+});
+
 test.describe('axe: multiple tab groups on one page', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/e2e/fixtures/multiple-instances.html');
