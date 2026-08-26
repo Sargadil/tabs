@@ -46,16 +46,16 @@ collide into invalid duplicate-`id` HTML, which would otherwise break `aria-cont
 Keys are handled on the currently focused tab. `event.preventDefault()` is called for every key
 below so the browser's default scroll behavior doesn't fight the widget.
 
-| Key | Horizontal | Vertical | Automatic activation | Manual activation |
-| --- | --- | --- | --- | --- |
-| `Tab` | Moves focus into/out of the tablist | Same | Enters the tablist at the currently selected tab (roving tabindex); leaves the tablist to the active panel. | Same |
-| `ArrowLeft` | Previous tab | *(ignored)* | Selects and activates the previous tab, wrapping from the first to the last. | Moves focus to the previous tab only; selection is unchanged. |
-| `ArrowRight` | Next tab | *(ignored)* | Selects and activates the next tab, wrapping from the last to the first. | Moves focus to the next tab only; selection is unchanged. |
-| `ArrowUp` | *(ignored)* | Previous tab | Selects and activates the previous tab, wrapping from the first to the last. | Moves focus to the previous tab only; selection is unchanged. |
-| `ArrowDown` | *(ignored)* | Next tab | Selects and activates the next tab, wrapping from the last to the first. | Moves focus to the next tab only; selection is unchanged. |
-| `Home` | First tab | First tab | Selects and activates the first tab. | Moves focus to the first tab only; selection is unchanged. |
-| `End` | Last tab | Last tab | Selects and activates the last tab. | Moves focus to the last tab only; selection is unchanged. |
-| `Enter` / `Space` | Activates the focused tab | Same | *(no-op — the focused tab is already selected)* | Selects and activates the focused tab. |
+| Key | Horizontal (LTR) | Horizontal (RTL) | Vertical | Automatic activation | Manual activation |
+| --- | --- | --- | --- | --- | --- |
+| `Tab` | Moves focus into/out of the tablist | Same | Same | Enters the tablist at the currently selected tab (roving tabindex); leaves the tablist to the active panel. | Same |
+| `ArrowLeft` | Previous tab | Next tab | *(ignored)* | Selects and activates the previous/next tab (per direction), wrapping around. | Moves focus to the previous/next tab only (per direction); selection is unchanged. |
+| `ArrowRight` | Next tab | Previous tab | *(ignored)* | Selects and activates the next/previous tab (per direction), wrapping around. | Moves focus to the next/previous tab only (per direction); selection is unchanged. |
+| `ArrowUp` | *(ignored)* | *(ignored)* | Previous tab | Selects and activates the previous tab, wrapping from the first to the last. | Moves focus to the previous tab only; selection is unchanged. |
+| `ArrowDown` | *(ignored)* | *(ignored)* | Next tab | Selects and activates the next tab, wrapping from the last to the first. | Moves focus to the next tab only; selection is unchanged. |
+| `Home` | First tab | First tab | First tab | Selects and activates the first tab. | Moves focus to the first tab only; selection is unchanged. |
+| `End` | Last tab | Last tab | Last tab | Selects and activates the last tab. | Moves focus to the last tab only; selection is unchanged. |
+| `Enter` / `Space` | Activates the focused tab | Same | Same | *(no-op — the focused tab is already selected)* | Selects and activates the focused tab. |
 
 Notes:
 
@@ -64,9 +64,10 @@ Notes:
   together, the matching panel's `hidden` attribute is updated, focus moves to the newly selected
   tab, and a `tabs:change` event fires. If the transition is canceled, none of that happens and
   focus/selection/`hidden` state remain exactly as they were.
-- Arrow-key wrap-around applies in both activation modes: from the last tab, next/`ArrowDown`/
-  `ArrowRight` moves to the first; from the first tab, previous/`ArrowUp`/`ArrowLeft` moves to
-  the last.
+- Arrow-key wrap-around applies in both activation modes and both directions: from the last tab,
+  next moves to the first; from the first tab, previous moves to the last — "next"/"previous"
+  being `ArrowDown`/`ArrowUp` in vertical mode, and `ArrowRight`/`ArrowLeft` in horizontal LTR
+  (reversed in horizontal RTL, see [RTL direction detection](#rtl-direction-detection)).
 - `Enter`/`Space` activation is native `<button>` behavior — the default generated nav and every
   bundled example always render `<button type="button" role="tab">`. If `useCustomNav` is used
   with a non-button element (e.g. a `<div role="tab">`), the author is responsible for making
@@ -89,6 +90,19 @@ Controlled by `options.activationMode`:
 In both modes, `aria-selected`, the roving `tabindex`, and panel `hidden` state are always kept
 consistent with each other — there is no intermediate state where, for example, `aria-selected`
 has changed but the panel hasn't (or vice versa).
+
+## RTL direction detection
+
+Horizontal orientation (the default) reverses `ArrowLeft`/`ArrowRight` in a right-to-left
+context, so the key that visually points toward the next tab always selects it. There is no
+`options.rtl` flag — direction is read from the DOM itself, via the focused tab's cascaded CSS
+`direction` property (`window.getComputedStyle(tab).direction`). This is exactly what the
+browser's own UA stylesheet derives from `dir="rtl"` on `<html>` or on any closer ancestor (e.g.
+a wrapper placed around just this tablist), so it works whether the whole document is RTL or
+only this particular tab group is.
+
+Vertical orientation is unaffected: `ArrowUp`/`ArrowDown` have no left/right reading direction to
+flip. `Home`/`End` and wrap-around are also unaffected — see the table above.
 
 ## Disabled tabs
 
@@ -130,12 +144,17 @@ real assistive technology** — see [Manual assistive technology test matrix](#m
   focus/ARIA/`hidden`/selection untouched and suppresses `tabs:change`), disabled tabs (native
   `disabled` and `aria-disabled`, in default and custom nav, in both activation modes — click,
   arrow-key/Home/End skipping with wrap-around, `selectTab()`, and the two constructor validation
-  errors), and that the component still resolves to the correct visible panel with no stylesheet
+  errors), RTL direction detection (`<html dir="rtl">`, a local `dir="rtl"` wrapper, automatic and
+  manual activation, wrap-around, `Home`/`End` unaffected, and vertical orientation unaffected),
+  and that the component still resolves to the correct visible panel with no stylesheet
   loaded at all. CI and `prepublishOnly` run `npm run test:coverage` instead, which runs the same
   suite gated on 100% branch/function coverage.
 - **Browser tests** (`npm run test:e2e`, [`e2e/`](./e2e)) — run with Playwright across Chromium,
-  Firefox, and WebKit. Cover initialization, keyboard navigation in both orientations, mouse
-  click, manual activation, multiple instances on one page, `options.swipeable`
+  Firefox, and WebKit. Cover initialization, keyboard navigation in both orientations, RTL
+  keyboard navigation ([`e2e/keyboard-rtl.spec.js`](./e2e/keyboard-rtl.spec.js) — automatic and
+  manual activation, vertical orientation unaffected, and direction detected from a local
+  `dir="rtl"` wrapper as well as `<html dir="rtl">`), mouse click, manual activation, multiple
+  instances on one page, `options.swipeable`
   ([`e2e/swipe.spec.js`](./e2e/swipe.spec.js)), `options.removeTabPanelTitle`
   ([`e2e/initialization.spec.js`](./e2e/initialization.spec.js)), canceling `tabs:beforechange`
   ([`e2e/before-change.spec.js`](./e2e/before-change.spec.js)) — including that a real browser's
@@ -167,9 +186,6 @@ only be established by the manual testing below.
 - **No `aria-label` by default.** `options.ariaLabel` is opt-in. A page with a single, obviously-
   scoped tab group is usually fine without one, but pages with more than one tablist, or a
   tablist without adjacent visible context (e.g. a heading right before it), should set one.
-- **RTL is not yet handled.** `ArrowLeft`/`ArrowRight` currently always map to previous/next
-  regardless of document or element direction; correct RTL behavior is tracked separately
-  (ROADMAP-8) and not implemented yet.
 - **Swipe gestures (`options.swipeable`) have no ARIA surface of their own.** They're an
   additional touch-only input path on top of the fully keyboard-accessible tablist, not a
   replacement for it, so they don't change anything in the tables above.
