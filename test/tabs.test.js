@@ -870,6 +870,116 @@ describe('tabs:beforechange event', () => {
     });
 });
 
+describe('RTL keyboard navigation', () => {
+    const LOCAL_RTL_HTML = `
+    <div dir="rtl">
+        ${DEFAULT_HTML}
+    </div>
+    `;
+
+    function setupDocumentDir(dir, html = DEFAULT_HTML) {
+        const { Tabs, dom, document } = setup(html);
+        document.documentElement.setAttribute('dir', dir);
+        return { Tabs, dom, document };
+    }
+
+    test('LTR (default): ArrowRight selects next, ArrowLeft selects previous, automatic mode', () => {
+        const { Tabs, dom, document } = setup();
+        const instance = new Tabs();
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+
+        keydown(buttons[0], dom, 'ArrowRight');
+        assert.equal(instance.getSelectedIndex(), 1, 'ArrowRight moves to next tab in LTR');
+
+        keydown(buttons[1], dom, 'ArrowLeft');
+        assert.equal(instance.getSelectedIndex(), 0, 'ArrowLeft moves to previous tab in LTR');
+    });
+
+    test('LTR (default): ArrowRight moves focus without selecting, manual mode', () => {
+        const { Tabs, dom, document } = setup();
+        const instance = new Tabs({ options: { activationMode: 'manual' } });
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+
+        keydown(buttons[0], dom, 'ArrowRight');
+        assert.equal(document.activeElement, buttons[1], 'ArrowRight moves focus to next tab in LTR');
+        assert.equal(instance.getSelectedIndex(), 0, 'focus move alone must not select');
+    });
+
+    test('<html dir="rtl">: ArrowLeft selects next, ArrowRight selects previous, automatic mode', () => {
+        const { Tabs, dom, document } = setupDocumentDir('rtl');
+        const instance = new Tabs();
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+
+        keydown(buttons[0], dom, 'ArrowLeft');
+        assert.equal(instance.getSelectedIndex(), 1, 'ArrowLeft moves to next tab in RTL');
+
+        keydown(buttons[1], dom, 'ArrowRight');
+        assert.equal(instance.getSelectedIndex(), 0, 'ArrowRight moves to previous tab in RTL');
+    });
+
+    test('<html dir="rtl">: ArrowLeft moves focus without selecting, manual mode', () => {
+        const { Tabs, dom, document } = setupDocumentDir('rtl');
+        const instance = new Tabs({ options: { activationMode: 'manual' } });
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+
+        keydown(buttons[0], dom, 'ArrowLeft');
+        assert.equal(document.activeElement, buttons[1], 'ArrowLeft moves focus to next tab in RTL');
+        assert.equal(instance.getSelectedIndex(), 0, 'focus move alone must not select');
+
+        keydown(buttons[1], dom, 'ArrowRight');
+        assert.equal(document.activeElement, buttons[0], 'ArrowRight moves focus back to previous tab in RTL');
+        assert.equal(instance.getSelectedIndex(), 0);
+    });
+
+    test('a local dir="rtl" wrapper (not <html>) also reverses horizontal arrows', () => {
+        const { Tabs, dom, document } = setup(LOCAL_RTL_HTML);
+        const instance = new Tabs();
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+
+        keydown(buttons[0], dom, 'ArrowLeft');
+        assert.equal(instance.getSelectedIndex(), 1, 'ArrowLeft moves to next tab under a local dir="rtl" ancestor');
+    });
+
+    test('RTL wrap-around: ArrowLeft wraps from the last tab to the first, ArrowRight wraps from the first to the last', () => {
+        const { Tabs, dom, document } = setupDocumentDir('rtl');
+        const instance = new Tabs();
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+
+        keydown(buttons[0], dom, 'ArrowRight');
+        assert.equal(instance.getSelectedIndex(), 2, 'ArrowRight from the first tab wraps to the last in RTL');
+
+        keydown(buttons[2], dom, 'ArrowLeft');
+        assert.equal(instance.getSelectedIndex(), 0, 'ArrowLeft from the last tab wraps to the first in RTL');
+    });
+
+    test('RTL: Home selects the first tab, End selects the last tab (unaffected by direction)', () => {
+        const { Tabs, dom, document } = setupDocumentDir('rtl');
+        const instance = new Tabs();
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+
+        keydown(buttons[0], dom, 'End');
+        assert.equal(instance.getSelectedIndex(), 2);
+
+        keydown(buttons[2], dom, 'Home');
+        assert.equal(instance.getSelectedIndex(), 0);
+    });
+
+    test('RTL + vertical orientation: ArrowUp/ArrowDown behavior is unchanged', () => {
+        const { Tabs, dom, document } = setupDocumentDir('rtl');
+        const instance = new Tabs({ options: { orientation: 'vertical' } });
+        const buttons = document.querySelectorAll('#tabs [role="tab"]');
+
+        keydown(buttons[0], dom, 'ArrowDown');
+        assert.equal(instance.getSelectedIndex(), 1, 'ArrowDown still selects the next tab in RTL vertical mode');
+
+        keydown(buttons[1], dom, 'ArrowUp');
+        assert.equal(instance.getSelectedIndex(), 0, 'ArrowUp still selects the previous tab in RTL vertical mode');
+
+        keydown(buttons[0], dom, 'ArrowLeft');
+        assert.equal(instance.getSelectedIndex(), 0, 'ArrowLeft/ArrowRight remain ignored in vertical mode, even in RTL');
+    });
+});
+
 describe('multiple instances on one page', () => {
     test('default tabPanelIdPrefix does not collide across instances', () => {
         const html = `
