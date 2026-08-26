@@ -22,8 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   does and does not verify, known limitations, and a manual assistive-technology test matrix
   that only a human tester may mark `PASS`/`FAIL`.
 - `npm run test:coverage`, gating unit tests on 100% branch and function coverage (Node's
-  built-in `--experimental-test-coverage`, no added dependency). Runs in CI in place of
-  `npm test`.
+  built-in `--experimental-test-coverage`, no added dependency). Runs in CI and as part of
+  `prepublishOnly`, in place of `npm test`.
 - A package smoke test (`npm run test:package`) that runs `npm pack`, installs the
   resulting tarball into a throwaway fixture project, and verifies the real publish
   artifact: `require()` (CJS), `import` (ESM), the `./style.css` export, the shipped
