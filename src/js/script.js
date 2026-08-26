@@ -442,6 +442,11 @@ class Tabs {
     /**
      * Toggle tab panel.
      *
+     * Dispatches the cancelable "tabs:beforechange" event first; if a
+     * listener calls preventDefault(), the transition is aborted before
+     * any ARIA/tabindex/hidden/focus state is touched, and "tabs:change"
+     * never fires.
+     *
      * @param {HTMLElement} old_tab
      *   Old tab element.
      *
@@ -453,8 +458,18 @@ class Tabs {
             return;
         }
 
-        const old_panel_tab_id = old_tab.getAttribute(['aria-controls']);
-        const new_panel_tab_id = new_tab.getAttribute(['aria-controls']);
+        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const from_index = Array.prototype.indexOf.call(tab_buttons, old_tab);
+        const to_index = Array.prototype.indexOf.call(tab_buttons, new_tab);
+        const old_panel = document.getElementById(old_tab.getAttribute('aria-controls'));
+        const new_panel = document.getElementById(new_tab.getAttribute('aria-controls'));
+
+        const allowed = this.#dispatchBeforeChangeEvent(from_index, to_index, old_tab, new_tab, old_panel, new_panel);
+
+        if (!allowed) {
+            this.#restoreFocusAfterCancel(tab_buttons, old_tab);
+            return;
+        }
 
         old_tab.setAttribute('aria-selected', 'false');
         old_tab.tabIndex = -1;
@@ -462,24 +477,87 @@ class Tabs {
         new_tab.tabIndex = 0;
         new_tab.focus();
 
-        this.#toggleTabContent(old_panel_tab_id, new_panel_tab_id);
-        this.#dispatchChangeEvent(new_tab, new_panel_tab_id);
+        this.#toggleTabContent(old_panel, new_panel);
+        this.#dispatchChangeEvent(to_index, new_tab, new_panel);
+    }
+
+    /**
+     * Dispatch the cancelable, bubbling "tabs:beforechange" CustomEvent on
+     * the context element, giving listeners a chance to veto the pending
+     * transition before any state is mutated.
+     *
+     * @param {number} from_index
+     *   Index of the currently selected tab.
+     *
+     * @param {number} to_index
+     *   Index of the tab about to be selected.
+     *
+     * @param {HTMLElement} old_tab
+     *   Currently selected tab button.
+     *
+     * @param {HTMLElement} new_tab
+     *   Tab button about to be selected.
+     *
+     * @param {HTMLElement} old_panel
+     *   Currently visible panel.
+     *
+     * @param {HTMLElement} new_panel
+     *   Panel about to become visible.
+     *
+     * @returns {boolean}
+     *   Return false if a listener called preventDefault(), true otherwise.
+     */
+    #dispatchBeforeChangeEvent(from_index, to_index, old_tab, new_tab, old_panel, new_panel) {
+        return this.#context.dispatchEvent(new CustomEvent('tabs:beforechange', {
+            bubbles: true,
+            cancelable: true,
+            detail: {
+                fromIndex: from_index,
+                toIndex: to_index,
+                fromTab: old_tab,
+                toTab: new_tab,
+                fromPanel: old_panel,
+                toPanel: new_panel,
+            },
+        }));
+    }
+
+    /**
+     * After a "tabs:beforechange" listener cancels a transition, restore
+     * focus to the still-selected tab if browser default behavior (e.g.
+     * a mousedown focusing the clicked button before the click handler
+     * runs) already moved DOM focus to a different tab in this tablist.
+     * Left untouched when focus lies outside the tablist entirely, so a
+     * canceled programmatic selectTab() call never steals focus from
+     * unrelated page content.
+     *
+     * @param {NodeList} tab_buttons
+     *   Nav buttons.
+     *
+     * @param {HTMLElement} old_tab
+     *   Still-selected tab to restore focus to.
+     */
+    #restoreFocusAfterCancel(tab_buttons, old_tab) {
+        const active = document.activeElement;
+
+        if (active !== old_tab && Array.prototype.indexOf.call(tab_buttons, active) !== -1) {
+            old_tab.focus();
+        }
     }
 
     /**
      * Dispatch a "tabs:change" CustomEvent on the context element.
      *
+     * @param {number} index
+     *   Index of the newly selected tab.
+     *
      * @param {HTMLElement} tab
      *   Newly selected tab button.
      *
-     * @param {string} panel_id
-     *   ID of the newly selected tab panel.
+     * @param {HTMLElement} panel
+     *   Newly selected tab panel.
      */
-    #dispatchChangeEvent(tab, panel_id) {
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
-        const index = Array.prototype.indexOf.call(tab_buttons, tab);
-        const panel = document.getElementById(panel_id);
-
+    #dispatchChangeEvent(index, tab, panel) {
         this.#context.dispatchEvent(new CustomEvent('tabs:change', {
             bubbles: true,
             detail: { index, tab, panel },
@@ -556,16 +634,14 @@ class Tabs {
      * for their visibility, and keeps the `tab-panel--open` class in sync
      * as a styling hook. `hidden` is never delayed for animation purposes.
      *
-     * @param {string} old_panel_tab_id
-     *   Old panel tab id name.
+     * @param {HTMLElement} old_panel
+     *   Outgoing panel element.
      *
-     * @param {string} new_panel_tab_id
-     *   New panel tab id name.
+     * @param {HTMLElement} new_panel
+     *   Incoming panel element.
      */
-    #toggleTabContent(old_panel_tab_id, new_panel_tab_id) {
+    #toggleTabContent(old_panel, new_panel) {
         const open_selector = this.#configs.selectors.tabPanelOpen;
-        const old_panel = document.getElementById(old_panel_tab_id);
-        const new_panel = document.getElementById(new_panel_tab_id);
 
         old_panel.classList.remove(open_selector);
         old_panel.hidden = true;

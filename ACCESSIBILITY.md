@@ -59,9 +59,11 @@ below so the browser's default scroll behavior doesn't fight the widget.
 
 Notes:
 
-- "Selects and activates" means: `aria-selected` and the roving `tabindex` move together, the
-  matching panel's `hidden` attribute is updated, focus moves to the newly selected tab, and a
-  `tabs:change` event fires.
+- "Selects and activates" means: a cancelable `tabs:beforechange` event fires first; unless a
+  listener calls `preventDefault()` on it, `aria-selected` and the roving `tabindex` move
+  together, the matching panel's `hidden` attribute is updated, focus moves to the newly selected
+  tab, and a `tabs:change` event fires. If the transition is canceled, none of that happens and
+  focus/selection/`hidden` state remain exactly as they were.
 - Arrow-key wrap-around applies in both activation modes: from the last tab, next/`ArrowDown`/
   `ArrowRight` moves to the first; from the first tab, previous/`ArrowUp`/`ArrowLeft` moves to
   the last.
@@ -96,16 +98,20 @@ real assistive technology** — see [Manual assistive technology test matrix](#m
 - **Unit tests** (`npm test`, [`test/tabs.test.js`](./test/tabs.test.js)) — run against jsdom.
   Cover the ARIA attributes set on init, `hidden` as the source of truth for every interaction
   path (click, automatic keyboard activation, manual activation, `selectTab()`), roving
-  `tabindex`, orientation, configuration validation, and that the component still resolves to
-  the correct visible panel with no stylesheet loaded at all. CI and `prepublishOnly` run
-  `npm run test:coverage` instead, which runs the same suite gated on 100% branch/function
-  coverage.
+  `tabindex`, orientation, configuration validation, the cancelable `tabs:beforechange` event
+  (detail contract, event order, and that canceling it via click/keyboard/`selectTab()` leaves
+  focus/ARIA/`hidden`/selection untouched and suppresses `tabs:change`), and that the component
+  still resolves to the correct visible panel with no stylesheet loaded at all. CI and
+  `prepublishOnly` run `npm run test:coverage` instead, which runs the same suite gated on 100%
+  branch/function coverage.
 - **Browser tests** (`npm run test:e2e`, [`e2e/`](./e2e)) — run with Playwright across Chromium,
   Firefox, and WebKit. Cover initialization, keyboard navigation in both orientations, mouse
   click, manual activation, multiple instances on one page, `options.swipeable`
   ([`e2e/swipe.spec.js`](./e2e/swipe.spec.js)), `options.removeTabPanelTitle`
-  ([`e2e/initialization.spec.js`](./e2e/initialization.spec.js)), and the public API
-  (`selectTab()`/`getSelectedIndex()`/`destroy()`/`tabs:change`).
+  ([`e2e/initialization.spec.js`](./e2e/initialization.spec.js)), canceling `tabs:beforechange`
+  ([`e2e/before-change.spec.js`](./e2e/before-change.spec.js)) — including that a real browser's
+  mousedown-focuses-the-target behavior is correctly unwound on a canceled click — and the public
+  API (`selectTab()`/`getSelectedIndex()`/`destroy()`/`tabs:beforechange`/`tabs:change`).
 - **axe-core scans** (part of `npm run test:e2e`, [`e2e/accessibility.spec.js`](./e2e/accessibility.spec.js))
   — run via `@axe-core/playwright` against the default, manual, vertical, custom-nav, swipeable,
   and multiple-instance fixtures, both on initial render and after interaction (click, keyboard,

@@ -35,7 +35,7 @@ var e = class {
 	#l = 0;
 	#u = 0;
 	constructor(e) {
-		this.#t = this.#G(this.#t, e), this.#f(), this.#U(), this.#p(), this.#V(), this.#m(), this.#t.options.removeTabPanelTitle && this.#L();
+		this.#t = this.#q(this.#t, e), this.#f(), this.#G(), this.#p(), this.#U(), this.#m(), this.#t.options.removeTabPanelTitle && this.#z();
 	}
 	#d(e) {
 		throw Error(`[@sargadil/tabs] ${e}`);
@@ -73,10 +73,10 @@ var e = class {
 		this.#k(r, n);
 	}
 	#m() {
-		this.#I();
+		this.#R();
 		let e = this.#e.tabsNavBtn;
 		for (let t = 0; t < e.length; t++) document.getElementById(e[t].getAttribute("aria-controls")), e[t].tabIndex = this.#t.options.initSelectedItem === t ? 0 : -1, e[t].addEventListener("keydown", this.#r), e[t].addEventListener("click", this.#i);
-		this.#N(), this.#t.options.swipeable && this.#h();
+		this.#F(), this.#t.options.swipeable && this.#h();
 	}
 	#h() {
 		this.#e.tabPanel.forEach((e) => {
@@ -113,11 +113,11 @@ var e = class {
 		o && (e.stopPropagation(), e.preventDefault());
 	}
 	#b(e) {
-		let t = this.#e.tabsNavBtn, n = this.#F(t, e), r = this.#j(n, t);
+		let t = this.#e.tabsNavBtn, n = this.#L(t, e), r = this.#N(n, t);
 		this.#k(e, r);
 	}
 	#x(e) {
-		let t = this.#e.tabsNavBtn, n = this.#F(t, e), r = this.#M(n, t);
+		let t = this.#e.tabsNavBtn, n = this.#L(t, e), r = this.#P(n, t);
 		this.#k(e, r);
 	}
 	#S(e) {
@@ -129,11 +129,11 @@ var e = class {
 		this.#k(e, n);
 	}
 	#w(e) {
-		let t = this.#e.tabsNavBtn, n = this.#F(t, e), r = this.#j(n, t);
+		let t = this.#e.tabsNavBtn, n = this.#L(t, e), r = this.#N(n, t);
 		this.#O(e, r);
 	}
 	#T(e) {
-		let t = this.#e.tabsNavBtn, n = this.#F(t, e), r = this.#M(n, t);
+		let t = this.#e.tabsNavBtn, n = this.#L(t, e), r = this.#P(n, t);
 		this.#O(e, r);
 	}
 	#E(e) {
@@ -149,61 +149,82 @@ var e = class {
 	}
 	#k(e, t) {
 		if (e === t) return;
-		let n = e.getAttribute(["aria-controls"]), r = t.getAttribute(["aria-controls"]);
-		e.setAttribute("aria-selected", "false"), e.tabIndex = -1, t.setAttribute("aria-selected", "true"), t.tabIndex = 0, t.focus(), this.#P(n, r), this.#A(t, r);
+		let n = this.#e.tabsNavBtn, r = Array.prototype.indexOf.call(n, e), i = Array.prototype.indexOf.call(n, t), a = document.getElementById(e.getAttribute("aria-controls")), o = document.getElementById(t.getAttribute("aria-controls"));
+		if (!this.#A(r, i, e, t, a, o)) {
+			this.#j(n, e);
+			return;
+		}
+		e.setAttribute("aria-selected", "false"), e.tabIndex = -1, t.setAttribute("aria-selected", "true"), t.tabIndex = 0, t.focus(), this.#I(a, o), this.#M(i, t, o);
 	}
-	#A(e, t) {
-		let n = this.#e.tabsNavBtn, r = Array.prototype.indexOf.call(n, e), i = document.getElementById(t);
-		this.#s.dispatchEvent(new CustomEvent("tabs:change", {
+	#A(e, t, n, r, i, a) {
+		return this.#s.dispatchEvent(new CustomEvent("tabs:beforechange", {
 			bubbles: !0,
+			cancelable: !0,
 			detail: {
-				index: r,
-				tab: e,
-				panel: i
+				fromIndex: e,
+				toIndex: t,
+				fromTab: n,
+				toTab: r,
+				fromPanel: i,
+				toPanel: a
 			}
 		}));
 	}
 	#j(e, t) {
+		let n = document.activeElement;
+		n !== t && Array.prototype.indexOf.call(e, n) !== -1 && t.focus();
+	}
+	#M(e, t, n) {
+		this.#s.dispatchEvent(new CustomEvent("tabs:change", {
+			bubbles: !0,
+			detail: {
+				index: e,
+				tab: t,
+				panel: n
+			}
+		}));
+	}
+	#N(e, t) {
 		return e > 0 ? t[e - 1] : t[t.length - 1];
 	}
-	#M(e, t) {
+	#P(e, t) {
 		return e < t.length - 1 ? t[e + 1] : t[0];
 	}
-	#N() {
+	#F() {
 		let e = this.#e.tabsNavBtn;
 		this.#e.tabPanel.forEach((t, n) => {
 			let r = this.#c[n], i = this.#t.selectors.tabPanelOpen, a = this.#t.options.initSelectedItem === n;
 			t.setAttribute("id", r), t.setAttribute("tabindex", "0"), t.setAttribute("role", "tabpanel"), t.hidden = !a, e[n] && t.setAttribute("aria-labelledby", e[n].id), a && t.classList.add(i);
 		});
 	}
-	#P(e, t) {
-		let n = this.#t.selectors.tabPanelOpen, r = document.getElementById(e), i = document.getElementById(t);
-		r.classList.remove(n), r.hidden = !0, i.classList.add(n), i.hidden = !1;
+	#I(e, t) {
+		let n = this.#t.selectors.tabPanelOpen;
+		e.classList.remove(n), e.hidden = !0, t.classList.add(n), t.hidden = !1;
 	}
-	#F(e, t) {
+	#L(e, t) {
 		return Array.from(e).findIndex((e) => e.getAttribute("aria-controls") === t.getAttribute("aria-controls"));
 	}
-	#I() {
-		this.#t.options.useCustomNav ? this.#B() : this.#e.tabsNavContainer[0].innerHTML = this.#z(), this.#W("tabsNavBtn", this.#s.querySelectorAll("[role = \"tab\"]"));
+	#R() {
+		this.#t.options.useCustomNav ? this.#H() : this.#e.tabsNavContainer[0].innerHTML = this.#V(), this.#K("tabsNavBtn", this.#s.querySelectorAll("[role = \"tab\"]"));
 	}
-	#L() {
+	#z() {
 		this.#e.tabPanelTitle.forEach((e) => {
 			e.remove();
 		});
 	}
-	#R(e) {
+	#B(e) {
 		let t = "";
 		return t = this.#t.options.customNavTitles.length ? this.#t.options.customNavTitles[e] : this.#e.tabPanelTitle[e].getAttribute("data-nav-title") ?? this.#e.tabPanelTitle[e].innerText, t === void 0 && (t = ""), t;
 	}
-	#z() {
+	#V() {
 		let e = this.#t.classes.tabsNavList.substring(1), t = this.#t.classes.tabsNavButton.substring(1), n = this.#t.options.ariaLabel, r = `<div class="${e}" role="tablist"${n ? ` aria-label="${n}"` : ""}${this.#t.options.orientation === "vertical" ? " aria-orientation=\"vertical\"" : ""}>`;
 		for (let e = 0; e < this.#e.tabPanelTitle.length; e++) {
 			let n = this.#c[e], i = n + "-tab", a = this.#t.options.initSelectedItem === e;
-			r += `<button type="button" id="${i}" class="${t}" role="tab" aria-selected="${a ? "true" : "false"}" aria-controls="${n}">${this.#R(e)}</button>`;
+			r += `<button type="button" id="${i}" class="${t}" role="tab" aria-selected="${a ? "true" : "false"}" aria-controls="${n}">${this.#B(e)}</button>`;
 		}
 		return r += "</div>", r;
 	}
-	#B() {
+	#H() {
 		if (this.#e.tabsNavList.length > 0) {
 			let e = this.#e.tabsNavList[0];
 			e.setAttribute("role", "tablist"), this.#t.options.ariaLabel && e.setAttribute("aria-label", this.#t.options.ariaLabel), this.#t.options.orientation === "vertical" && e.setAttribute("aria-orientation", "vertical");
@@ -213,27 +234,27 @@ var e = class {
 			t.id || t.setAttribute("id", n + "-tab"), t.tagName === "BUTTON" && !t.hasAttribute("type") && t.setAttribute("type", "button"), t.setAttribute("aria-controls", n), t.setAttribute("aria-selected", "false"), r && t.setAttribute("aria-selected", "true");
 		}
 	}
-	#V() {
+	#U() {
 		let e = this.#e.tabPanel.length, t = this.#t.selectors.tabPanelIdPrefix, n = [];
-		for (let r = 0; r < e; r++) n.push(this.#H(`${t}-${r}`));
+		for (let r = 0; r < e; r++) n.push(this.#W(`${t}-${r}`));
 		this.#c = n;
 	}
-	#H(e) {
+	#W(e) {
 		let t = e, n = 2;
 		for (; document.getElementById(t);) t = `${e}-${n}`, n++;
 		return t;
 	}
-	#U() {
+	#G() {
 		let e = this.#t.classes, t = this.#t.contextID, n = t instanceof HTMLElement ? t : document.getElementById(t);
 		n || this.#d(`Context element was not found. Expected an element with id "${t}".`), this.#s = n;
 		for (let t in e) this.#e[t] = n.querySelectorAll(e[t]);
 	}
-	#W(e, t) {
+	#K(e, t) {
 		this.#e[e] = t;
 	}
-	#G(e, t) {
+	#q(e, t) {
 		let n = { ...e };
-		for (let r in t) t.hasOwnProperty(r) && (n[r] = Array.isArray(t[r]) && Array.isArray(e[r]) ? e[r].concat(t[r]) : t[r] instanceof Object && e[r] instanceof Object ? this.#G(e[r], t[r]) : t[r]);
+		for (let r in t) t.hasOwnProperty(r) && (n[r] = Array.isArray(t[r]) && Array.isArray(e[r]) ? e[r].concat(t[r]) : t[r] instanceof Object && e[r] instanceof Object ? this.#q(e[r], t[r]) : t[r]);
 		return n;
 	}
 };
