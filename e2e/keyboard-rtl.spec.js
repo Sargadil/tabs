@@ -134,3 +134,40 @@ test.describe('RTL: direction detected from a local dir="rtl" wrapper, not just 
         await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
     });
 });
+
+test.describe('RTL + disabled tabs', () => {
+    // One (index 0) and Four (index 3) are disabled; initSelectedItem is 1 (Two).
+    test.beforeEach(async ({ page }) => {
+        await page.goto('/e2e/fixtures/rtl-disabled.html');
+    });
+
+    test('ArrowLeft (next in RTL) and ArrowRight (previous in RTL) wrap around both disabled edges', async ({ page }) => {
+        const tabs = page.getByRole('tab');
+
+        await tabs.nth(1).focus();
+        await page.keyboard.press('ArrowLeft'); // RTL "next": Two -> Three
+        await expect(tabs.nth(2)).toBeFocused();
+        await expect(tabs.nth(2)).toHaveAttribute('aria-selected', 'true');
+
+        await page.keyboard.press('ArrowLeft'); // RTL "next": Three -> skip disabled Four, wrap, skip disabled One, land on Two
+        await expect(tabs.nth(1)).toBeFocused();
+        await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+
+        await page.keyboard.press('ArrowRight'); // RTL "previous": Two -> skip disabled One, wrap, skip disabled Four, land on Three
+        await expect(tabs.nth(2)).toBeFocused();
+        await expect(tabs.nth(2)).toHaveAttribute('aria-selected', 'true');
+    });
+
+    test('Home/End skip the disabled edges under RTL', async ({ page }) => {
+        const tabs = page.getByRole('tab');
+
+        await tabs.nth(2).focus();
+        await page.keyboard.press('Home');
+        await expect(tabs.nth(1)).toBeFocused();
+        await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+
+        await page.keyboard.press('End');
+        await expect(tabs.nth(2)).toBeFocused();
+        await expect(tabs.nth(2)).toHaveAttribute('aria-selected', 'true');
+    });
+});

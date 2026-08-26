@@ -297,6 +297,10 @@ A disabled tab, regardless of which of the two mechanisms above marked it:
 - cannot be selected with `selectTab()` — it throws
   `[@sargadil/tabs] Cannot select disabled tab at index 2.` instead.
 
+A click, `Enter`, or `Space` blocked by a disabled tab never dispatches
+[`tabs:beforechange`](#tabsbeforechange-event) either — the disabled check happens first, so a
+`tabs:beforechange` listener never sees an attempt to select a disabled tab.
+
 Two configurations are rejected at construction time, with the same friendly error format as the
 rest of [configuration validation](#configuration-validation):
 

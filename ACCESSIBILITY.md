@@ -123,6 +123,11 @@ It still participates in the roving `tabindex` as a non-target — i.e. it's sim
 order and the "enabled" accessibility state by the browser itself, independent of anything this
 library does.
 
+A blocked click/`Enter`/`Space` on a disabled tab never dispatches
+[`tabs:beforechange` or `tabs:change`](./README.md#tabsbeforechange-event) either — the disabled
+check happens before either event would be raised, so a listener watching for selection attempts
+will never see one aimed at a disabled tab.
+
 The constructor rejects two configurations that would otherwise leave the widget in a broken
 state: `options.initSelectedItem` pointing at a disabled tab, and every tab being disabled (a
 tablist needs at least one selectable tab). See [Disabled tabs in the
@@ -146,15 +151,18 @@ real assistive technology** — see [Manual assistive technology test matrix](#m
   arrow-key/Home/End skipping with wrap-around, `selectTab()`, and the two constructor validation
   errors), RTL direction detection (`<html dir="rtl">`, a local `dir="rtl"` wrapper, automatic and
   manual activation, wrap-around, `Home`/`End` unaffected, and vertical orientation unaffected),
-  and that the component still resolves to the correct visible panel with no stylesheet
-  loaded at all. CI and `prepublishOnly` run `npm run test:coverage` instead, which runs the same
-  suite gated on 100% branch/function coverage.
+  RTL combined with disabled tabs (reversed arrow-key skipping and `Home`/`End` under RTL, both
+  activation modes, wrap-around past both disabled edges), that a blocked disabled-tab interaction
+  never dispatches `tabs:beforechange`, and that the component still resolves to the correct
+  visible panel with no stylesheet loaded at all. CI and `prepublishOnly` run
+  `npm run test:coverage` instead, which runs the same suite gated on 100% branch/function
+  coverage.
 - **Browser tests** (`npm run test:e2e`, [`e2e/`](./e2e)) — run with Playwright across Chromium,
   Firefox, and WebKit. Cover initialization, keyboard navigation in both orientations, RTL
   keyboard navigation ([`e2e/keyboard-rtl.spec.js`](./e2e/keyboard-rtl.spec.js) — automatic and
-  manual activation, vertical orientation unaffected, and direction detected from a local
-  `dir="rtl"` wrapper as well as `<html dir="rtl">`), mouse click, manual activation, multiple
-  instances on one page, `options.swipeable`
+  manual activation, vertical orientation unaffected, direction detected from a local `dir="rtl"`
+  wrapper as well as `<html dir="rtl">`, and RTL combined with disabled tabs), mouse click, manual
+  activation, multiple instances on one page, `options.swipeable`
   ([`e2e/swipe.spec.js`](./e2e/swipe.spec.js)), `options.removeTabPanelTitle`
   ([`e2e/initialization.spec.js`](./e2e/initialization.spec.js)), canceling `tabs:beforechange`
   ([`e2e/before-change.spec.js`](./e2e/before-change.spec.js)) — including that a real browser's
@@ -166,7 +174,7 @@ real assistive technology** — see [Manual assistive technology test matrix](#m
   (`selectTab()`/`getSelectedIndex()`/`destroy()`/`tabs:beforechange`/`tabs:change`).
 - **axe-core scans** (part of `npm run test:e2e`, [`e2e/accessibility.spec.js`](./e2e/accessibility.spec.js))
   — run via `@axe-core/playwright` against the default, manual, vertical, custom-nav, swipeable,
-  disabled-tabs, and multiple-instance fixtures, both on initial render and after interaction
+  disabled-tabs, RTL + disabled-tabs, and multiple-instance fixtures, both on initial render and after interaction
   (click, keyboard, swipe).
 
 axe-core only detects a subset of accessibility issues — [roughly a third of WCAG success
