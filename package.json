@@ -1,6 +1,6 @@
 {
-  "name": "tabs-a11y",
-  "version": "1.1.2",
+  "name": "@sargadil/tabs",
+  "version": "1.2.0",
   "description": "Tabs with Full Accessibility ",
   "keywords": [
     "tabs",
@@ -16,17 +16,17 @@
     "javascript",
     "horizontal tabs"
   ],
-  "main": "./dist/js/tabs-a11y.cjs",
-  "module": "./dist/js/tabs-a11y.mjs",
-  "types": "./dist/js/tabs-a11y.d.ts",
-  "unpkg": "./dist/js/tabs-a11y.umd.js",
-  "jsdelivr": "./dist/js/tabs-a11y.umd.js",
+  "main": "./dist/js/tabs.cjs",
+  "module": "./dist/js/tabs.mjs",
+  "types": "./dist/js/tabs.d.ts",
+  "unpkg": "./dist/js/tabs.umd.js",
+  "jsdelivr": "./dist/js/tabs.umd.js",
   "exports": {
     ".": {
-      "types": "./dist/js/tabs-a11y.d.ts",
-      "import": "./dist/js/tabs-a11y.mjs",
-      "require": "./dist/js/tabs-a11y.cjs",
-      "default": "./dist/js/tabs-a11y.mjs"
+      "types": "./dist/js/tabs.d.ts",
+      "import": "./dist/js/tabs.mjs",
+      "require": "./dist/js/tabs.cjs",
+      "default": "./dist/js/tabs.mjs"
     },
     "./style.css": "./dist/css/styles.min.css",
     "./package.json": "./package.json"
@@ -37,9 +37,12 @@
     "LICENSE",
     "CHANGELOG.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build:js": "vite build",
-    "build:types": "cp src/js/script.d.ts dist/js/tabs-a11y.d.ts",
+    "build:types": "cp src/js/script.d.ts dist/js/tabs.d.ts",
     "build:css": "sass src/scss/styles.scss:dist/css/styles.min.css --style=compressed --no-source-map",
     "build": "npm run build:js && npm run build:types && npm run build:css",
     "dev:js": "vite build --watch",

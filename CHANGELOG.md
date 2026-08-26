@@ -3,6 +3,15 @@
 All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.0] — 2026-08-26
+
+### Changed
+- Package renamed and republished as `@sargadil/tabs`. `tabs-a11y` is deprecated in favor
+  of this package; no API or behavior changes — this is a straight identity migration.
+  Build artifacts are now named `tabs.cjs`, `tabs.mjs`, `tabs.umd.js`, and `tabs.d.ts`
+  (previously `tabs-a11y.*`). `dist/css/styles.min.css` is unchanged. See
+  [Migrating from `tabs-a11y`](README.md#migrating-from-tabs-a11y) in the README.
+
 ## [1.1.1] — 2026-08-25
 
 ### Added
