@@ -194,6 +194,22 @@ test.describe('axe: disabled tabs (custom navigation, native + aria-disabled)', 
     });
 });
 
+test.describe('axe: swipeable + disabled tabs', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto('/e2e/fixtures/swipeable-disabled.html');
+    });
+
+    test('has no violations on initial render', async ({ page }) => {
+        await expectNoViolations(page);
+    });
+
+    test('has no violations after a swipe skips a disabled tab', async ({ page }) => {
+        await swipe(page.locator('.tab-panel').first(), { x1: 200, y1: 100, x2: 50, y2: 105 });
+
+        await expectNoViolations(page);
+    });
+});
+
 test.describe('axe: RTL + disabled tabs', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/e2e/fixtures/rtl-disabled.html');

@@ -1250,6 +1250,50 @@ describe('swipeable', () => {
         touch(panels[0], dom, 'touchend', 200, 105); // swipe right -> previous, wraps to last
         assert.equal(instance.getSelectedIndex(), 2);
     });
+
+    test('a swipe skips a disabled middle tab instead of throwing', () => {
+        const html = `
+        <div class="tabs" id="tabs">
+            <div class="tabs__nav"></div>
+            <div class="tabs__panels">
+                <div class="tab-panel"><h3 class="tab-panel__title">One</h3><div class="tab-panel__content">1</div></div>
+                <div class="tab-panel"><h3 class="tab-panel__title" aria-disabled="true">Two</h3><div class="tab-panel__content">2</div></div>
+                <div class="tab-panel"><h3 class="tab-panel__title">Three</h3><div class="tab-panel__content">3</div></div>
+            </div>
+        </div>
+        `;
+        const { Tabs, dom, document } = setup(html);
+        const instance = new Tabs({ options: { swipeable: true } });
+        const panels = document.querySelectorAll('#tabs [role="tabpanel"]');
+
+        assert.doesNotThrow(() => {
+            touch(panels[0], dom, 'touchstart', 200, 100);
+            touch(panels[0], dom, 'touchend', 50, 105); // swipe left -> must skip disabled tab 1, land on 2
+        });
+        assert.equal(instance.getSelectedIndex(), 2);
+    });
+
+    test('a swipe wraps past a disabled edge to the other enabled end', () => {
+        const html = `
+        <div class="tabs" id="tabs">
+            <div class="tabs__nav"></div>
+            <div class="tabs__panels">
+                <div class="tab-panel"><h3 class="tab-panel__title">One</h3><div class="tab-panel__content">1</div></div>
+                <div class="tab-panel"><h3 class="tab-panel__title">Two</h3><div class="tab-panel__content">2</div></div>
+                <div class="tab-panel"><h3 class="tab-panel__title" aria-disabled="true">Three</h3><div class="tab-panel__content">3</div></div>
+            </div>
+        </div>
+        `;
+        const { Tabs, dom, document } = setup(html);
+        const instance = new Tabs({ options: { swipeable: true, initSelectedItem: 1 } });
+        const panels = document.querySelectorAll('#tabs [role="tabpanel"]');
+
+        assert.doesNotThrow(() => {
+            touch(panels[1], dom, 'touchstart', 200, 100);
+            touch(panels[1], dom, 'touchend', 50, 105); // swipe left from Two -> must skip disabled Three, wrap to One
+        });
+        assert.equal(instance.getSelectedIndex(), 0);
+    });
 });
 
 describe('disabled tabs', () => {

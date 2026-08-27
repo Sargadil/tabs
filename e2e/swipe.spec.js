@@ -54,6 +54,24 @@ test.describe('options.swipeable', () => {
     });
 });
 
+test.describe('options.swipeable + disabled tabs', () => {
+    test.beforeEach(async ({ page }) => {
+        await page.goto('/e2e/fixtures/swipeable-disabled.html');
+    });
+
+    test('a swipe skips a disabled middle tab instead of throwing', async ({ page }) => {
+        const errors = [];
+        page.on('pageerror', (error) => errors.push(error.message));
+
+        const panels = page.locator('.tab-panel');
+        await swipe(panels.nth(0), { x1: 200, y1: 100, x2: 50, y2: 105 }); // swipe left from One -> must skip disabled Two, land on Three
+
+        const selectedIndex = await page.evaluate(() => window.tabsInstance.getSelectedIndex());
+        expect(selectedIndex).toBe(2);
+        expect(errors).toEqual([]);
+    });
+});
+
 test.describe('swipe is a no-op when options.swipeable is not set', () => {
     test('a horizontal swipe on the default fixture does not change the active tab', async ({ page }) => {
         await page.goto('/e2e/fixtures/default.html');

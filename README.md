@@ -197,7 +197,7 @@ document.getElementById('tabs').addEventListener('tabs:change', (event) => {
 | options.ariaLabel           | string  | Accessible name (`aria-label`) for the tablist, e.g. `"Product details"`. Recommended when a page has more than one tab group.  |
 | options.orientation         | string  | `'horizontal'` (default, `ArrowLeft`/`ArrowRight`, direction-aware — see [RTL support](#rtl-support)) or `'vertical'` (`ArrowUp`/`ArrowDown`, sets `aria-orientation="vertical"`).  |
 | options.activationMode      | string  | `'automatic'` (default) selects a tab as soon as it receives focus. `'manual'` moves focus with the arrow keys/Home/End without selecting; the focused tab is only activated on click, Enter, or Space. |
-| options.swipeable           | boolean | `false` by default. When `true`, swiping left/right on a panel (touchscreens) moves to the next/previous tab. |
+| options.swipeable           | boolean | `false` by default. When `true`, swiping left/right on a panel (touchscreens) moves to the next/previous tab, skipping [disabled tabs](#disabled-tabs) the same way arrow-key navigation does. |
 
 `orientation` only changes keyboard/ARIA behaviour, not layout. When using `'vertical'`, also add
 the `tabs--vertical` class to the main container to lay the nav beside the panels instead of above
@@ -294,6 +294,7 @@ A disabled tab, regardless of which of the two mechanisms above marked it:
 - does not activate on click, `Enter`, or `Space`,
 - is skipped by `ArrowLeft`/`ArrowRight`/`ArrowUp`/`ArrowDown` (including wrap-around),
 - is skipped by `Home`/`End`,
+- is skipped by a swipe (`options.swipeable`), including wrap-around,
 - cannot be selected with `selectTab()` — it throws
   `[@sargadil/tabs] Cannot select disabled tab at index 2.` instead.
 
