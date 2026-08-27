@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@sargadil/tabs — Custom navigation</title>
+    <link rel="stylesheet" href="../dist/css/styles.min.css">
+    <style>
+        body { font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+               max-width: 44rem; margin: 2rem auto; padding: 0 1rem;
+               background: #fff; color: #1a1a1f; }
+        .note { border-left: 3px solid #2557d6; background: #f6f6f9;
+                padding: .6rem .9rem; margin: 1rem 0; font-size: .95rem; }
+        .my-nav__list { display: flex; gap: .25rem; }
+        .my-nav__btn { padding: .5rem .9rem; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #0f172a; color: #f1f5f9; }
+            .note { background: #1e293b; border-color: #60a5fa; }
+        }
+    </style>
+</head>
+<body>
+<h1>Custom navigation markup</h1>
+<p>
+    When the nav already exists in the DOM (your own classes, your own order), set
+    <code>options.useCustomNav: true</code> and point the three <code>classes.tabsNav*</code>
+    selectors at it. The library wires ARIA and keyboard behaviour onto the existing elements
+    instead of generating a nav from the panel titles.
+</p>
+
+<div class="tabs" id="tabs">
+    <div class="my-nav">
+        <div class="my-nav__list">
+            <button class="my-nav__btn" role="tab">Docs</button>
+            <button class="my-nav__btn" role="tab">Support</button>
+            <button class="my-nav__btn" role="tab">Settings</button>
+        </div>
+    </div>
+    <div class="tabs__panels">
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Docs</h2>
+            <div class="tab-panel__content">The button text is whatever you put in the markup.</div>
+        </div>
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Support</h2>
+            <div class="tab-panel__content">There must be one nav element per panel.</div>
+        </div>
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Settings</h2>
+            <div class="tab-panel__content">Plain <code>&lt;button&gt;</code> elements get <code>type="button"</code> added automatically.</div>
+        </div>
+    </div>
+</div>
+
+<p class="note">A custom nav / panel count mismatch is rejected at construction with a
+   <code>[@sargadil/tabs] …</code> error.</p>
+
+<script type="module">
+    import Tabs from '../dist/js/tabs.mjs';
+
+    window.tabsInstance = new Tabs({
+        classes: {
+            tabsNavContainer: '.my-nav',
+            tabsNavList: '.my-nav__list',
+            tabsNavButton: '.my-nav__btn',
+        },
+        options: { useCustomNav: true },
+    });
+</script>
+</body>
+</html>

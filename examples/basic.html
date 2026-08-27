@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@sargadil/tabs — Basic</title>
+    <link rel="stylesheet" href="../dist/css/styles.min.css">
+    <style>
+        body { font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+               max-width: 44rem; margin: 2rem auto; padding: 0 1rem;
+               background: #fff; color: #1a1a1f; }
+        .note { border-left: 3px solid #2557d6; background: #f6f6f9;
+                padding: .6rem .9rem; margin: 1rem 0; font-size: .95rem; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #0f172a; color: #f1f5f9; }
+            .note { background: #1e293b; border-color: #60a5fa; }
+        }
+    </style>
+</head>
+<body>
+<h1>Basic</h1>
+<p>The minimal setup: an <code>import</code>, the markup, and <code>new Tabs()</code> — no options.</p>
+
+<div class="tabs" id="tabs">
+    <div class="tabs__nav"></div>
+    <div class="tabs__panels">
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Overview</h2>
+            <div class="tab-panel__content">The nav button for this panel was generated from the title above.</div>
+        </div>
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Features</h2>
+            <div class="tab-panel__content">Arrow keys move between tabs; <kbd>Home</kbd>/<kbd>End</kbd> jump to the first/last.</div>
+        </div>
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Pricing</h2>
+            <div class="tab-panel__content">Inactive panels carry the native <code>hidden</code> attribute.</div>
+        </div>
+    </div>
+</div>
+
+<p class="note">
+    Panel visibility is driven by the native <code>hidden</code> attribute, not by the bundled CSS —
+    remove the stylesheet link above and the component still shows exactly one panel at a time.
+</p>
+
+<script type="module">
+    import Tabs from '../dist/js/tabs.mjs';
+
+    // contextID defaults to 'tabs', so no config is needed here.
+    window.tabsInstance = new Tabs();
+</script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@sargadil/tabs — Manual activation</title>
+    <link rel="stylesheet" href="../dist/css/styles.min.css">
+    <style>
+        body { font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+               max-width: 44rem; margin: 2rem auto; padding: 0 1rem;
+               background: #fff; color: #1a1a1f; }
+        .note { border-left: 3px solid #2557d6; background: #f6f6f9;
+                padding: .6rem .9rem; margin: 1rem 0; font-size: .95rem; }
+        .state { display: flex; gap: 1rem; margin: 1rem 0; font: 600 .95rem monospace; }
+        .state span { padding: .3rem .6rem; border: 1px solid currentColor; border-radius: .3rem; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #0f172a; color: #f1f5f9; }
+            .note { background: #1e293b; border-color: #60a5fa; }
+        }
+    </style>
+</head>
+<body>
+<h1>Manual activation</h1>
+<p>
+    With <code>activationMode: 'manual'</code> the arrow keys and <kbd>Home</kbd>/<kbd>End</kbd> only
+    <em>move focus</em>. The focused tab is selected only on <kbd>Enter</kbd>, <kbd>Space</kbd>, or a click.
+</p>
+
+<div class="state">
+    <span id="focused">focused: –</span>
+    <span id="selected">selected: 0</span>
+</div>
+
+<div class="tabs" id="tabs">
+    <div class="tabs__nav"></div>
+    <div class="tabs__panels">
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Report A</h2>
+            <div class="tab-panel__content">Tab into the list, press an arrow key, and watch "focused" change while "selected" stays put.</div>
+        </div>
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Report B</h2>
+            <div class="tab-panel__content">Press Enter or Space to actually activate the focused tab.</div>
+        </div>
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Report C</h2>
+            <div class="tab-panel__content">Useful when selecting a tab is expensive — see the events example for lazy loading.</div>
+        </div>
+    </div>
+</div>
+
+<p class="note">In the default <code>'automatic'</code> mode, "focused" and "selected" would always match.</p>
+
+<script type="module">
+    import Tabs from '../dist/js/tabs.mjs';
+
+    const container = document.getElementById('tabs');
+    window.tabsInstance = new Tabs({ options: { activationMode: 'manual' } });
+
+    const tabs = () => [...container.querySelectorAll('[role="tab"]')];
+    const focusedEl = document.getElementById('focused');
+    const selectedEl = document.getElementById('selected');
+
+    container.addEventListener('focusin', (event) => {
+        const index = tabs().indexOf(event.target);
+        if (index !== -1) {
+            focusedEl.textContent = `focused: ${index}`;
+        }
+    });
+
+    container.addEventListener('tabs:change', (event) => {
+        selectedEl.textContent = `selected: ${event.detail.index}`;
+    });
+</script>
+</body>
+</html>

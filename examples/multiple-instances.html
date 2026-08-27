@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@sargadil/tabs — Multiple instances</title>
+    <link rel="stylesheet" href="../dist/css/styles.min.css">
+    <style>
+        body { font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+               max-width: 44rem; margin: 2rem auto; padding: 0 1rem;
+               background: #fff; color: #1a1a1f; }
+        .note { border-left: 3px solid #2557d6; background: #f6f6f9;
+                padding: .6rem .9rem; margin: 1rem 0; font-size: .95rem; }
+        h2.section { margin-top: 2.5rem; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #0f172a; color: #f1f5f9; }
+            .note { background: #1e293b; border-color: #60a5fa; }
+        }
+    </style>
+</head>
+<body>
+<h1>Multiple instances</h1>
+<p>
+    Two independent groups on one page. Each gets its own instance; switching one never affects the
+    other. Panel ids are made unique automatically, so <code>aria-controls</code>/<code>aria-labelledby</code>
+    relationships stay separate even though both groups use the default markup.
+</p>
+
+<h2 class="section">Product details</h2>
+<div class="tabs" id="tabs-product">
+    <div class="tabs__nav"></div>
+    <div class="tabs__panels">
+        <div class="tab-panel">
+            <h3 class="tab-panel__title">Description</h3>
+            <div class="tab-panel__content">Group one, panel one.</div>
+        </div>
+        <div class="tab-panel">
+            <h3 class="tab-panel__title">Specs</h3>
+            <div class="tab-panel__content">Group one, panel two.</div>
+        </div>
+        <div class="tab-panel">
+            <h3 class="tab-panel__title">Reviews</h3>
+            <div class="tab-panel__content">Group one, panel three.</div>
+        </div>
+    </div>
+</div>
+
+<h2 class="section">Support</h2>
+<div class="tabs" id="tabs-support">
+    <div class="tabs__nav"></div>
+    <div class="tabs__panels">
+        <div class="tab-panel">
+            <h3 class="tab-panel__title">Shipping</h3>
+            <div class="tab-panel__content">Group two, panel one.</div>
+        </div>
+        <div class="tab-panel">
+            <h3 class="tab-panel__title">Returns</h3>
+            <div class="tab-panel__content">Group two, panel two.</div>
+        </div>
+    </div>
+</div>
+
+<p class="note">Give each tablist an <code>options.ariaLabel</code> so screen-reader users can tell
+   the two groups apart.</p>
+
+<script type="module">
+    import Tabs from '../dist/js/tabs.mjs';
+
+    window.tabsInstanceProduct = new Tabs({
+        contextID: 'tabs-product',
+        options: { ariaLabel: 'Product details' },
+    });
+
+    window.tabsInstanceSupport = new Tabs({
+        contextID: 'tabs-support',
+        options: { ariaLabel: 'Support' },
+    });
+</script>
+</body>
+</html>

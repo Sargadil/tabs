@@ -389,6 +389,10 @@ technique that's markup-only and not on that page: you can put the **`data-nav-t
 on a panel's `.tab-panel__title` to override just that tab's button text, instead of listing every
 title in `options.customNavTitles`.
 
+For small, self-contained pages you can open and read one at a time — basic setup, manual
+activation, vertical, RTL, disabled tabs, custom navigation, `tabs:beforechange`, `tabs:change`,
+`refresh()`, and multiple instances — see **[`examples/`](./examples/)**.
+
 ## Recipes
 
 These aren't extra config options — they're just the existing API (`destroy()`, `selectTab()`,
@@ -479,27 +483,8 @@ window.addEventListener('hashchange', () => {
 ### Lazy-loading panel content
 Combine `activationMode: 'manual'` with `tabs:change` — the event only fires when a tab is
 actually activated (click, Enter, Space, or `selectTab()`), not while arrow keys are just moving
-focus between tabs, so you only fetch data for a tab the user actually opened.
-
-```javascript
-const tabs = new Tabs({ options: { activationMode: 'manual' } });
-const container = document.getElementById('tabs');
-const loaded = new Set();
-
-container.addEventListener('tabs:change', async (event) => {
-    const { index, panel } = event.detail;
-
-    if (loaded.has(index)) {
-        return;
-    }
-
-    loaded.add(index);
-
-    const content = panel.querySelector('.tab-panel__content');
-    content.textContent = 'Loading…';
-    content.textContent = await fetch(`/api/tab-${index}`).then((res) => res.text());
-});
-```
+focus between tabs, so you only fetch data for a tab the user actually opened. Runnable version:
+[`examples/events.html`](./examples/events.html).
 
 ## Migrating from `tabs-a11y`
 

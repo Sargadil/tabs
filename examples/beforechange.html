@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@sargadil/tabs — Before change</title>
+    <link rel="stylesheet" href="../dist/css/styles.min.css">
+    <style>
+        body { font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+               max-width: 44rem; margin: 2rem auto; padding: 0 1rem;
+               background: #fff; color: #1a1a1f; }
+        .note { border-left: 3px solid #2557d6; background: #f6f6f9;
+                padding: .6rem .9rem; margin: 1rem 0; font-size: .95rem; }
+        .guard { margin: 1rem 0; padding: .6rem .9rem; border: 1px solid currentColor; border-radius: .4rem; }
+        .status { min-height: 1.4em; font-weight: 600; }
+        .status.blocked { color: #c02626; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #0f172a; color: #f1f5f9; }
+            .note { background: #1e293b; border-color: #60a5fa; }
+            .status.blocked { color: #f87171; }
+        }
+    </style>
+</head>
+<body>
+<h1>Cancelable tab switching</h1>
+<p>
+    <code>tabs:beforechange</code> fires before the selection changes, whatever triggered it
+    (mouse, keyboard, <code>selectTab()</code>). Call <code>preventDefault()</code> and nothing moves —
+    no ARIA/tabindex/hidden/focus change, and <code>tabs:change</code> never fires.
+</p>
+
+<div class="guard">
+    <label><input type="checkbox" id="dirty"> This tab has unsaved changes</label>
+</div>
+<p class="status" id="status">&nbsp;</p>
+
+<div class="tabs" id="tabs">
+    <div class="tabs__nav"></div>
+    <div class="tabs__panels">
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Editor</h2>
+            <div class="tab-panel__content">Tick the box above, then try to switch tabs — the change is blocked.</div>
+        </div>
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Preview</h2>
+            <div class="tab-panel__content">Untick it and switching works again.</div>
+        </div>
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Settings</h2>
+            <div class="tab-panel__content">A real app would show its own confirm dialog here.</div>
+        </div>
+    </div>
+</div>
+
+<p class="note">The "unsaved changes" state here is just one checkbox — the point is the
+   <code>preventDefault()</code> call, not the form.</p>
+
+<script type="module">
+    import Tabs from '../dist/js/tabs.mjs';
+
+    const container = document.getElementById('tabs');
+    const dirty = document.getElementById('dirty');
+    const status = document.getElementById('status');
+
+    window.tabsInstance = new Tabs();
+
+    container.addEventListener('tabs:beforechange', (event) => {
+        if (dirty.checked) {
+            event.preventDefault();
+            status.textContent = `Blocked switch to "${event.detail.toTab.textContent}" — unsaved changes.`;
+            status.classList.add('blocked');
+        }
+    });
+
+    container.addEventListener('tabs:change', (event) => {
+        status.textContent = `Switched to "${event.detail.tab.textContent}".`;
+        status.classList.remove('blocked');
+    });
+</script>
+</body>
+</html>
