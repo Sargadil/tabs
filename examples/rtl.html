@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@sargadil/tabs — RTL</title>
+    <link rel="stylesheet" href="../dist/css/styles.min.css">
+    <style>
+        body { font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+               max-width: 44rem; margin: 2rem auto; padding: 0 1rem;
+               background: #fff; color: #1a1a1f; }
+        .note { border-left: 3px solid #2557d6; background: #f6f6f9;
+                padding: .6rem .9rem; margin: 1rem 0; font-size: .95rem; }
+        .log { font: 600 .95rem monospace; padding: .3rem .6rem;
+               border: 1px solid currentColor; border-radius: .3rem; display: inline-block; margin: 1rem 0; }
+        [dir="rtl"] { border: 1px dashed currentColor; padding: 1rem; border-radius: .4rem; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #0f172a; color: #f1f5f9; }
+            .note { background: #1e293b; border-color: #60a5fa; }
+        }
+    </style>
+</head>
+<body>
+<h1>RTL horizontal navigation</h1>
+<p>
+    In a right-to-left context, <kbd>ArrowLeft</kbd> / <kbd>ArrowRight</kbd> are reversed so the key
+    pointing toward the next tab visually always selects it. Direction is read from the DOM —
+    there is <strong>no <code>options.rtl</code> flag</strong>. Here a wrapping
+    <code>&lt;div dir="rtl"&gt;</code> is enough (a <code>&lt;html dir="rtl"&gt;</code> document works too).
+</p>
+
+<div class="log" id="log">last key: – → selected: 0</div>
+
+<div dir="rtl">
+    <div class="tabs" id="tabs">
+        <div class="tabs__nav"></div>
+        <div class="tabs__panels">
+            <div class="tab-panel">
+                <h2 class="tab-panel__title">الأول</h2>
+                <div class="tab-panel__content">اضغط السهم الأيسر للانتقال إلى التبويب التالي.</div>
+            </div>
+            <div class="tab-panel">
+                <h2 class="tab-panel__title">الثاني</h2>
+                <div class="tab-panel__content">السهم الأيمن ينتقل إلى التبويب السابق.</div>
+            </div>
+            <div class="tab-panel">
+                <h2 class="tab-panel__title">الثالث</h2>
+                <div class="tab-panel__content"><kbd>Home</kbd> / <kbd>End</kbd> غير متأثرين بالاتجاه.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<p class="note">
+    Watch the readout: <kbd>ArrowLeft</kbd> increases the selected index, <kbd>ArrowRight</kbd> decreases it —
+    the opposite of an LTR page.
+</p>
+
+<script type="module">
+    import Tabs from '../dist/js/tabs.mjs';
+
+    const container = document.getElementById('tabs');
+    const log = document.getElementById('log');
+    window.tabsInstance = new Tabs({ options: { ariaLabel: 'أقسام' } });
+
+    container.addEventListener('keydown', (event) => {
+        if (event.key.startsWith('Arrow') || event.key === 'Home' || event.key === 'End') {
+            requestAnimationFrame(() => {
+                log.textContent = `last key: ${event.key} → selected: ${window.tabsInstance.getSelectedIndex()}`;
+            });
+        }
+    });
+</script>
+</body>
+</html>

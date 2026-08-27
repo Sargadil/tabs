@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@sargadil/tabs — Events</title>
+    <link rel="stylesheet" href="../dist/css/styles.min.css">
+    <style>
+        body { font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+               max-width: 44rem; margin: 2rem auto; padding: 0 1rem;
+               background: #fff; color: #1a1a1f; }
+        .note { border-left: 3px solid #2557d6; background: #f6f6f9;
+                padding: .6rem .9rem; margin: 1rem 0; font-size: .95rem; }
+        #log { margin: 1rem 0; padding: .5rem .8rem; border: 1px solid currentColor;
+               border-radius: .4rem; font: .9rem/1.5 monospace; white-space: pre-wrap; min-height: 3em; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #0f172a; color: #f1f5f9; }
+            .note { background: #1e293b; border-color: #60a5fa; }
+        }
+    </style>
+</head>
+<body>
+<h1>Reacting to tab changes</h1>
+<p>
+    <code>tabs:change</code> fires only when a tab is actually activated — not while arrow keys move
+    focus in <code>'manual'</code> mode. That makes it the right hook for analytics or for fetching a
+    panel's content the first time it's opened.
+</p>
+
+<div class="tabs" id="tabs">
+    <div class="tabs__nav"></div>
+    <div class="tabs__panels">
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Summary</h2>
+            <div class="tab-panel__content" data-src="summary">Loaded upfront.</div>
+        </div>
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Activity</h2>
+            <div class="tab-panel__content" data-src="activity"></div>
+        </div>
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Invoices</h2>
+            <div class="tab-panel__content" data-src="invoices"></div>
+        </div>
+    </div>
+</div>
+
+<div id="log">event log:</div>
+
+<p class="note">Arrow through the tabs (manual mode) and nothing loads until you press
+   <kbd>Enter</kbd>/<kbd>Space</kbd> or click.</p>
+
+<script type="module">
+    import Tabs from '../dist/js/tabs.mjs';
+
+    const container = document.getElementById('tabs');
+    const log = document.getElementById('log');
+    const loaded = new Set([0]);
+
+    window.tabsInstance = new Tabs({ options: { activationMode: 'manual' } });
+
+    // Stand-in for a real request.
+    const fetchPanel = (name) =>
+        new Promise((resolve) => setTimeout(() => resolve(`${name} data fetched at ${new Date().toLocaleTimeString()}`), 400));
+
+    container.addEventListener('tabs:change', async (event) => {
+        const { index, panel } = event.detail;
+        log.textContent += `\ntabs:change → index ${index}`;
+
+        if (loaded.has(index)) {
+            return;
+        }
+        loaded.add(index);
+
+        const content = panel.querySelector('.tab-panel__content');
+        content.textContent = 'Loading…';
+        content.textContent = await fetchPanel(content.dataset.src);
+    });
+</script>
+</body>
+</html>

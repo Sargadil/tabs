@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@sargadil/tabs — Dynamic refresh</title>
+    <link rel="stylesheet" href="../dist/css/styles.min.css">
+    <style>
+        body { font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+               max-width: 44rem; margin: 2rem auto; padding: 0 1rem;
+               background: #fff; color: #1a1a1f; }
+        .note { border-left: 3px solid #2557d6; background: #f6f6f9;
+                padding: .6rem .9rem; margin: 1rem 0; font-size: .95rem; }
+        .controls { display: flex; gap: .5rem; margin: 1rem 0; }
+        .controls button { padding: .4rem .8rem; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #0f172a; color: #f1f5f9; }
+            .note { background: #1e293b; border-color: #60a5fa; }
+        }
+    </style>
+</head>
+<body>
+<h1>Dynamic DOM + refresh()</h1>
+<p>
+    The DOM stays your responsibility — there is no <code>addTab()</code>/<code>removeTab()</code> and
+    no <code>MutationObserver</code>. After your code changes the panels markup, call
+    <code>refresh()</code> and the instance re-reads the DOM: new listeners, re-synced ARIA and ids,
+    the active tab kept if its panel still exists.
+</p>
+
+<div class="controls">
+    <button type="button" id="add">Add panel</button>
+    <button type="button" id="remove">Remove last panel</button>
+</div>
+
+<div class="tabs" id="tabs">
+    <div class="tabs__nav"></div>
+    <div class="tabs__panels">
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">One</h2>
+            <div class="tab-panel__content">Add a few panels, then arrow all the way to the right — the new tabs are fully wired.</div>
+        </div>
+        <div class="tab-panel">
+            <h2 class="tab-panel__title">Two</h2>
+            <div class="tab-panel__content">Remove the last panel while an earlier tab is active and the selection is preserved.</div>
+        </div>
+    </div>
+</div>
+
+<p class="note">Calling <code>refresh()</code> repeatedly is safe — listeners are never bound twice,
+   so events don't start firing multiple times.</p>
+
+<script type="module">
+    import Tabs from '../dist/js/tabs.mjs';
+
+    const panels = document.querySelector('#tabs .tabs__panels');
+    let counter = 2;
+
+    window.tabsInstance = new Tabs();
+
+    document.getElementById('add').addEventListener('click', () => {
+        counter += 1;
+        panels.insertAdjacentHTML(
+            'beforeend',
+            `<div class="tab-panel"><h2 class="tab-panel__title">Panel ${counter}</h2>` +
+            `<div class="tab-panel__content">Added at ${new Date().toLocaleTimeString()}.</div></div>`,
+        );
+        window.tabsInstance.refresh();
+    });
+
+    document.getElementById('remove').addEventListener('click', () => {
+        const all = panels.querySelectorAll('.tab-panel');
+        if (all.length > 1) {
+            all[all.length - 1].remove();
+            window.tabsInstance.refresh();
+        }
+    });
+</script>
+</body>
+</html>
