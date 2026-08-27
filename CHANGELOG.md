@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- `refresh()` — a public method to re-synchronize an instance with the current DOM after the
+  consumer has added or removed `.tab-panel` elements (AJAX, a CMS, HTMX, a framework re-render)
+  or toggled a tab's disabled state. It detects added/removed tabs and panels, moves event
+  listeners off removed elements and onto new ones without ever double-binding (repeated
+  `refresh()` calls never multiply event dispatches), re-synchronizes the ARIA relationships,
+  panel ids, and disabled state, and preserves the active tab — falling back to the tab that took
+  its position (or the new last tab) if the active panel was removed, skipping disabled tabs.
+  Focus only moves if it was already inside the tablist; no `tabs:beforechange`/`tabs:change`
+  event is dispatched. There is deliberately no `addTab()`/`removeTab()`/`updateTab()` and no
+  `MutationObserver` — the DOM stays the consumer's responsibility. See
+  [Dynamic tabs](README.md#dynamic-tabs).
 - RTL support for horizontal tabs: `ArrowLeft`/`ArrowRight` now reverse (next/previous instead of
   previous/next) when the focused tab's direction, per the cascaded CSS `direction` property, is
   right-to-left. Direction is read from the DOM — via `dir="rtl"` on `<html>` or any closer

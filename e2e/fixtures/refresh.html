@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Tabs e2e — refresh() (dynamic DOM)</title>
+</head>
+<body>
+<main>
+<h1>Tabs e2e — refresh()</h1>
+<div class="tabs" id="tabs">
+    <div class="tabs__nav"></div>
+    <div class="tabs__panels">
+        <div class="tab-panel"><h2 class="tab-panel__title">One</h2><div class="tab-panel__content">Panel one content</div></div>
+        <div class="tab-panel"><h2 class="tab-panel__title">Two</h2><div class="tab-panel__content">Panel two content</div></div>
+        <div class="tab-panel"><h2 class="tab-panel__title">Three</h2><div class="tab-panel__content">Panel three content</div></div>
+    </div>
+</div>
+<script type="module">
+    import Tabs from '/dist/js/tabs.mjs';
+
+    const panels = document.querySelector('#tabs .tabs__panels');
+
+    window.tabsInstance = new Tabs({ options: { ariaLabel: 'Sections' } });
+
+    window.addPanel = (title) => {
+        panels.insertAdjacentHTML(
+            'beforeend',
+            `<div class="tab-panel"><h2 class="tab-panel__title">${title}</h2><div class="tab-panel__content">Panel ${title} content</div></div>`,
+        );
+    };
+
+    window.removePanelAt = (index) => {
+        panels.querySelectorAll('.tab-panel')[index].remove();
+    };
+
+    window.setTitleDisabledAt = (index, disabled) => {
+        const title = panels.querySelectorAll('.tab-panel__title')[index];
+        if (disabled) {
+            title.setAttribute('aria-disabled', 'true');
+        } else {
+            title.removeAttribute('aria-disabled');
+        }
+    };
+</script>
+</main>
+</body>
+</html>
