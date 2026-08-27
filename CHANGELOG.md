@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- `examples/` — a set of small, self-contained runnable pages (one use case each, public API only,
+  no build step or framework): basic setup, manual activation, vertical, RTL, disabled tabs, custom
+  navigation, `tabs:beforechange`, `tabs:change`, `refresh()`, and multiple instances. Served via
+  `npm run examples` and smoke-tested in CI so the documented behaviour can't silently drift. See
+  [`examples/`](examples/).
 - `refresh()` — a public method to re-synchronize an instance with the current DOM after the
   consumer has added or removed `.tab-panel` elements (AJAX, a CMS, HTMX, a framework re-render)
   or toggled a tab's disabled state. It detects added/removed tabs and panels, moves event

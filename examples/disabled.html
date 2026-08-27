@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@sargadil/tabs — Disabled tabs</title>
+    <link rel="stylesheet" href="../dist/css/styles.min.css">
+    <style>
+        body { font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+               max-width: 44rem; margin: 2rem auto; padding: 0 1rem;
+               background: #fff; color: #1a1a1f; }
+        .note { border-left: 3px solid #2557d6; background: #f6f6f9;
+                padding: .6rem .9rem; margin: 1rem 0; font-size: .95rem; }
+        h2.section { margin-top: 2.5rem; }
+        .custom-tabs__nav-inner { display: flex; gap: .25rem; }
+        .custom-tabs__nav-button { padding: .5rem .9rem; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #0f172a; color: #f1f5f9; }
+            .note { background: #1e293b; border-color: #60a5fa; }
+        }
+    </style>
+</head>
+<body>
+<h1>Disabled tabs</h1>
+<p>
+    A disabled tab cannot be activated (click, <kbd>Enter</kbd>, <kbd>Space</kbd>) and is skipped by
+    arrow keys, <kbd>Home</kbd>/<kbd>End</kbd>, and wrap-around. There is no library-specific
+    attribute — you use whatever a native <code>&lt;button&gt;</code> or a custom
+    <code>role="tab"</code> element already uses.
+</p>
+
+<h2 class="section">Default nav</h2>
+<p>Mark the panel's <code>.tab-panel__title</code> with <code>aria-disabled="true"</code>; the
+   generated tab becomes a real <code>&lt;button disabled&gt;</code>.</p>
+
+<div class="tabs" id="tabs-default">
+    <div class="tabs__nav"></div>
+    <div class="tabs__panels">
+        <div class="tab-panel">
+            <h3 class="tab-panel__title">Profile</h3>
+            <div class="tab-panel__content">Enabled.</div>
+        </div>
+        <div class="tab-panel">
+            <h3 class="tab-panel__title" aria-disabled="true">Billing</h3>
+            <div class="tab-panel__content">Disabled — arrow keys jump straight over this one.</div>
+        </div>
+        <div class="tab-panel">
+            <h3 class="tab-panel__title">Team</h3>
+            <div class="tab-panel__content">Enabled.</div>
+        </div>
+    </div>
+</div>
+
+<h2 class="section">Custom nav</h2>
+<p>Disable the tab element directly — native <code>disabled</code> on a
+   <code>&lt;button&gt;</code>, or <code>aria-disabled="true"</code> on a non-button tab.</p>
+
+<div class="tabs" id="tabs-custom">
+    <div class="custom-nav">
+        <div class="custom-nav__list">
+            <button class="custom-nav__btn" role="tab">Docs</button>
+            <button class="custom-nav__btn" role="tab" disabled>Support</button>
+            <div class="custom-nav__btn" role="tab" tabindex="-1" aria-disabled="true">Settings</div>
+        </div>
+    </div>
+    <div class="tabs__panels">
+        <div class="tab-panel">
+            <h3 class="tab-panel__title">Docs</h3>
+            <div class="tab-panel__content">Enabled.</div>
+        </div>
+        <div class="tab-panel">
+            <h3 class="tab-panel__title">Support</h3>
+            <div class="tab-panel__content">Disabled via native <code>disabled</code>.</div>
+        </div>
+        <div class="tab-panel">
+            <h3 class="tab-panel__title">Settings</h3>
+            <div class="tab-panel__content">Disabled via <code>aria-disabled="true"</code>.</div>
+        </div>
+    </div>
+</div>
+
+<p class="note">
+    <code>selectTab()</code> on a disabled index throws
+    <code>[@sargadil/tabs] Cannot select disabled tab at index N.</code>, and a disabled tab never
+    dispatches <code>tabs:beforechange</code>.
+</p>
+
+<script type="module">
+    import Tabs from '../dist/js/tabs.mjs';
+
+    window.tabsInstance = new Tabs({ contextID: 'tabs-default' });
+
+    window.tabsInstanceCustom = new Tabs({
+        contextID: 'tabs-custom',
+        classes: {
+            tabsNavContainer: '.custom-nav',
+            tabsNavList: '.custom-nav__list',
+            tabsNavButton: '.custom-nav__btn',
+        },
+        options: { useCustomNav: true },
+    });
+</script>
+</body>
+</html>
