@@ -135,8 +135,11 @@ state: `options.initSelectedItem` pointing at a disabled tab, and every tab bein
 tablist needs at least one selectable tab). See [Disabled tabs in the
 README](./README.md#disabled-tabs) for the exact error messages and markup examples.
 
-Disabling/enabling a tab after construction is not automatically picked up by the running
-instance — this is tracked separately as a future `refresh()` (ROADMAP-11), not implemented here.
+Disabling/enabling a tab after construction (or adding/removing tabs and panels) is not picked up
+automatically; the consumer calls [`refresh()`](./README.md#dynamic-tabs) after changing the DOM.
+`refresh()` re-synchronizes the ARIA relationships, roving `tabindex`, `hidden` panels, and
+disabled state, keeps the active tab selected when its panel survives (with a documented fallback
+when it doesn't), and only moves focus if focus was already inside the tablist.
 
 ## Automated testing
 
@@ -156,7 +159,10 @@ real assistive technology** — see [Manual assistive technology test matrix](#m
   RTL combined with disabled tabs (reversed arrow-key skipping and `Home`/`End` under RTL, both
   activation modes, wrap-around past both disabled edges), that a blocked disabled-tab interaction
   never dispatches `tabs:beforechange`, that a swipe (`options.swipeable`) skips a disabled tab
-  instead of throwing (including wrap-around past a disabled edge), and that the component still
+  instead of throwing (including wrap-around past a disabled edge), `refresh()` (added/removed
+  tabs and panels, removal of the active tab and its documented fallback, disabled-state changes,
+  that repeated `refresh()` calls never duplicate listeners/events, focus handling, and that
+  multiple instances stay independent), and that the component still
   resolves to the correct visible panel with no stylesheet loaded at all. CI and `prepublishOnly` run
   `npm run test:coverage` instead, which runs the same suite gated on 100% branch/function
   coverage.
@@ -174,7 +180,11 @@ real assistive technology** — see [Manual assistive technology test matrix](#m
   in default and custom nav and in manual mode ([`e2e/disabled-tabs.spec.js`](./e2e/disabled-tabs.spec.js)),
   including that a real click event arriving via `dispatchEvent` (the closest a test can get to a
   native disabled `<button>`, which Playwright's own actionability checks otherwise refuse to
-  click) is still correctly ignored — and the public API
+  click) is still correctly ignored — `refresh()`
+  ([`e2e/refresh.spec.js`](./e2e/refresh.spec.js) — picking up an added panel and driving it with
+  mouse/keyboard, the active-tab-removal fallback, repeated `refresh()` not stacking listeners,
+  focus staying put unless it was already in the tablist, a newly disabled tab, and an axe scan
+  afterwards) — and the public API
   (`selectTab()`/`getSelectedIndex()`/`destroy()`/`tabs:beforechange`/`tabs:change`).
 - **axe-core scans** (part of `npm run test:e2e`, [`e2e/accessibility.spec.js`](./e2e/accessibility.spec.js))
   — run via `@axe-core/playwright` against the default, manual, vertical, custom-nav, swipeable,

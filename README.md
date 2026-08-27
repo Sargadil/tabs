@@ -118,6 +118,18 @@ const tabs = new Tabs();
 tabs.getSelectedIndex(); // 0
 ```
 
+### `refresh()`
+Re-synchronizes the instance with the current DOM after you've added or removed tabs/panels, or
+toggled a tab's [disabled](#disabled-tabs) state. See [Dynamic tabs](#dynamic-tabs) for the full
+behavior and an example.
+
+```javascript
+const tabs = new Tabs();
+
+// after your code has added/removed .tab-panel elements
+tabs.refresh();
+```
+
 ### `tabs:beforechange` event
 Dispatched (bubbling, cancelable) on the main container element right before the selected tab
 changes, whether triggered by mouse, keyboard, or `selectTab()`. Call `preventDefault()` on it to
@@ -310,7 +322,50 @@ rest of [configuration validation](#configuration-validation):
 - every tab being disabled — `[@sargadil/tabs] At least one enabled tab is required.`.
 
 Toggling a tab's disabled state after construction (e.g. in response to app state) is not
-automatically picked up — re-create the instance, or wait for a future `refresh()`.
+picked up automatically — call [`refresh()`](#dynamic-tabs) after changing it.
+
+## Dynamic tabs
+
+When your own code changes the tabs/panels markup after construction — an AJAX or CMS fragment
+swap, an HTMX update, a framework re-render, or just toggling a tab's
+[disabled](#disabled-tabs) state — call `refresh()` to re-synchronize the instance with the new
+DOM. The DOM stays your responsibility; there is deliberately no `addTab()`/`removeTab()` and no
+automatic `MutationObserver`.
+
+```javascript
+const tabs = new Tabs();
+const panels = document.querySelector('#tabs .tabs__panels');
+
+// add a panel (default nav: include a `.tab-panel__title` — it becomes the tab label)
+panels.insertAdjacentHTML('beforeend',
+    '<div class="tab-panel"><h3 class="tab-panel__title">Reports</h3><div class="tab-panel__content">…</div></div>');
+
+// …or remove one
+document.getElementById('tabpanel-1').remove();
+
+tabs.refresh();
+```
+
+`refresh()`:
+
+- detects added and removed tabs/panels, and drops removed ones from the instance's state,
+- moves event listeners off removed elements and onto new ones, without ever binding an element
+  twice — calling `refresh()` repeatedly will not make events fire multiple times,
+- re-synchronizes the ARIA relationships (`aria-controls`/`aria-labelledby`), the panel ids, and
+  the disabled state,
+- keeps the currently active tab selected if its panel still exists. If that panel was removed,
+  the tab that took its position becomes active (or the new last tab, if the removed one was
+  last), skipping disabled tabs,
+- only moves focus if focus was already inside the tablist (it follows the active tab across the
+  rebuild); it never steals focus otherwise,
+- does not dispatch [`tabs:beforechange`](#tabsbeforechange-event) or
+  [`tabs:change`](#tabschange-event).
+
+Multiple instances on one page stay independent — refreshing one does not touch the others.
+
+If the refreshed DOM is no longer valid (every panel removed, every tab disabled, a custom
+navigation/panel count mismatch), `refresh()` throws the same `[@sargadil/tabs] …` error the
+constructor would.
 
 ## Accessibility
 

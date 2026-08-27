@@ -6,5 +6,6 @@ assert.equal(typeof Tabs, 'function', 'require("@sargadil/tabs") should resolve 
 assert.equal(typeof Tabs.prototype.destroy, 'function', 'Tabs.prototype should expose destroy()');
 assert.equal(typeof Tabs.prototype.selectTab, 'function', 'Tabs.prototype should expose selectTab()');
 assert.equal(typeof Tabs.prototype.getSelectedIndex, 'function', 'Tabs.prototype should expose getSelectedIndex()');
+assert.equal(typeof Tabs.prototype.refresh, 'function', 'Tabs.prototype should expose refresh()');
 
 console.log('commonjs import ok');
