@@ -104,8 +104,8 @@ var e = class {
 	#b(e) {
 		let t = e.changedTouches[0], n = t.screenX - this.#l, r = t.screenY - this.#u;
 		if (Math.abs(n) < this.#n || Math.abs(n) <= Math.abs(r)) return;
-		let i = this.#e.tabsNavBtn, a = this.getSelectedIndex(), o = n < 0 ? a < i.length - 1 ? a + 1 : 0 : a > 0 ? a - 1 : i.length - 1;
-		this.selectTab(o);
+		let i = this.#e.tabsNavBtn, a = this.getSelectedIndex(), o = i[a], s = n < 0 ? this.#R(a, i) : this.#L(a, i);
+		this.#N(o, s);
 	}
 	#x(e) {
 		let t = e.currentTarget;

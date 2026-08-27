@@ -305,7 +305,10 @@ class Tabs {
     /**
      * Switch to the previous/next tab if the touch ended far enough
      * away horizontally to count as a swipe rather than a vertical
-     * scroll (options.swipeable).
+     * scroll (options.swipeable). Skips disabled tabs and wraps
+     * around, same as ArrowLeft/ArrowRight — see #getNextTab()/
+     * #getPreviousTab() — rather than calling the public selectTab(),
+     * which would throw if the plain adjacent index were disabled.
      *
      * @param {TouchEvent} event
      *   Touchend event.
@@ -321,11 +324,12 @@ class Tabs {
 
         const tab_buttons = this.#objectsHTML['tabsNavBtn'];
         const current_index = this.getSelectedIndex();
-        const next_index = delta_x < 0
-            ? (current_index < tab_buttons.length - 1 ? current_index + 1 : 0)
-            : (current_index > 0 ? current_index - 1 : tab_buttons.length - 1);
+        const current_tab = tab_buttons[current_index];
+        const new_tab = delta_x < 0
+            ? this.#getNextTab(current_index, tab_buttons)
+            : this.#getPreviousTab(current_index, tab_buttons);
 
-        this.selectTab(next_index);
+        this.#setSelectedTab(current_tab, new_tab);
     }
 
     /**

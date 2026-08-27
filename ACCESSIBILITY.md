@@ -116,6 +116,8 @@ A disabled tab is excluded from every interaction path:
 - click, `Enter`, and `Space` do not activate it,
 - `ArrowLeft`/`ArrowRight`/`ArrowUp`/`ArrowDown` skip over it, including when wrapping around,
 - `Home`/`End` skip it in favor of the first/last *enabled* tab,
+- a swipe (`options.swipeable`) skips it too, using the same adjacent-enabled-tab lookup as arrow-key
+  navigation, including wrap-around,
 - `selectTab()` throws instead of selecting it.
 
 It still participates in the roving `tabindex` as a non-target — i.e. it's simply never assigned
@@ -153,8 +155,9 @@ real assistive technology** — see [Manual assistive technology test matrix](#m
   manual activation, wrap-around, `Home`/`End` unaffected, and vertical orientation unaffected),
   RTL combined with disabled tabs (reversed arrow-key skipping and `Home`/`End` under RTL, both
   activation modes, wrap-around past both disabled edges), that a blocked disabled-tab interaction
-  never dispatches `tabs:beforechange`, and that the component still resolves to the correct
-  visible panel with no stylesheet loaded at all. CI and `prepublishOnly` run
+  never dispatches `tabs:beforechange`, that a swipe (`options.swipeable`) skips a disabled tab
+  instead of throwing (including wrap-around past a disabled edge), and that the component still
+  resolves to the correct visible panel with no stylesheet loaded at all. CI and `prepublishOnly` run
   `npm run test:coverage` instead, which runs the same suite gated on 100% branch/function
   coverage.
 - **Browser tests** (`npm run test:e2e`, [`e2e/`](./e2e)) — run with Playwright across Chromium,
@@ -163,7 +166,8 @@ real assistive technology** — see [Manual assistive technology test matrix](#m
   manual activation, vertical orientation unaffected, direction detected from a local `dir="rtl"`
   wrapper as well as `<html dir="rtl">`, and RTL combined with disabled tabs), mouse click, manual
   activation, multiple instances on one page, `options.swipeable`
-  ([`e2e/swipe.spec.js`](./e2e/swipe.spec.js)), `options.removeTabPanelTitle`
+  ([`e2e/swipe.spec.js`](./e2e/swipe.spec.js) — including that a swipe skips a disabled tab instead
+  of throwing), `options.removeTabPanelTitle`
   ([`e2e/initialization.spec.js`](./e2e/initialization.spec.js)), canceling `tabs:beforechange`
   ([`e2e/before-change.spec.js`](./e2e/before-change.spec.js)) — including that a real browser's
   mousedown-focuses-the-target behavior is correctly unwound on a canceled click — disabled tabs
@@ -174,7 +178,8 @@ real assistive technology** — see [Manual assistive technology test matrix](#m
   (`selectTab()`/`getSelectedIndex()`/`destroy()`/`tabs:beforechange`/`tabs:change`).
 - **axe-core scans** (part of `npm run test:e2e`, [`e2e/accessibility.spec.js`](./e2e/accessibility.spec.js))
   — run via `@axe-core/playwright` against the default, manual, vertical, custom-nav, swipeable,
-  disabled-tabs, RTL + disabled-tabs, and multiple-instance fixtures, both on initial render and after interaction
+  disabled-tabs, RTL + disabled-tabs, swipeable + disabled-tabs, and multiple-instance fixtures,
+  both on initial render and after interaction
   (click, keyboard, swipe).
 
 axe-core only detects a subset of accessibility issues — [roughly a third of WCAG success
