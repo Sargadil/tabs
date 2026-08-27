@@ -38,13 +38,22 @@ class Tabs {
     #touchStartX = 0;
     #touchStartY = 0;
 
+    /**
+     * Nav-button label derived for each panel at build time, keyed by the
+     * panel element. Only consulted as a fallback in #getNavTitle(): with
+     * options.removeTabPanelTitle the source `.tab-panel__title` element is
+     * gone after the first build, so a later refresh() still needs the
+     * label it produced back then to regenerate that tab.
+     */
+    #navTitleByPanel = new WeakMap();
+
     constructor(configs) {
         this.#configs = this.#deepMerge(this.#configs, configs);
         this.#validateConfig();
         this.#initElements();
         this.#validateDOM();
         this.#generatePanelIds();
-        this.#initTabs();
+        this.#initTabs(this.#configs.options.initSelectedItem);
 
         if (this.#configs.options.removeTabPanelTitle) {
             this.#removeTabPanelTitle();
@@ -97,7 +106,7 @@ class Tabs {
      * scattering identical presence checks across #insertNav(),
      * #prepareTabContent(), etc.
      */
-    #validateDOM() {
+    #validateDOM(is_refresh = false) {
         const classes = this.#configs.classes;
         const options = this.#configs.options;
         const panel_count = this.#objectsHTML['tabPanel'].length;
@@ -106,7 +115,10 @@ class Tabs {
             this.#throwError(`No tab panels were found. Expected at least one element matching "${classes.tabPanel}".`);
         }
 
-        if (options.initSelectedItem >= panel_count) {
+        // initSelectedItem only picks the tab shown at construction time; a
+        // later refresh() resolves its own active tab from the live DOM, so
+        // it must not be re-measured against a now-shorter panel list.
+        if (!is_refresh && options.initSelectedItem >= panel_count) {
             this.#throwError(`initSelectedItem ${options.initSelectedItem} is out of range. Found ${panel_count} tabs.`);
         }
 
@@ -127,12 +139,17 @@ class Tabs {
 
             const title_count = this.#objectsHTML['tabPanelTitle'].length;
 
-            if (title_count !== panel_count) {
+            // options.removeTabPanelTitle deletes every title element after
+            // the first build, so on refresh() there is nothing left to
+            // count — #getNavTitle() falls back to the cached labels.
+            const skip_title_check = is_refresh && options.removeTabPanelTitle;
+
+            if (!skip_title_check && title_count !== panel_count) {
                 this.#throwError(`Expected ${panel_count} tab panel title(s) matching "${classes.tabPanelTitle}" (one per panel) but found ${title_count}. Each panel needs a title element; options.customNavTitles only overrides its displayed text.`);
             }
         }
 
-        this.#validateDisabledTabs(panel_count);
+        this.#validateDisabledTabs(panel_count, is_refresh);
     }
 
     /**
@@ -144,7 +161,7 @@ class Tabs {
      * @param {number} panel_count
      *   Number of tab panels.
      */
-    #validateDisabledTabs(panel_count) {
+    #validateDisabledTabs(panel_count, is_refresh = false) {
         const options = this.#configs.options;
         let has_enabled_tab = false;
 
@@ -159,7 +176,9 @@ class Tabs {
             this.#throwError('At least one enabled tab is required.');
         }
 
-        if (this.#isSourceDisabled(options.initSelectedItem)) {
+        // Only meaningful at construction time — refresh() never re-reads
+        // initSelectedItem (see #resolveActiveIndex()).
+        if (!is_refresh && this.#isSourceDisabled(options.initSelectedItem)) {
             this.#throwError(`initSelectedItem ${options.initSelectedItem} is disabled. Choose an enabled tab as the initial tab.`);
         }
     }
@@ -183,7 +202,9 @@ class Tabs {
             return this.#isTabDisabled(this.#objectsHTML['tabsNavButton'][index]);
         }
 
-        return this.#objectsHTML['tabPanelTitle'][index].getAttribute('aria-disabled') === 'true';
+        const title = this.#objectsHTML['tabPanel'][index].querySelector(this.#configs.classes.tabPanelTitle);
+
+        return title ? title.getAttribute('aria-disabled') === 'true' : false;
     }
 
     /**
@@ -206,19 +227,127 @@ class Tabs {
      * unmount in a framework) to avoid leaking listeners.
      */
     destroy() {
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        this.#teardownListeners(this.#objectsHTML['tabsNavBtn'], this.#objectsHTML['tabPanel']);
+    }
 
+    /**
+     * Remove the keydown/click listeners from `tab_buttons` and the
+     * touch listeners from `panels`. removeEventListener() is a no-op for
+     * a listener that was never attached, so this is safe to call on
+     * elements that may or may not currently be wired up (e.g. panels
+     * when options.swipeable is off).
+     *
+     * @param {NodeList|HTMLElement[]} tab_buttons
+     *   Tab buttons to unbind.
+     *
+     * @param {NodeList|HTMLElement[]} panels
+     *   Tab panels to unbind.
+     */
+    #teardownListeners(tab_buttons, panels) {
         for (let i = 0; i < tab_buttons.length; i++) {
             tab_buttons[i].removeEventListener('keydown', this.#boundOnKeyDown);
             tab_buttons[i].removeEventListener('click', this.#boundOnClick);
         }
 
-        if (this.#configs.options.swipeable) {
-            this.#objectsHTML['tabPanel'].forEach((panel) => {
-                panel.removeEventListener('touchstart', this.#boundOnTouchStart);
-                panel.removeEventListener('touchend', this.#boundOnTouchEnd);
-            });
+        panels.forEach((panel) => {
+            panel.removeEventListener('touchstart', this.#boundOnTouchStart);
+            panel.removeEventListener('touchend', this.#boundOnTouchEnd);
+        });
+    }
+
+    /**
+     * Re-synchronize this instance with the current DOM.
+     *
+     * Call this after the consumer has changed the tabs/panels markup —
+     * added or removed panels (AJAX, a CMS, HTMX, a framework re-render),
+     * or toggled a tab's disabled state. The DOM stays the consumer's
+     * responsibility; there is deliberately no addTab()/removeTab().
+     *
+     * refresh() re-reads panels and navigation from the live DOM,
+     * re-validates the structure, moves listeners off removed elements and
+     * onto new ones (never binding an element twice), re-synchronizes the
+     * ARIA relationships, panel ids, and disabled state, and keeps the
+     * currently active tab selected if its panel still exists. If the
+     * active panel was removed, the tab that took its position becomes
+     * active (or the new last tab, if the removed one was last), skipping
+     * disabled tabs. Focus is only moved if it was already inside this
+     * tablist. No `tabs:beforechange`/`tabs:change` event is dispatched.
+     */
+    refresh() {
+        const previous_buttons = this.#objectsHTML['tabsNavBtn'];
+        const previous_panels = this.#objectsHTML['tabPanel'];
+        const previous_index = this.getSelectedIndex();
+        const previous_selected_panel = this.#panelForTab(previous_buttons[previous_index]);
+        const focus_was_in_tablist =
+            Array.prototype.indexOf.call(previous_buttons, this.#context.ownerDocument.activeElement) !== -1;
+
+        // Re-read the live DOM and re-validate before mutating anything, so
+        // a now-invalid DOM (e.g. every panel removed) throws while the
+        // instance is still fully wired to its previous elements.
+        this.#initElements();
+        this.#validateDOM(true);
+
+        // Safe to mutate now. Detach listeners from the previous elements
+        // first, so re-attaching below can never leave one bound twice.
+        this.#teardownListeners(previous_buttons, previous_panels);
+
+        this.#generatePanelIds();
+        this.#initTabs(this.#resolveActiveIndex(previous_selected_panel, previous_index));
+
+        if (this.#configs.options.removeTabPanelTitle) {
+            this.#removeTabPanelTitle();
         }
+
+        if (focus_was_in_tablist) {
+            this.#objectsHTML['tabsNavBtn'][this.getSelectedIndex()].focus();
+        }
+    }
+
+    /**
+     * The panel a tab controls, or null when there is no such tab (e.g.
+     * nothing was selected before a refresh()).
+     *
+     * @param {HTMLElement} [tab]
+     *   Tab button.
+     *
+     * @returns {HTMLElement|null}
+     */
+    #panelForTab(tab) {
+        return tab ? document.getElementById(tab.getAttribute('aria-controls')) : null;
+    }
+
+    /**
+     * Decide which tab index should be active after a refresh().
+     *
+     * Keeps the previous selection if its panel is still in the DOM. If
+     * that panel was removed, falls back to whatever panel now sits at the
+     * old position (visually "the next tab"), clamped to the new last
+     * panel if the removed one was last ("the previous tab"). If the
+     * resulting tab is disabled — including when the still-present active
+     * tab was just disabled — advances (wrapping) to the next enabled one.
+     * #validateDOM() has already guaranteed at least one enabled tab.
+     *
+     * @param {HTMLElement|null} previous_selected_panel
+     *   The panel that was active before the refresh, if any.
+     *
+     * @param {number} previous_index
+     *   The index that was active before the refresh (-1 if none).
+     *
+     * @returns {number}
+     */
+    #resolveActiveIndex(previous_selected_panel, previous_index) {
+        const panels = this.#objectsHTML['tabPanel'];
+        let index = Array.prototype.indexOf.call(panels, previous_selected_panel);
+
+        if (index === -1) {
+            index = Math.min(Math.max(previous_index, 0), panels.length - 1);
+        }
+
+        while (this.#isSourceDisabled(index)) {
+            index = (index + 1) % panels.length;
+        }
+
+        return index;
     }
 
     /**
@@ -257,22 +386,29 @@ class Tabs {
     }
 
     /**
-     * Initial tabs functionality.
+     * Build (or rebuild) the navigation, wire up listeners, and sync every
+     * panel to the given active tab. Shared by the constructor and
+     * refresh(); the listener wiring removes before it adds, so a rebuild
+     * over elements that persist (custom nav buttons, existing panels)
+     * never leaves them bound twice.
+     *
+     * @param {number} selected_index
+     *   Index of the tab that should be active.
      */
-    #initTabs() {
-        this.#insertNav();
+    #initTabs(selected_index) {
+        this.#insertNav(selected_index);
 
         const tab_buttons = this.#objectsHTML['tabsNavBtn'];
 
         for (let i = 0; i < tab_buttons.length; i++) {
-            const tab_panel = document.getElementById(tab_buttons[i].getAttribute('aria-controls'));
-
-            tab_buttons[i].tabIndex = this.#configs.options.initSelectedItem === i ? 0 : -1;
+            tab_buttons[i].tabIndex = selected_index === i ? 0 : -1;
+            tab_buttons[i].removeEventListener('keydown', this.#boundOnKeyDown);
+            tab_buttons[i].removeEventListener('click', this.#boundOnClick);
             tab_buttons[i].addEventListener('keydown', this.#boundOnKeyDown);
             tab_buttons[i].addEventListener('click', this.#boundOnClick);
         }
 
-        this.#prepareTabContent();
+        this.#prepareTabContent(selected_index);
 
         if (this.#configs.options.swipeable) {
             this.#initSwipe();
@@ -281,11 +417,14 @@ class Tabs {
 
     /**
      * Attach touch listeners to each panel to switch tabs on a
-     * horizontal swipe (options.swipeable).
+     * horizontal swipe (options.swipeable). Removes before adding so a
+     * refresh() over surviving panels doesn't bind them twice.
      */
     #initSwipe() {
         this.#objectsHTML['tabPanel'].forEach((panel) => {
             panel.style.touchAction = 'pan-y';
+            panel.removeEventListener('touchstart', this.#boundOnTouchStart);
+            panel.removeEventListener('touchend', this.#boundOnTouchEnd);
             panel.addEventListener('touchstart', this.#boundOnTouchStart, { passive: true });
             panel.addEventListener('touchend', this.#boundOnTouchEnd, { passive: true });
         });
@@ -765,26 +904,21 @@ class Tabs {
      * hides inactive panels natively, without depending on bundled CSS.
      * The `tab-panel--open` class is kept in sync purely as a styling hook.
      */
-    #prepareTabContent() {
+    #prepareTabContent(selected_index) {
         const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const open_class_selector = this.#configs.selectors.tabPanelOpen;
 
         this.#objectsHTML['tabPanel'].forEach((item, index) => {
-            const tab_panel_id = this.#panelIds[index];
-            const open_class_selector = this.#configs.selectors.tabPanelOpen;
-            const tab_panel_open_index = this.#configs.options.initSelectedItem;
-            const is_selected = tab_panel_open_index === index;
+            const is_selected = selected_index === index;
 
-            item.setAttribute('id', tab_panel_id);
+            item.setAttribute('id', this.#panelIds[index]);
             item.setAttribute('tabindex', '0');
             item.setAttribute('role', 'tabpanel');
             item.hidden = !is_selected;
+            item.classList.toggle(open_class_selector, is_selected);
 
             if (tab_buttons[index]) {
                 item.setAttribute('aria-labelledby', tab_buttons[index].id);
-            }
-
-            if (is_selected) {
-                item.classList.add(open_class_selector);
             }
         });
     }
@@ -833,11 +967,11 @@ class Tabs {
     /**
      * Prepare and insert tab navigation.
      */
-    #insertNav() {
+    #insertNav(selected_index) {
         if (!this.#configs.options.useCustomNav) {
-            this.#objectsHTML['tabsNavContainer'][0].innerHTML = this.#createNav();
+            this.#objectsHTML['tabsNavContainer'][0].innerHTML = this.#createNav(selected_index);
         } else {
-            this.#preparedCustomNavButton();
+            this.#preparedCustomNavButton(selected_index);
         }
 
         this.#appendElement('tabsNavBtn', this.#context.querySelectorAll('[role = "tab"]'));
@@ -862,18 +996,27 @@ class Tabs {
      *   Return title string.
      */
     #getNavTitle(index) {
-        let title = '';
+        const panel = this.#objectsHTML['tabPanel'][index];
+        let title;
 
         if (this.#configs.options.customNavTitles.length) {
             title = this.#configs.options.customNavTitles[index];
         } else {
-            let custom_title = this.#objectsHTML['tabPanelTitle'][index].getAttribute('data-nav-title');
-            title = custom_title ?? this.#objectsHTML['tabPanelTitle'][index].innerText;
+            const title_element = panel.querySelector(this.#configs.classes.tabPanelTitle);
+
+            // options.removeTabPanelTitle deletes the source element after the
+            // first build, so a later refresh() falls back to the label that
+            // element produced back then, kept per-panel in #navTitleByPanel.
+            title = title_element
+                ? (title_element.getAttribute('data-nav-title') ?? title_element.innerText)
+                : this.#navTitleByPanel.get(panel);
         }
 
         if (title === undefined) {
             title = '';
         }
+
+        this.#navTitleByPanel.set(panel, title);
 
         return title;
     }
@@ -884,7 +1027,7 @@ class Tabs {
      * @returns {string}
      *   Return raw nav HTML.
      */
-    #createNav() {
+    #createNav(selected_index) {
         const tab_nav_list_selector = this.#configs.classes.tabsNavList.substring(1);
         const tab_nav_btn_selector = this.#configs.classes.tabsNavButton.substring(1);
         const aria_label = this.#configs.options.ariaLabel;
@@ -894,10 +1037,10 @@ class Tabs {
 
         let html = `<div class="${tab_nav_list_selector}" role="tablist"${aria_label_attr}${aria_orientation_attr}>`;
 
-        for (let i = 0; i < this.#objectsHTML['tabPanelTitle'].length; i++) {
+        for (let i = 0; i < this.#objectsHTML['tabPanel'].length; i++) {
             let tab_panel_id = this.#panelIds[i];
             let tab_id = tab_panel_id + '-tab';
-            let is_selected = this.#configs.options.initSelectedItem === i;
+            let is_selected = selected_index === i;
             let disabled_attr = this.#isSourceDisabled(i) ? ' disabled' : '';
 
             html += `<button type="button" id="${tab_id}" class="${tab_nav_btn_selector}" role="tab" aria-selected="${is_selected ? 'true' : 'false'}" aria-controls="${tab_panel_id}"${disabled_attr}>${this.#getNavTitle(i)}</button>`
@@ -914,7 +1057,7 @@ class Tabs {
      * given `type="button"` so it can't accidentally submit an enclosing
      * `<form>`. Elements other than `<button>` are left untouched.
      */
-    #preparedCustomNavButton() {
+    #preparedCustomNavButton(selected_index) {
         if (this.#objectsHTML['tabsNavList'].length > 0) {
             const tablist = this.#objectsHTML['tabsNavList'][0];
 
@@ -932,7 +1075,7 @@ class Tabs {
         for (let i = 0; i < this.#objectsHTML['tabsNavButton'].length; i++) {
             const button = this.#objectsHTML['tabsNavButton'][i];
             let tab_panel_id = this.#panelIds[i];
-            let is_selected = this.#configs.options.initSelectedItem === i;
+            let is_selected = selected_index === i;
 
             if (!button.id) {
                 button.setAttribute('id', tab_panel_id + '-tab');
@@ -943,12 +1086,7 @@ class Tabs {
             }
 
             button.setAttribute('aria-controls', tab_panel_id);
-            button.setAttribute('aria-selected', 'false');
-
-
-            if (is_selected) {
-                button.setAttribute('aria-selected', 'true');
-            }
+            button.setAttribute('aria-selected', is_selected ? 'true' : 'false');
         }
     }
 
@@ -959,13 +1097,21 @@ class Tabs {
      * make document.getElementById resolve to the wrong instance).
      */
     #generatePanelIds() {
-        const count = this.#objectsHTML['tabPanel'].length;
         const prefix = this.#configs.selectors.tabPanelIdPrefix;
         const ids = [];
 
-        for (let i = 0; i < count; i++) {
-            ids.push(this.#makeUniqueId(`${prefix}-${i}`));
-        }
+        this.#objectsHTML['tabPanel'].forEach((panel, index) => {
+            // Keep an id a panel already has — its own from a previous build,
+            // or one the consumer set — so refresh() doesn't rename surviving
+            // panels (and break bookmarked in-page links to them). Only newly
+            // added panels get a fresh id, made unique against the whole
+            // document so it can't clash with another instance or a kept id.
+            if (!panel.id) {
+                panel.id = this.#makeUniqueId(`${prefix}-${index}`);
+            }
+
+            ids.push(panel.id);
+        });
 
         this.#panelIds = ids;
     }
