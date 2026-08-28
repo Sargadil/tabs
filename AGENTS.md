@@ -11,8 +11,8 @@ not restate the API or the accessibility contract (those live in `README.md` and
 zero-runtime-dependency tabs library implementing the
 [WAI-ARIA Tabs Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/). The
 implementation is the `Tabs` class in `src/js/script.js`, with a small number of
-internal, non-public helper modules under `src/js/internal/` (currently
-`config.js`). Everything builds into a single bundle per format.
+internal, non-public helper modules under `src/js/internal/` (`config.js`,
+`keyboard.js`). Everything builds into a single bundle per format.
 
 The goal is a small, predictable, well-tested library — not a feature-rich one.
 `docs/PROJECT.md` has the full context and the priority order that settles
@@ -39,11 +39,12 @@ you the ticket to implement. Implement only that ticket.
 
 ```
 src/js/script.js         The Tabs class — orchestration + DOM/ARIA/keyboard (private #methods)
-src/js/internal/         Internal, non-public helper modules (config.js); bundled into dist/
+src/js/internal/         Internal, non-public helper modules (config.js, keyboard.js); bundled into dist/
 src/js/script.d.ts       Public TypeScript types — hand-maintained, copied into dist/ by the build
 src/scss/                Style source
 dist/                    Generated build output — COMMITTED (see "Generated files")
 test/tabs.test.js        Unit/integration tests (node --test, jsdom)
+test/keyboard.test.mjs   Isolated unit tests for src/js/internal/keyboard.js (pure, no jsdom)
 e2e/                     Playwright: specs, fixtures/, axe scans, static server
 examples/                Small runnable public-API examples (also smoke-tested in CI)
 index.html               Live demo (served at github.io via Pages-from-branch)
