@@ -261,6 +261,7 @@
                 <a href="https://github.com/Sargadil/tabs">GitHub</a>
                 <a href="https://www.npmjs.com/package/@sargadil/tabs">npm</a>
                 <a href="./README.md">README</a>
+                <a href="./examples/">Examples</a>
             </p>
         </header>
 
@@ -269,9 +270,12 @@
                 <a href="#default">Default</a>
                 <a href="#vertical">Vertical</a>
                 <a href="#manual">Manual activation</a>
+                <a href="#rtl">RTL</a>
+                <a href="#disabled">Disabled tabs</a>
                 <a href="#custom-nav">Custom nav markup</a>
                 <a href="#custom-titles">Custom titles</a>
                 <a href="#swipeable">Swipeable</a>
+                <a href="#multiple">Multiple instances</a>
                 <a href="#narrow">Narrow container</a>
             </div>
             <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Switch to light theme">🌙</button>
@@ -432,6 +436,83 @@
             </details>
         </section>
 
+        <section class="example" id="rtl">
+            <h2>RTL</h2>
+            <p class="description">
+                Inside <code>dir="rtl"</code>, <kbd>ArrowLeft</kbd>/<kbd>ArrowRight</kbd> are reversed so the key
+                that points toward the next tab still selects it. Direction is read from the DOM — there is no
+                <code>rtl</code> option. <kbd>Home</kbd>/<kbd>End</kbd> are unaffected.
+            </p>
+            <div class="demo">
+                <div dir="rtl">
+                    <div class="tabs" id="tabs-rtl">
+                        <div class="tabs__nav"></div>
+                        <div class="tabs__panels">
+                            <div class="tab-panel">
+                                <h3 class="tab-panel__title">الأول</h3>
+                                <div class="tab-panel__content">اضغط السهم الأيسر للانتقال إلى التبويب التالي، والسهم الأيمن للسابق.</div>
+                            </div>
+                            <div class="tab-panel">
+                                <h3 class="tab-panel__title">الثاني</h3>
+                                <div class="tab-panel__content">الاتجاه يُكتشف من عنصر <code>dir="rtl"</code> المحيط.</div>
+                            </div>
+                            <div class="tab-panel">
+                                <h3 class="tab-panel__title">الثالث</h3>
+                                <div class="tab-panel__content">مفتاحا Home و End يبقيان بلا تغيير.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <details class="code">
+                <summary>Show code</summary>
+                <pre><code>&lt;div dir="rtl"&gt;
+    &lt;div class="tabs" id="tabs-rtl"&gt;...&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+    new Tabs({ contextID: 'tabs-rtl', options: { ariaLabel: 'أقسام' } });
+&lt;/script&gt;</code></pre>
+            </details>
+        </section>
+
+        <section class="example" id="disabled">
+            <h2>Disabled tabs</h2>
+            <p class="description">
+                A disabled tab cannot be activated and is skipped by arrow keys, <kbd>Home</kbd>/<kbd>End</kbd>,
+                and wrap-around. Default nav: mark the panel's <code>.tab-panel__title</code> with
+                <code>aria-disabled="true"</code> and the generated tab becomes a real
+                <code>&lt;button disabled&gt;</code>.
+            </p>
+            <div class="demo">
+                <div class="tabs" id="tabs-disabled">
+                    <div class="tabs__nav"></div>
+                    <div class="tabs__panels">
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Profile</h3>
+                            <div class="tab-panel__content">Enabled. Arrow right — focus jumps straight over "Billing".</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title" aria-disabled="true">Billing</h3>
+                            <div class="tab-panel__content">Disabled.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Team</h3>
+                            <div class="tab-panel__content">Enabled.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <details class="code">
+                <summary>Show code</summary>
+                <pre><code>&lt;h3 class="tab-panel__title" aria-disabled="true"&gt;Billing&lt;/h3&gt;
+
+&lt;script&gt;
+    new Tabs({ contextID: 'tabs-disabled' });
+&lt;/script&gt;</code></pre>
+            </details>
+        </section>
+
         <section class="example" id="custom-nav">
             <h2>Custom navigation markup</h2>
             <p class="description">
@@ -568,6 +649,50 @@
             </details>
         </section>
 
+        <section class="example" id="multiple">
+            <h2>Multiple instances</h2>
+            <p class="description">
+                Two independent groups on one page, both using the default markup. Switching one never affects
+                the other; panel ids are made unique automatically so the <code>aria-controls</code>/
+                <code>aria-labelledby</code> wiring stays separate. Give each an <code>ariaLabel</code>.
+            </p>
+            <div class="demo">
+                <div class="tabs" id="tabs-multi-a">
+                    <div class="tabs__nav"></div>
+                    <div class="tabs__panels">
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Description</h3>
+                            <div class="tab-panel__content">Group one, panel one.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Specs</h3>
+                            <div class="tab-panel__content">Group one, panel two.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tabs" id="tabs-multi-b">
+                    <div class="tabs__nav"></div>
+                    <div class="tabs__panels">
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Shipping</h3>
+                            <div class="tab-panel__content">Group two, panel one.</div>
+                        </div>
+                        <div class="tab-panel">
+                            <h3 class="tab-panel__title">Returns</h3>
+                            <div class="tab-panel__content">Group two, panel two.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <details class="code">
+                <summary>Show code</summary>
+                <pre><code>&lt;script&gt;
+    new Tabs({ contextID: 'tabs-multi-a', options: { ariaLabel: 'Product details' } });
+    new Tabs({ contextID: 'tabs-multi-b', options: { ariaLabel: 'Support' } });
+&lt;/script&gt;</code></pre>
+            </details>
+        </section>
+
         <section class="example" id="narrow">
             <h2>Responsive nav in a narrow container</h2>
             <p class="description">
@@ -631,6 +756,13 @@
         });
 
         new Tabs({
+            contextID: 'tabs-rtl',
+            options: { ariaLabel: 'أقسام' },
+        });
+
+        new Tabs({ contextID: 'tabs-disabled' });
+
+        new Tabs({
             contextID: 'tabs-custom-nav',
             classes: {
                 tabsNavContainer: '.custom-tabs__nav',
@@ -651,6 +783,9 @@
             contextID: 'tabs-swipeable',
             options: { swipeable: true },
         });
+
+        new Tabs({ contextID: 'tabs-multi-a', options: { ariaLabel: 'Product details' } });
+        new Tabs({ contextID: 'tabs-multi-b', options: { ariaLabel: 'Support' } });
 
         new Tabs({ contextID: 'tabs-narrow' });
     </script>

@@ -126,7 +126,7 @@ order and the "enabled" accessibility state by the browser itself, independent o
 library does.
 
 A blocked click/`Enter`/`Space` on a disabled tab never dispatches
-[`tabs:beforechange` or `tabs:change`](./README.md#tabsbeforechange-event) either — the disabled
+[`tabs:beforechange` or `tabs:change`](./README.md#tabsbeforechange) either — the disabled
 check happens before either event would be raised, so a listener watching for selection attempts
 will never see one aimed at a disabled tab.
 
@@ -237,8 +237,8 @@ here (with the date and, ideally, a link to notes or an issue for any `FAIL`).
 | iOS | Safari | VoiceOver | TBD | — |
 | Android | Chrome | TalkBack | TBD | — |
 
-Suggested minimum check per row, using the [live demo](https://sargadil.github.io/tabs/) or the
-`e2e/fixtures/` pages:
+Suggested minimum check per row, using the [live demo](https://sargadil.github.io/tabs/), the
+[`examples/`](./examples/) pages, or the `e2e/fixtures/` pages:
 
 1. Tab into the tablist; confirm the AT announces a tab, its name, its selected state, and its
    position (e.g. "1 of 3").
