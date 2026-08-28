@@ -27,6 +27,7 @@ Public docs (present in every clone):
 | `README.md` | Public package usage and API |
 | `docs/PROJECT.md` | What the project is and why; priority order; AI workflow |
 | `docs/CONTRIBUTING.md` | Development and quality rules, per-ticket gates, reusable agent prompts |
+| `docs/ARCHITECTURE.md` | Structure, responsibility boundaries, invariants, the frozen public contract |
 | `docs/NON-GOALS.md` | Features intentionally out of scope — do not implement them |
 | `ACCESSIBILITY.md` | Accessibility and keyboard contract |
 | `CHANGELOG.md` | User-facing change history (`[Unreleased]` at the top) |
@@ -72,8 +73,10 @@ options.orientation         "horizontal" | "vertical"
 options.activationMode      "automatic" | "manual"
 ```
 
-Details are in `README.md` and `src/js/script.d.ts` — read those, don't rely on
-this list for anything beyond orientation.
+Details are in `README.md` and `src/js/script.d.ts`; the frozen contract
+(guarantees, package shape, error messages) is `docs/ARCHITECTURE.md` →
+*Public contract*. Read those — don't rely on this list for anything beyond
+orientation.
 
 ## Architecture invariants
 

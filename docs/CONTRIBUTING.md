@@ -2,27 +2,12 @@
 
 ## Development philosophy
 
-`@sargadil/tabs` is meant to stay a small and predictable library.
+`@sargadil/tabs` is meant to stay a small and predictable library. More features
+does not automatically mean a better product.
 
-Project priorities:
-
-```text
-correctness
-↓
-accessibility
-↓
-tests
-↓
-package quality
-↓
-developer experience
-↓
-features
-↓
-visual enhancements
-```
-
-More features does not automatically mean a better product.
+The priority order that settles conflicts between goals is in
+[`PROJECT.md`](./PROJECT.md#priority-order); the structure and invariants are in
+[`ARCHITECTURE.md`](./ARCHITECTURE.md). This file is the day-to-day rules.
 
 ---
 
@@ -491,46 +476,14 @@ Do not add a MutationObserver without a clear justification.
 
 ---
 
-# Generated code and AI
+# AI-assisted work
 
-Using AI in this project is allowed and expected.
+The workflow, the "AI executes / maintainer decides" rule, and the review
+checklist for AI-generated changes are in
+[`PROJECT.md`](./PROJECT.md#ai-assisted-engineering).
 
-AI can help with:
-
-- implementation,
-- analysis,
-- tests,
-- refactoring,
-- documentation,
-- research.
-
-AI-generated code is not automatically correct.
-
-Every implementation must be evaluated for:
-
-```text
-correctness
-architecture
-edge cases
-API design
-accessibility
-maintainability
-tests
-```
-
----
-
-# AI role
-
-The rule:
-
-> AI executes. Maintainer decides.
-
-AI may propose a feature.
-
-That does not mean the feature should be added.
-
-A low implementation cost is not an argument for expanding the API.
+For this repo specifically: a low implementation cost is never an argument for
+expanding the public API or the options object.
 
 ---
 
