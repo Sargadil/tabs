@@ -27,7 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   right-to-left. Direction is read from the DOM — via `dir="rtl"` on `<html>` or any closer
   ancestor — with no `options.rtl` flag to set. Vertical orientation (`ArrowUp`/`ArrowDown`),
   `Home`/`End`, and wrap-around are all unaffected by direction. See
-  [RTL support](README.md#rtl-support).
+  [RTL](README.md#rtl).
 - Disabled tabs, following standard HTML/ARIA semantics with no library-specific attribute: the
   default nav renders a disabled panel's tab as a native `<button disabled>` (read from
   `aria-disabled="true"` on the panel's `.tab-panel__title`, since no tab element exists yet at
@@ -43,7 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   container right before the selected tab changes — via click, keyboard, or `selectTab()`.
   Calling `preventDefault()` on it blocks the transition entirely: `aria-selected`, the roving
   `tabindex`, `hidden` panels, focus, and the selected index are all left exactly as they were,
-  and `tabs:change` does not fire. See [`tabs:beforechange`](README.md#tabsbeforechange-event).
+  and `tabs:change` does not fire. See [`tabs:beforechange`](README.md#tabsbeforechange).
 - A real-browser test suite (`npm run test:e2e`, [`e2e/`](e2e)) running on `@playwright/test`
   (dev dependency only) across Chromium, Firefox, and WebKit. Covers initialization, keyboard
   navigation in both orientations (including wrap-around and RTL), mouse click, manual activation mode,
@@ -87,6 +87,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   click, on automatic keyboard activation, and on `selectTab()`), so the component hides
   and shows panels correctly even without the bundled CSS. The `tab-panel--open` class is
   kept in sync purely as a styling hook and behaves exactly as before.
+- README restructured into a conventional section order (What it is → Features → Installation
+  → Basic usage → CSS → Configuration → API → Events → Accessibility → RTL → Disabled tabs
+  → Dynamic tabs → Recipes → Browser support → Development → Migrating → License), with new
+  Features, Browser support, and Development sections. No API or behavior changes.
+- The live demo (`index.html`) gained RTL, disabled-tabs, and multiple-instances panels and a
+  link to `examples/`.
+- Contributor documentation added under `docs/` (`CONTRIBUTING.md`, `PROJECT.md`, `NON-GOALS.md`)
+  plus `AGENTS.md` / `CLAUDE.md` for coding-agent onboarding. Not part of the published package.
 
 ### Fixed
 - Generated nav buttons now have `type="button"`, and custom-nav `<button>` elements
