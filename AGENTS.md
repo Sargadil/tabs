@@ -10,7 +10,9 @@ not restate the API or the accessibility contract (those live in `README.md` and
 `@sargadil/tabs` is a lightweight, framework-agnostic, accessibility-first,
 zero-runtime-dependency tabs library implementing the
 [WAI-ARIA Tabs Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/). The
-entire implementation is one file: `src/js/script.js`.
+implementation is the `Tabs` class in `src/js/script.js`, with a small number of
+internal, non-public helper modules under `src/js/internal/` (currently
+`config.js`). Everything builds into a single bundle per format.
 
 The goal is a small, predictable, well-tested library — not a feature-rich one.
 `docs/PROJECT.md` has the full context and the priority order that settles
@@ -25,6 +27,7 @@ Public docs (present in every clone):
 | `README.md` | Public package usage and API |
 | `docs/PROJECT.md` | What the project is and why; priority order; AI workflow |
 | `docs/CONTRIBUTING.md` | Development and quality rules, per-ticket gates, reusable agent prompts |
+| `docs/ARCHITECTURE.md` | Structure, responsibility boundaries, invariants, the frozen public contract |
 | `docs/NON-GOALS.md` | Features intentionally out of scope — do not implement them |
 | `ACCESSIBILITY.md` | Accessibility and keyboard contract |
 | `CHANGELOG.md` | User-facing change history (`[Unreleased]` at the top) |
@@ -35,7 +38,8 @@ you the ticket to implement. Implement only that ticket.
 ## Repository map
 
 ```
-src/js/script.js         The entire library (single file; private #methods)
+src/js/script.js         The Tabs class — orchestration + DOM/ARIA/keyboard (private #methods)
+src/js/internal/         Internal, non-public helper modules (config.js); bundled into dist/
 src/js/script.d.ts       Public TypeScript types — hand-maintained, copied into dist/ by the build
 src/scss/                Style source
 dist/                    Generated build output — COMMITTED (see "Generated files")
@@ -69,8 +73,10 @@ options.orientation         "horizontal" | "vertical"
 options.activationMode      "automatic" | "manual"
 ```
 
-Details are in `README.md` and `src/js/script.d.ts` — read those, don't rely on
-this list for anything beyond orientation.
+Details are in `README.md` and `src/js/script.d.ts`; the frozen contract
+(guarantees, package shape, error messages) is `docs/ARCHITECTURE.md` →
+*Public contract*. Read those — don't rely on this list for anything beyond
+orientation.
 
 ## Architecture invariants
 

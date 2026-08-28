@@ -24,7 +24,7 @@ API*, *Runtime dependencies*, *State*, *Framework independence*.
 ## Cross-cutting
 
 - **No new runtime dependencies.** Dev dependencies for testing / build / tooling are fine.
-- **Do not grow the public API or the options object** without a concrete problem the existing API cannot solve. The surface is intentionally: `new Tabs(config)`, `destroy()`, `selectTab()`, `getSelectedIndex()`, `refresh()`, and the `tabs:beforechange` / `tabs:change` events.
+- **Do not grow the public API or the options object** without a concrete problem the existing API cannot solve. The surface is intentionally small and frozen — see [`ARCHITECTURE.md`](./ARCHITECTURE.md#public-contract).
 - **No vendor-specific agent instruction files** (`GEMINI.md`, `.cursor/rules/*`, `.github/copilot-instructions.md`, …). `AGENTS.md` is the single neutral source; add a vendor file only for a concrete technical need.
 - **No unqualified accessibility claims** ("fully accessible", "100% WCAG compliant"). State only what is true and tested: follows the WAI-ARIA Tabs Pattern; tested with Playwright and axe; manually verified with a given tool only if it actually was.
 - **No breaking changes by accident.** If one is genuinely needed: call it out, explain why, provide a migration path.
