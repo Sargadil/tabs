@@ -51,8 +51,24 @@ function packTarball(destinationDir) {
         { cwd: PROJECT_ROOT, encoding: 'utf8' }
     );
 
-    const [result] = JSON.parse(output);
-    return result;
+    // npm may print a config warning before the JSON payload, and the payload
+    // shape differs by npm major:
+    //   npm <= 11: [ { name, version, filename, files, ... } ]
+    //   npm >= 12: { "<package-name>": { name, version, filename, files, ... } }
+    const jsonStart = output.search(/[[{]/);
+    if (jsonStart === -1) {
+        throw new Error(`npm pack --json produced no JSON:\n${output}`);
+    }
+
+    const parsed = JSON.parse(output.slice(jsonStart));
+
+    if (Array.isArray(parsed)) {
+        return parsed[0];
+    }
+    if (parsed && typeof parsed.name === 'string') {
+        return parsed;
+    }
+    return Object.values(parsed)[0];
 }
 
 function verifyTarballContents(packResult, pkg) {
