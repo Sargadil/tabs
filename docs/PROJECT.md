@@ -8,7 +8,8 @@ in [`CONTRIBUTING.md`](./CONTRIBUTING.md); this file is the "why".
 `@sargadil/tabs` is a lightweight, framework-agnostic, accessibility-first,
 zero-runtime-dependency tabs library implementing the
 [WAI-ARIA Tabs Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/). The
-implementation is a single file, `src/js/script.js`.
+implementation is the `Tabs` class in `src/js/script.js` plus a few internal,
+non-public helper modules under `src/js/internal/`.
 
 The goal is not a component with the maximum number of features. The goal is a
 library that is:
