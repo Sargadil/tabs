@@ -24,7 +24,10 @@ jobs:
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
 
-      - run: npm install -g npm@latest
+      # Pin the npm major: `npm@latest` floating to a new major (e.g. 12) has
+      # changed `npm pack --json` output and broken the package smoke test
+      # mid-release. npm >= 11.5 is required for OIDC trusted publishing.
+      - run: npm install -g npm@11
 
       - run: npm ci
 
