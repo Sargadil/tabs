@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-08-28
+
 ### Added
 - `examples/` — a set of small, self-contained runnable pages (one use case each, public API only,
   no build step or framework): basic setup, manual activation, vertical, RTL, disabled tabs, custom
