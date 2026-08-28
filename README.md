@@ -75,7 +75,7 @@ or jsDelivr:
 ```
 
 Both expose a `Tabs` global. Pin a version for production, e.g.
-`https://unpkg.com/@sargadil/tabs@1.2.0/...`, instead of always fetching the latest.
+`https://unpkg.com/@sargadil/tabs@1.3.0/...`, instead of always fetching the latest.
 
 ## Basic usage
 
