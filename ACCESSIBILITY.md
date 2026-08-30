@@ -163,9 +163,12 @@ real assistive technology** — see [Manual assistive technology test matrix](#m
   tabs and panels, removal of the active tab and its documented fallback, disabled-state changes,
   that repeated `refresh()` calls never duplicate listeners/events, focus handling, and that
   multiple instances stay independent), and that the component still
-  resolves to the correct visible panel with no stylesheet loaded at all. CI and `prepublishOnly` run
-  `npm run test:coverage` instead, which runs the same suite gated on 100% branch/function
-  coverage.
+  resolves to the correct visible panel with no stylesheet loaded at all.
+  [`test/keyboard.test.mjs`](./test/keyboard.test.mjs) additionally exercises the
+  pure keyboard/swipe decision logic (`src/js/internal/keyboard.js`) in isolation —
+  orientation, RTL, `Home`/`End`, wrap-around, disabled-tab skipping, and non-navigation
+  keys — with plain values, no DOM. CI and `prepublishOnly` run `npm run test:coverage`
+  instead, which runs the same suites gated on 100% branch/function coverage.
 - **Browser tests** (`npm run test:e2e`, [`e2e/`](./e2e)) — run with Playwright across Chromium,
   Firefox, and WebKit. Cover initialization, keyboard navigation in both orientations, RTL
   keyboard navigation ([`e2e/keyboard-rtl.spec.js`](./e2e/keyboard-rtl.spec.js) — automatic and
