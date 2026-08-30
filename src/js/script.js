@@ -4,7 +4,10 @@ import * as dom from './internal/dom.js';
 
 class Tabs {
 
-    #objectsHTML = {};
+    // The queried DOM, keyed by the config `classes` names, plus `tabsNavBtn`
+    // (the resolved `role="tab"` elements). Re-read from the live DOM by
+    // #initElements() on construction and on every refresh().
+    #elements = {};
 
     // The effective configuration (defaults + the caller's object).
     // Assigned in the constructor via mergeConfig().
@@ -37,10 +40,6 @@ class Tabs {
         this.#validateDomStructure();
         this.#generatePanelIds();
         this.#initTabs(this.#configs.options.initSelectedItem);
-
-        if (this.#configs.options.removeTabPanelTitle) {
-            this.#removeTabPanelTitle();
-        }
     }
 
     /**
@@ -67,15 +66,13 @@ class Tabs {
      *   initSelectedItem / missing-title rules).
      */
     #validateDomStructure(is_refresh = false) {
-        const elements = this.#objectsHTML;
-
         config.validateDomStructure(
             this.#configs,
             {
-                panelCount: elements['tabPanel'].length,
-                navButtonCount: elements['tabsNavButton'].length,
-                navContainerCount: elements['tabsNavContainer'].length,
-                titleCount: elements['tabPanelTitle'].length,
+                panelCount: this.#elements.tabPanel.length,
+                navButtonCount: this.#elements.tabsNavButton.length,
+                navContainerCount: this.#elements.tabsNavContainer.length,
+                titleCount: this.#elements.tabPanelTitle.length,
             },
             (index) => this.#isSourceDisabled(index),
             is_refresh,
@@ -97,8 +94,8 @@ class Tabs {
         return dom.isSourceDisabled(
             {
                 useCustomNav: this.#configs.options.useCustomNav,
-                navButtons: this.#objectsHTML['tabsNavButton'],
-                panels: this.#objectsHTML['tabPanel'],
+                navButtons: this.#elements.tabsNavButton,
+                panels: this.#elements.tabPanel,
                 titleSelector: this.#configs.classes.tabPanelTitle,
             },
             index,
@@ -112,7 +109,7 @@ class Tabs {
      * unmount in a framework) to avoid leaking listeners.
      */
     destroy() {
-        this.#teardownListeners(this.#objectsHTML['tabsNavBtn'], this.#objectsHTML['tabPanel']);
+        this.#teardownListeners(this.#elements.tabsNavBtn, this.#elements.tabPanel);
     }
 
     /**
@@ -159,8 +156,8 @@ class Tabs {
      * tablist. No `tabs:beforechange`/`tabs:change` event is dispatched.
      */
     refresh() {
-        const previous_buttons = this.#objectsHTML['tabsNavBtn'];
-        const previous_panels = this.#objectsHTML['tabPanel'];
+        const previous_buttons = this.#elements.tabsNavBtn;
+        const previous_panels = this.#elements.tabPanel;
         const previous_index = this.getSelectedIndex();
         const previous_selected_panel = dom.panelForTab(previous_buttons[previous_index], this.#context.ownerDocument);
         const focus_was_in_tablist =
@@ -179,12 +176,8 @@ class Tabs {
         this.#generatePanelIds();
         this.#initTabs(this.#resolveActiveIndex(previous_selected_panel, previous_index));
 
-        if (this.#configs.options.removeTabPanelTitle) {
-            this.#removeTabPanelTitle();
-        }
-
         if (focus_was_in_tablist) {
-            this.#objectsHTML['tabsNavBtn'][this.getSelectedIndex()].focus();
+            this.#elements.tabsNavBtn[this.getSelectedIndex()].focus();
         }
     }
 
@@ -208,7 +201,7 @@ class Tabs {
      * @returns {number}
      */
     #resolveActiveIndex(previous_selected_panel, previous_index) {
-        const panels = this.#objectsHTML['tabPanel'];
+        const panels = this.#elements.tabPanel;
         let index = Array.prototype.indexOf.call(panels, previous_selected_panel);
 
         if (index === -1) {
@@ -229,7 +222,7 @@ class Tabs {
      *   Return the index of the currently selected tab, or -1 if none is selected.
      */
     getSelectedIndex() {
-        return dom.selectedIndex(this.#objectsHTML['tabsNavBtn']);
+        return dom.selectedIndex(this.#elements.tabsNavBtn);
     }
 
     /**
@@ -239,7 +232,7 @@ class Tabs {
      *   Index of the tab to select.
      */
     selectTab(index) {
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const tab_buttons = this.#elements.tabsNavBtn;
         const new_tab = tab_buttons[index];
 
         if (!new_tab) {
@@ -256,11 +249,12 @@ class Tabs {
     }
 
     /**
-     * Build (or rebuild) the navigation, wire up listeners, and sync every
-     * panel to the given active tab. Shared by the constructor and
-     * refresh(); the listener wiring removes before it adds, so a rebuild
-     * over elements that persist (custom nav buttons, existing panels)
-     * never leaves them bound twice.
+     * Build (or rebuild) the tabs to the given active index: nav markup,
+     * roving tabindex, listeners, panel sync, and the optional swipe /
+     * title-removal steps. Shared by the constructor and refresh(); the
+     * listener wiring removes before it adds, so a rebuild over elements
+     * that persist (custom nav buttons, existing panels) never leaves
+     * them bound twice.
      *
      * @param {number} selected_index
      *   Index of the tab that should be active.
@@ -268,7 +262,7 @@ class Tabs {
     #initTabs(selected_index) {
         this.#insertNav(selected_index);
 
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const tab_buttons = this.#elements.tabsNavBtn;
 
         dom.applyRovingTabIndex(tab_buttons, selected_index);
 
@@ -280,7 +274,7 @@ class Tabs {
         }
 
         dom.syncPanels({
-            panels: this.#objectsHTML['tabPanel'],
+            panels: this.#elements.tabPanel,
             panelIds: this.#panelIds,
             tabButtons: tab_buttons,
             selectedIndex: selected_index,
@@ -290,6 +284,12 @@ class Tabs {
         if (this.#configs.options.swipeable) {
             this.#initSwipe();
         }
+
+        // The title text has been read into the nav buttons (and cached in
+        // #navTitleByPanel) by now, so the source elements can go.
+        if (this.#configs.options.removeTabPanelTitle) {
+            dom.removeAll(this.#elements.tabPanelTitle);
+        }
     }
 
     /**
@@ -298,7 +298,7 @@ class Tabs {
      * refresh() over surviving panels doesn't bind them twice.
      */
     #initSwipe() {
-        this.#objectsHTML['tabPanel'].forEach((panel) => {
+        this.#elements.tabPanel.forEach((panel) => {
             panel.style.touchAction = 'pan-y';
             panel.removeEventListener('touchstart', this.#boundOnTouchStart);
             panel.removeEventListener('touchend', this.#boundOnTouchEnd);
@@ -338,16 +338,15 @@ class Tabs {
             return;
         }
 
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const tab_buttons = this.#elements.tabsNavBtn;
         const current_index = this.getSelectedIndex();
-        const current_tab = tab_buttons[current_index];
         const target_index = keyboard.adjacentEnabledIndex(
             current_index,
             delta_x < 0 ? 1 : -1,
-            this.#enabledTabs(tab_buttons),
+            this.#enabledTabs(),
         );
 
-        this.#setSelectedTab(current_tab, tab_buttons[target_index]);
+        this.#setSelectedTab(tab_buttons[current_index], tab_buttons[target_index]);
     }
 
     /**
@@ -387,13 +386,13 @@ class Tabs {
         }
 
         const options = this.#configs.options;
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const tab_buttons = this.#elements.tabsNavBtn;
 
         const target_index = keyboard.resolveTargetIndex(event.key, {
             orientation: options.orientation,
             rtl: options.orientation === 'horizontal' && dom.isRtl(target),
             currentIndex: dom.tabIndexByControls(tab_buttons, target),
-            enabled: this.#enabledTabs(tab_buttons),
+            enabled: this.#enabledTabs(),
         });
 
         if (target_index === null) {
@@ -416,13 +415,10 @@ class Tabs {
      * The enabled/disabled flag for each nav button, in document order —
      * the shape internal/keyboard.js consumes.
      *
-     * @param {NodeList} tab_buttons
-     *   Nav buttons.
-     *
      * @returns {boolean[]}
      */
-    #enabledTabs(tab_buttons) {
-        return Array.from(tab_buttons, (button) => !dom.isTabDisabled(button));
+    #enabledTabs() {
+        return Array.from(this.#elements.tabsNavBtn, (button) => !dom.isTabDisabled(button));
     }
 
     /**
@@ -444,7 +440,7 @@ class Tabs {
             return;
         }
 
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const tab_buttons = this.#elements.tabsNavBtn;
         const doc = this.#context.ownerDocument;
         const from_index = Array.prototype.indexOf.call(tab_buttons, old_tab);
         const to_index = Array.prototype.indexOf.call(tab_buttons, new_tab);
@@ -559,12 +555,12 @@ class Tabs {
         const options = this.#configs.options;
 
         if (!options.useCustomNav) {
-            const panels = this.#objectsHTML['tabPanel'];
+            const panels = this.#elements.tabPanel;
 
-            this.#objectsHTML['tabsNavContainer'][0].innerHTML = dom.buildNavHtml({
+            this.#elements.tabsNavContainer[0].innerHTML = dom.buildNavHtml({
                 panelIds: this.#panelIds,
-                navTitles: Array.from(panels, (_panel, i) => this.#getNavTitle(i)),
-                disabledFlags: Array.from(panels, (_panel, i) => this.#isSourceDisabled(i)),
+                navTitles: Array.from(panels, (_, i) => this.#getNavTitle(i)),
+                disabledFlags: Array.from(panels, (_, i) => this.#isSourceDisabled(i)),
                 selectedIndex: selected_index,
                 listClass: this.#configs.classes.tabsNavList.substring(1),
                 buttonClass: this.#configs.classes.tabsNavButton.substring(1),
@@ -573,8 +569,8 @@ class Tabs {
             });
         } else {
             dom.adoptCustomNav({
-                tablist: this.#objectsHTML['tabsNavList'][0],
-                navButtons: this.#objectsHTML['tabsNavButton'],
+                tablist: this.#elements.tabsNavList[0],
+                navButtons: this.#elements.tabsNavButton,
                 panelIds: this.#panelIds,
                 selectedIndex: selected_index,
                 ariaLabel: options.ariaLabel,
@@ -582,15 +578,7 @@ class Tabs {
             });
         }
 
-        this.#objectsHTML['tabsNavBtn'] = dom.queryTabs(this.#context);
-    }
-
-    /**
-     * Remove the `.tab-panel__title` elements once their text has been
-     * copied into the nav buttons (options.removeTabPanelTitle).
-     */
-    #removeTabPanelTitle() {
-        dom.removeAll(this.#objectsHTML['tabPanelTitle']);
+        this.#elements.tabsNavBtn = dom.queryTabs(this.#context);
     }
 
     /**
@@ -606,7 +594,7 @@ class Tabs {
      * @returns {string}
      */
     #getNavTitle(index) {
-        const panel = this.#objectsHTML['tabPanel'][index];
+        const panel = this.#elements.tabPanel[index];
         let title;
 
         if (this.#configs.options.customNavTitles.length) {
@@ -632,7 +620,7 @@ class Tabs {
      */
     #generatePanelIds() {
         this.#panelIds = dom.ensurePanelIds(
-            this.#objectsHTML['tabPanel'],
+            this.#elements.tabPanel,
             this.#configs.selectors.tabPanelIdPrefix,
             this.#context.ownerDocument,
         );
@@ -653,7 +641,8 @@ class Tabs {
 
         this.#context = context;
 
-        Object.assign(this.#objectsHTML, dom.discoverElements(context, this.#configs.classes));
+        // A fresh set each time; #insertNav() adds `tabsNavBtn` afterwards.
+        this.#elements = dom.discoverElements(context, this.#configs.classes);
     }
 }
 
