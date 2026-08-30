@@ -176,18 +176,17 @@ var A = class {
 	#u = 0;
 	#d = /* @__PURE__ */ new WeakMap();
 	constructor(e) {
-		this.#t = r(e), i(this.#t), this.#M(), this.#p(), this.#j(), this.#_(this.#t.options.initSelectedItem), this.#t.options.removeTabPanelTitle && this.#k();
+		this.#t = r(e), i(this.#t), this.#j(), this.#p(), this.#A(), this.#_(this.#t.options.initSelectedItem);
 	}
 	#f(e) {
 		throw Error(`[@sargadil/tabs] ${e}`);
 	}
 	#p(e = !1) {
-		let t = this.#e;
 		a(this.#t, {
-			panelCount: t.tabPanel.length,
-			navButtonCount: t.tabsNavButton.length,
-			navContainerCount: t.tabsNavContainer.length,
-			titleCount: t.tabPanelTitle.length
+			panelCount: this.#e.tabPanel.length,
+			navButtonCount: this.#e.tabsNavButton.length,
+			navContainerCount: this.#e.tabsNavContainer.length,
+			titleCount: this.#e.tabPanelTitle.length
 		}, (e) => this.#m(e), e);
 	}
 	#m(e) {
@@ -209,7 +208,7 @@ var A = class {
 	}
 	refresh() {
 		let e = this.#e.tabsNavBtn, t = this.#e.tabPanel, n = this.getSelectedIndex(), r = g(e[n], this.#s.ownerDocument), i = Array.prototype.indexOf.call(e, this.#s.ownerDocument.activeElement) !== -1;
-		this.#M(), this.#p(!0), this.#h(e, t), this.#j(), this.#_(this.#g(r, n)), this.#t.options.removeTabPanelTitle && this.#k(), i && this.#e.tabsNavBtn[this.getSelectedIndex()].focus();
+		this.#j(), this.#p(!0), this.#h(e, t), this.#A(), this.#_(this.#g(r, n)), i && this.#e.tabsNavBtn[this.getSelectedIndex()].focus();
 	}
 	#g(e, t) {
 		let n = this.#e.tabPanel, r = Array.prototype.indexOf.call(n, e);
@@ -236,7 +235,7 @@ var A = class {
 			tabButtons: t,
 			selectedIndex: e,
 			openClass: this.#t.selectors.tabPanelOpen
-		}), this.#t.options.swipeable && this.#v();
+		}), this.#t.options.swipeable && this.#v(), this.#t.options.removeTabPanelTitle && k(this.#e.tabPanelTitle);
 	}
 	#v() {
 		this.#e.tabPanel.forEach((e) => {
@@ -249,8 +248,8 @@ var A = class {
 	#b(e) {
 		let t = e.changedTouches[0], n = t.screenX - this.#l, r = t.screenY - this.#u;
 		if (Math.abs(n) < this.#n || Math.abs(n) <= Math.abs(r)) return;
-		let i = this.#e.tabsNavBtn, a = this.getSelectedIndex(), o = i[a], s = l(a, n < 0 ? 1 : -1, this.#C(i));
-		this.#w(o, i[s]);
+		let i = this.#e.tabsNavBtn, a = this.getSelectedIndex(), o = l(a, n < 0 ? 1 : -1, this.#C());
+		this.#w(i[a], i[o]);
 	}
 	#x(e) {
 		let t = e.currentTarget;
@@ -265,14 +264,14 @@ var A = class {
 			orientation: n.orientation,
 			rtl: n.orientation === "horizontal" && f(t),
 			currentIndex: h(r, t),
-			enabled: this.#C(r)
+			enabled: this.#C()
 		});
 		if (i === null) return;
 		let a = r[i];
 		n.activationMode === "manual" ? O(t, a) : this.#w(t, a), e.stopPropagation(), e.preventDefault();
 	}
-	#C(e) {
-		return Array.from(e, (e) => !d(e));
+	#C() {
+		return Array.from(this.#e.tabsNavBtn, (e) => !d(e));
 	}
 	#w(e, t) {
 		if (e === t) return;
@@ -325,7 +324,7 @@ var A = class {
 			let n = this.#e.tabPanel;
 			this.#e.tabsNavContainer[0].innerHTML = S({
 				panelIds: this.#c,
-				navTitles: Array.from(n, (e, t) => this.#A(t)),
+				navTitles: Array.from(n, (e, t) => this.#k(t)),
 				disabledFlags: Array.from(n, (e, t) => this.#m(t)),
 				selectedIndex: e,
 				listClass: this.#t.classes.tabsNavList.substring(1),
@@ -336,10 +335,7 @@ var A = class {
 		}
 		this.#e.tabsNavBtn = y(this.#s);
 	}
-	#k() {
-		k(this.#e.tabPanelTitle);
-	}
-	#A(e) {
+	#k(e) {
 		let t = this.#e.tabPanel[e], n;
 		if (this.#t.options.customNavTitles.length) n = this.#t.options.customNavTitles[e];
 		else {
@@ -348,12 +344,12 @@ var A = class {
 		}
 		return n === void 0 && (n = ""), this.#d.set(t, n), n;
 	}
-	#j() {
+	#A() {
 		this.#c = x(this.#e.tabPanel, this.#t.selectors.tabPanelIdPrefix, this.#s.ownerDocument);
 	}
-	#M() {
+	#j() {
 		let e = this.#t.contextID, t = e instanceof HTMLElement ? e : document.getElementById(e);
-		t || this.#f(`Context element was not found. Expected an element with id "${e}".`), this.#s = t, Object.assign(this.#e, v(t, this.#t.classes));
+		t || this.#f(`Context element was not found. Expected an element with id "${e}".`), this.#s = t, this.#e = v(t, this.#t.classes);
 	}
 };
 //#endregion
