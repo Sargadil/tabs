@@ -278,7 +278,7 @@ labels, and disabled flags and writes them out).
 | MAINT-2 | configuration | ✅ `src/js/internal/config.js` |
 | MAINT-3 | keyboard | ✅ `src/js/internal/keyboard.js` |
 | MAINT-4 | DOM / ARIA | ✅ `src/js/internal/dom.js` |
-| MAINT-5 | orchestration cleanup | — |
+| MAINT-5 | orchestration cleanup | ✅ `Tabs` now coordinates initialize / select / refresh / destroy / events; helpers do the rest |
 
 ### Current internal map
 
@@ -300,7 +300,7 @@ that will move.
   passes element counts plus an `isSourceDisabled(index)` probe; the `refresh()`
   relaxations are driven by an `isRefresh` flag;
 - remaining in `Tabs`: a thin `#validateDomStructure()` adapter (counts from
-  `#objectsHTML` + a closure over `#isSourceDisabled`);
+  `#elements` + a closure over `#isSourceDisabled`);
 - the error prefix is briefly duplicated (`config.js` and `#throwError` in
   `script.js`) — to be unified in MAINT-12.
 
@@ -396,23 +396,26 @@ shared primitive, candidate for `internal/error.js` in MAINT-12). `#makeUniqueId
 - **utilities** — distributed to their owners; only the error primitive is
   shared widely enough to stand alone.
 
-### Open coupling still to resolve (MAINT-5)
+### Open coupling — remaining notes
 
-- `#objectsHTML` is a shared mutable bag keyed partly by config class-names and
-  partly by an injected `tabsNavBtn` list; the orchestrator still threads it into
-  every `dom.*` call as loose fields. An explicit "resolved elements" value
-  object would tighten the boundary.
+- `#elements` (renamed from `#objectsHTML` in MAINT-5) holds the queried
+  `NodeList`s keyed by the config `classes` names, plus the resolved
+  `tabsNavBtn`. The orchestrator still threads individual entries into each
+  `dom.*` call rather than passing one "resolved elements" value object — a
+  deliberate stop: the current shape is readable and every `dom.*` signature is
+  explicit about what it needs.
 - `#getNavTitle` + the `#navTitleByPanel` `WeakMap` (refresh-support label cache)
   stay in the orchestrator — `dom.js` only does the leaf `dom.titleText()` read.
-  Whether the whole label resolution belongs in `dom.js` is a MAINT-5 call.
+  The label *priority* (option → element → cache → `""`) and the cache are
+  instance concerns, so this split was kept.
 - ~~Keyboard logic reaches selection/focus through eight near-duplicate
   wrappers~~ — resolved in MAINT-3.
 - ~~Global `document` vs scoped `#context`~~ — resolved in MAINT-4: only the
   bootstrap context lookup in `#initElements()` still uses the global `document`
   (nothing else is available before `#context` is set).
-- Naming: `classes.tabsNavButton` (a config selector) vs
-  `#objectsHTML.tabsNavBtn` (the resolved `role="tab"` list) — different things,
-  near-identical names (MAINT-10).
+- Naming: `classes.tabsNavButton` (a config selector) vs `#elements.tabsNavBtn`
+  (the resolved `role="tab"` list) — different things, near-identical names
+  (MAINT-10).
 
 ---
 
@@ -433,9 +436,8 @@ validateConfig()                    internal/config.js — throws on bad config
 ↓
 #generatePanelIds()                 dom.ensurePanelIds() — assign / keep unique ids
 ↓
-#initTabs(initSelectedItem)         dom.buildNavHtml/adoptCustomNav + roving tabindex + wire listeners + dom.syncPanels
-↓
-(removeTabPanelTitle) #removeTabPanelTitle()
+#initTabs(initSelectedItem)         nav markup + roving tabindex + wire listeners + dom.syncPanels
+                                    + (swipeable) #initSwipe + (removeTabPanelTitle) dom.removeAll
 ```
 
 ### Selection
