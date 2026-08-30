@@ -263,18 +263,20 @@ readability requires.
 | --- | --- |
 | **Tabs orchestration** (`src/js/script.js`) | initialization, the selection flow, `refresh`, events, lifecycle — *what should happen* |
 | **Configuration** (`src/js/internal/config.js`) | defaults, merge, validation, configuration errors |
-| **Keyboard** (planned `src/js/internal/keyboard.js`) | interpreting keys — orientation, RTL direction, wrapping, enabled/disabled navigation |
+| **Keyboard** (`src/js/internal/keyboard.js`) | interpreting keys / swipes — orientation, RTL direction, wrapping, enabled/disabled navigation → *which tab to move to* |
 | **DOM / ARIA** (planned `src/js/internal/dom.js`) | element discovery, ARIA synchronization, `hidden`, `tabindex`, IDs, relationships — *how to represent that state* |
 
-The keyboard and DOM layers must not decide which tab is selected; orchestration
-must not touch the DOM directly once those layers exist.
+The keyboard and DOM layers must not decide which tab is *selected* (keyboard
+returns an index; the orchestrator applies it as a selection or a focus move
+depending on `activationMode`); orchestration must not touch the DOM directly
+once the DOM layer exists.
 
 ### Extraction status
 
 | Ticket | Area | Status |
 | --- | --- | --- |
 | MAINT-2 | configuration | ✅ `src/js/internal/config.js` |
-| MAINT-3 | keyboard | — |
+| MAINT-3 | keyboard | ✅ `src/js/internal/keyboard.js` |
 | MAINT-4 | DOM / ARIA | — |
 | MAINT-5 | orchestration cleanup | — |
 
@@ -325,15 +327,22 @@ the nav builders; `hidden` as selection state. These writes are spread across
 nav building, panel prep, and the selection transition — there is no single
 synchronization point today.
 
-**keyboard navigation.** `#onKeyDown()` (map `event.key` →
-previous/next/first/last from orientation + RTL + activation mode); `#isRTL()`;
-`#getAdjacentEnabledTab()` / `#getNextTab()` / `#getPreviousTab()` (wrap + skip
-disabled); `#getFirstEnabledTab()` / `#getLastEnabledTab()`; swipe
-(`#onTouchStart()`, `#onTouchEnd()`, `#touchStartX/Y`, `#swipeThreshold`,
-`#initSwipe()`); `#getClickedTabIndex()`. The "which tab" decision is already
-fairly pure, but it is reached through eight near-duplicate wrappers
-(`#setSelectedToNextTab` vs `#moveFocusToNextTab`, …) that differ only in
-apply-selection vs apply-focus.
+**keyboard navigation — extracted (MAINT-3).** `src/js/internal/keyboard.js`,
+exporting `resolveTargetIndex(key, state)` and `adjacentEnabledIndex(from,
+direction, enabled)`. Pure: given `key`, `orientation`, `rtl`, `currentIndex`,
+and an `enabled` boolean array, it returns the target tab index (or `null` for a
+non-navigation key). It does not know about `activationMode` — the orchestrator
+applies the index as a selection (`#setSelectedTab`) or a focus move
+(`#moveFocusTo`). `adjacentEnabledIndex` is shared by arrow keys and swipe.
+
+- remaining in `Tabs`: `#onKeyDown()` / `#onTouchEnd()` (gather state, apply the
+  result), `#enabledTabs()` (build the boolean array), `#isRTL()` (computed
+  `direction` of the focused tab — a DOM read, moves to the DOM layer in
+  MAINT-4), `#moveFocusTo()`, `#getClickedTabIndex()`, `#onTouchStart()` /
+  `#initSwipe()` / `#touchStartX/Y` / `#swipeThreshold` (the swipe plumbing).
+- the eight near-duplicate `#setSelectedTo*` / `#moveFocusTo*` wrappers and the
+  `#get{Previous,Next,Adjacent,First,Last}…Tab` family are gone — collapsed into
+  "ask keyboard for the index, then apply".
 
 **selection.** `getSelectedIndex()`; `selectTab()` (range + disabled guard →
 `#setSelectedTab()`); `#setSelectedTab()` (the transition: no-op guard, resolve
@@ -373,9 +382,10 @@ keyboard/selection); `#appendElement()` (trivial; likely disappears).
 
 ### Deliberately not separate modules
 
-- **disabled state** — a two-function predicate pair. Co-locate with the DOM
-  layer (it reads the DOM) and export it for keyboard + orchestration. Not its
-  own file.
+- **disabled state** — a two-function predicate pair (`#isTabDisabled` /
+  `#isSourceDisabled`). Co-locate with the DOM layer (they read the DOM). The
+  keyboard layer never sees them — the orchestrator passes it a pre-computed
+  `enabled` boolean array. Not its own file.
 - **events** — `tabs:beforechange` / `tabs:change` construction is ~15 lines and
   its payload is public contract; it stays in orchestration next to
   `#setSelectedTab`.
@@ -392,9 +402,9 @@ keyboard/selection); `#appendElement()` (trivial; likely disappears).
   `#setSelectedTab`, `#onClick` use `document.*` directly; others use
   `#context.querySelector` / `#context.ownerDocument`. Normalize on
   `#context.ownerDocument` when moving into the DOM layer.
-- Keyboard logic reaches selection/focus through eight near-duplicate wrappers;
-  collapsing them depends on the keyboard layer returning
-  `{ action, targetIndex }` first.
+- ~~Keyboard logic reaches selection/focus through eight near-duplicate
+  wrappers~~ — resolved in MAINT-3: `keyboard.resolveTargetIndex()` returns an
+  index, the orchestrator applies it.
 - `#navTitleByPanel` (a `WeakMap`) is `refresh()`-support state embedded in label
   derivation — it moves with `#getNavTitle` into the DOM layer.
 - Naming: `classes.tabsNavButton` (a config selector) vs

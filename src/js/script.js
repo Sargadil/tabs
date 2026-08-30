@@ -1,4 +1,5 @@
 import * as config from './internal/config.js';
+import * as keyboard from './internal/keyboard.js';
 
 class Tabs {
 
@@ -341,10 +342,10 @@ class Tabs {
     /**
      * Switch to the previous/next tab if the touch ended far enough
      * away horizontally to count as a swipe rather than a vertical
-     * scroll (options.swipeable). Skips disabled tabs and wraps
-     * around, same as ArrowLeft/ArrowRight — see #getNextTab()/
-     * #getPreviousTab() — rather than calling the public selectTab(),
-     * which would throw if the plain adjacent index were disabled.
+     * scroll (options.swipeable). Skips disabled tabs and wraps around
+     * via the same keyboard.adjacentEnabledIndex() that ArrowLeft/
+     * ArrowRight use, rather than the public selectTab(), which would
+     * throw if the plain adjacent index were disabled.
      *
      * @param {TouchEvent} event
      *   Touchend event.
@@ -361,11 +362,13 @@ class Tabs {
         const tab_buttons = this.#objectsHTML['tabsNavBtn'];
         const current_index = this.getSelectedIndex();
         const current_tab = tab_buttons[current_index];
-        const new_tab = delta_x < 0
-            ? this.#getNextTab(current_index, tab_buttons)
-            : this.#getPreviousTab(current_index, tab_buttons);
+        const target_index = keyboard.adjacentEnabledIndex(
+            current_index,
+            delta_x < 0 ? 1 : -1,
+            this.#enabledTabs(tab_buttons),
+        );
 
-        this.#setSelectedTab(current_tab, new_tab);
+        this.#setSelectedTab(current_tab, tab_buttons[target_index]);
     }
 
     /**
@@ -389,6 +392,11 @@ class Tabs {
     /**
      * Do appropriate action based on key event.
      *
+     * The "which tab" decision (orientation, RTL, wrapping, skipping
+     * disabled tabs) lives in internal/keyboard.js. This method only
+     * gathers the current state, then applies the returned index as a
+     * selection (automatic activation) or a focus move (manual).
+     *
      * @param {KeyboardEvent} event
      *   Keydown event.
      */
@@ -399,36 +407,43 @@ class Tabs {
             return;
         }
 
-        const is_vertical = this.#configs.options.orientation === 'vertical';
-        const is_manual = this.#configs.options.activationMode === 'manual';
-        const is_rtl = !is_vertical && this.#isRTL(target);
-        const previous_key = is_vertical ? 'ArrowUp' : (is_rtl ? 'ArrowRight' : 'ArrowLeft');
-        const next_key = is_vertical ? 'ArrowDown' : (is_rtl ? 'ArrowLeft' : 'ArrowRight');
-        let flag = false;
+        const options = this.#configs.options;
+        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
 
-        switch (event.key) {
-            case previous_key:
-                is_manual ? this.#moveFocusToPreviousTab(target) : this.#setSelectedToPreviousTab(target);
-                flag = true;
-                break;
-            case next_key:
-                is_manual ? this.#moveFocusToNextTab(target) : this.#setSelectedToNextTab(target);
-                flag = true;
-                break;
-            case 'Home':
-                is_manual ? this.#moveFocusToFirstTab(target) : this.#setSelectedToFirstTab(target);
-                flag = true;
-                break;
-            case 'End':
-                is_manual ? this.#moveFocusToLastTab(target) : this.#setSelectedToLastTab(target);
-                flag = true;
-                break;
+        const target_index = keyboard.resolveTargetIndex(event.key, {
+            orientation: options.orientation,
+            rtl: options.orientation === 'horizontal' && this.#isRTL(target),
+            currentIndex: this.#getClickedTabIndex(tab_buttons, target),
+            enabled: this.#enabledTabs(tab_buttons),
+        });
+
+        if (target_index === null) {
+            return;
         }
 
-        if (flag) {
-            event.stopPropagation();
-            event.preventDefault();
+        const new_tab = tab_buttons[target_index];
+
+        if (options.activationMode === 'manual') {
+            this.#moveFocusTo(target, new_tab);
+        } else {
+            this.#setSelectedTab(target, new_tab);
         }
+
+        event.stopPropagation();
+        event.preventDefault();
+    }
+
+    /**
+     * The enabled/disabled flag for each nav button, in document order —
+     * the shape internal/keyboard.js consumes.
+     *
+     * @param {NodeList} tab_buttons
+     *   Nav buttons.
+     *
+     * @returns {boolean[]}
+     */
+    #enabledTabs(tab_buttons) {
+        return Array.from(tab_buttons, (button) => !this.#isTabDisabled(button));
     }
 
     /**
@@ -450,119 +465,6 @@ class Tabs {
      */
     #isRTL(element) {
         return element.ownerDocument.defaultView.getComputedStyle(element).direction === 'rtl';
-    }
-
-    /**
-     * Select previous tab.
-     *
-     * @param {HTMLElement} target
-     *   Clicked nav button.
-     */
-    #setSelectedToPreviousTab(target) {
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
-        const current_tab_index = this.#getClickedTabIndex(tab_buttons, target);
-        const new_current_tab = this.#getPreviousTab(current_tab_index, tab_buttons);
-
-        this.#setSelectedTab(target, new_current_tab);
-    }
-
-
-    /**
-     * Select next tab.
-     *
-     * @param {HTMLElement} target
-     *   Clicked nav button.
-     */
-    #setSelectedToNextTab(target) {
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
-        const current_tab_index = this.#getClickedTabIndex(tab_buttons, target);
-        const new_current_tab = this.#getNextTab(current_tab_index, tab_buttons);
-
-        this.#setSelectedTab(target, new_current_tab);
-    }
-
-    /**
-     * Select first tab.
-     *
-     * @param {HTMLElement} target
-     *   Clicked nav button.
-     */
-    #setSelectedToFirstTab(target) {
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
-        const new_current_tab = this.#getFirstEnabledTab(tab_buttons);
-
-        this.#setSelectedTab(target, new_current_tab);
-    }
-
-    /**
-     * Select last tab.
-     *
-     * @param {HTMLElement} target
-     *   Clicked nav button.
-     */
-    #setSelectedToLastTab(target) {
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
-        const new_current_tab = this.#getLastEnabledTab(tab_buttons);
-
-        this.#setSelectedTab(target, new_current_tab);
-    }
-
-    /**
-     * Move keyboard focus to the previous tab without changing the
-     * active selection (manual activation mode).
-     *
-     * @param {HTMLElement} target
-     *   Focused nav button.
-     */
-    #moveFocusToPreviousTab(target) {
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
-        const current_tab_index = this.#getClickedTabIndex(tab_buttons, target);
-        const new_current_tab = this.#getPreviousTab(current_tab_index, tab_buttons);
-
-        this.#moveFocusTo(target, new_current_tab);
-    }
-
-    /**
-     * Move keyboard focus to the next tab without changing the
-     * active selection (manual activation mode).
-     *
-     * @param {HTMLElement} target
-     *   Focused nav button.
-     */
-    #moveFocusToNextTab(target) {
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
-        const current_tab_index = this.#getClickedTabIndex(tab_buttons, target);
-        const new_current_tab = this.#getNextTab(current_tab_index, tab_buttons);
-
-        this.#moveFocusTo(target, new_current_tab);
-    }
-
-    /**
-     * Move keyboard focus to the first tab without changing the
-     * active selection (manual activation mode).
-     *
-     * @param {HTMLElement} target
-     *   Focused nav button.
-     */
-    #moveFocusToFirstTab(target) {
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
-        const new_current_tab = this.#getFirstEnabledTab(tab_buttons);
-
-        this.#moveFocusTo(target, new_current_tab);
-    }
-
-    /**
-     * Move keyboard focus to the last tab without changing the
-     * active selection (manual activation mode).
-     *
-     * @param {HTMLElement} target
-     *   Focused nav button.
-     */
-    #moveFocusToLastTab(target) {
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
-        const new_current_tab = this.#getLastEnabledTab(tab_buttons);
-
-        this.#moveFocusTo(target, new_current_tab);
     }
 
     /**
@@ -704,94 +606,6 @@ class Tabs {
             bubbles: true,
             detail: { index, tab, panel },
         }));
-    }
-
-    /**
-     * Get previous tab element, skipping disabled tabs and wrapping
-     * around from the first tab to the last.
-     *
-     * @param {number} current_tab_index
-     *   Current tab index.
-     *
-     * @param {NodeList} tab_buttons
-     *   Nav buttons.
-     *
-     * @returns HTMLElement
-     *   Return previous enabled tab.
-     */
-    #getPreviousTab(current_tab_index, tab_buttons) {
-        return this.#getAdjacentEnabledTab(tab_buttons, current_tab_index, -1);
-    }
-
-    /**
-     * Get next tab element, skipping disabled tabs and wrapping around
-     * from the last tab to the first.
-     *
-     * @param {number} current_tab_index
-     *   Current tab index.
-     *
-     * @param {NodeList} tab_buttons
-     *   Nav buttons.
-     *
-     * @returns HTMLElement
-     *   Return next enabled tab.
-     */
-    #getNextTab(current_tab_index, tab_buttons) {
-        return this.#getAdjacentEnabledTab(tab_buttons, current_tab_index, 1);
-    }
-
-    /**
-     * Walk the tablist from `start_index` in `direction` (-1 or 1),
-     * wrapping around, and return the first enabled tab encountered.
-     * Constructor validation guarantees at least one enabled tab
-     * exists, so this always terminates.
-     *
-     * @param {NodeList} tab_buttons
-     *   Nav buttons.
-     *
-     * @param {number} start_index
-     *   Index to start searching from (exclusive).
-     *
-     * @param {number} direction
-     *   -1 for previous, 1 for next.
-     *
-     * @returns {HTMLElement}
-     */
-    #getAdjacentEnabledTab(tab_buttons, start_index, direction) {
-        const count = tab_buttons.length;
-        let index = start_index;
-
-        do {
-            index = (index + direction + count) % count;
-        } while (this.#isTabDisabled(tab_buttons[index]));
-
-        return tab_buttons[index];
-    }
-
-    /**
-     * Get the first enabled tab. Constructor validation guarantees at
-     * least one enabled tab exists.
-     *
-     * @param {NodeList} tab_buttons
-     *   Nav buttons.
-     *
-     * @returns {HTMLElement}
-     */
-    #getFirstEnabledTab(tab_buttons) {
-        return Array.from(tab_buttons).find((tab) => !this.#isTabDisabled(tab));
-    }
-
-    /**
-     * Get the last enabled tab. Constructor validation guarantees at
-     * least one enabled tab exists.
-     *
-     * @param {NodeList} tab_buttons
-     *   Nav buttons.
-     *
-     * @returns {HTMLElement}
-     */
-    #getLastEnabledTab(tab_buttons) {
-        return Array.from(tab_buttons).reverse().find((tab) => !this.#isTabDisabled(tab));
     }
 
     /**
