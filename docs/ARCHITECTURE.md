@@ -264,12 +264,12 @@ readability requires.
 | **Tabs orchestration** (`src/js/script.js`) | initialization, the selection flow, `refresh`, events, lifecycle — *what should happen* |
 | **Configuration** (`src/js/internal/config.js`) | defaults, merge, validation, configuration errors |
 | **Keyboard** (`src/js/internal/keyboard.js`) | interpreting keys / swipes — orientation, RTL direction, wrapping, enabled/disabled navigation → *which tab to move to* |
-| **DOM / ARIA** (planned `src/js/internal/dom.js`) | element discovery, ARIA synchronization, `hidden`, `tabindex`, IDs, relationships — *how to represent that state* |
+| **DOM / ARIA** (`src/js/internal/dom.js`) | element discovery, id generation, nav markup, ARIA / `tabindex` / `hidden` synchronization — *how to represent that state* |
 
 The keyboard and DOM layers must not decide which tab is *selected* (keyboard
 returns an index; the orchestrator applies it as a selection or a focus move
-depending on `activationMode`); orchestration must not touch the DOM directly
-once the DOM layer exists.
+depending on `activationMode`; the DOM layer receives the resolved index,
+labels, and disabled flags and writes them out).
 
 ### Extraction status
 
@@ -277,7 +277,7 @@ once the DOM layer exists.
 | --- | --- | --- |
 | MAINT-2 | configuration | ✅ `src/js/internal/config.js` |
 | MAINT-3 | keyboard | ✅ `src/js/internal/keyboard.js` |
-| MAINT-4 | DOM / ARIA | — |
+| MAINT-4 | DOM / ARIA | ✅ `src/js/internal/dom.js` |
 | MAINT-5 | orchestration cleanup | — |
 
 ### Current internal map
@@ -300,113 +300,116 @@ that will move.
   passes element counts plus an `isSourceDisabled(index)` probe; the `refresh()`
   relaxations are driven by an `isRefresh` flag;
 - remaining in `Tabs`: a thin `#validateDomStructure()` adapter (counts from
-  `#objectsHTML` + a closure over `#isSourceDisabled`) and the disabled probes
-  (`#isSourceDisabled` / `#isTabDisabled`, which read the DOM and move to the DOM
-  layer in MAINT-4);
+  `#objectsHTML` + a closure over `#isSourceDisabled`);
 - the error prefix is briefly duplicated (`config.js` and `#throwError` in
   `script.js`) — to be unified in MAINT-12.
 
-**DOM discovery.** `#context`, `#objectsHTML`; `#initElements()` (resolve the
-context, `querySelectorAll` each `classes.*` into `#objectsHTML`);
-`#appendElement()` (store the resolved `[role="tab"]` list as `tabsNavBtn`);
-`#panelForTab()` (`getElementById(aria-controls)`).
+**DOM / ARIA — extracted (MAINT-4).** `src/js/internal/dom.js`. Low-level reads
+and writes; it represents state but never decides which tab that state describes.
 
-**DOM preparation.** `#insertNav()` / `#createNav()` /
-`#preparedCustomNavButton()` (generate or adopt the nav); `#getNavTitle()` +
-`#navTitleByPanel` (derive the button label from `customNavTitles` /
-`data-nav-title` / title text / cache); `#removeTabPanelTitle()`;
-`#generatePanelIds()` / `#makeUniqueId()`; `#prepareTabContent()` (panel `role` /
-`tabindex` / `id` / `hidden` / open-class / `aria-labelledby` at init);
-`#toggleTabContent()` (flip `hidden` + open-class between panels).
-
-**ARIA synchronization.** `aria-selected` and the roving `tabindex` in
-`#setSelectedTab()` / `#moveFocusTo()` / `#initTabs()`; `aria-controls` /
-`aria-labelledby` in `#createNav()` / `#preparedCustomNavButton()` /
-`#prepareTabContent()`; `role="tablist"` / `aria-orientation` / `aria-label` in
-the nav builders; `hidden` as selection state. These writes are spread across
-nav building, panel prep, and the selection transition — there is no single
-synchronization point today.
+- **discovery / ids** — `discoverElements(context, classes)`,
+  `queryTabs(context)`, `ensurePanelIds(panels, prefix, doc)` (keeps an id a
+  panel already has; assigns fresh document-unique ones otherwise);
+- **nav markup** — `buildNavHtml(spec)` (pure string builder for the default
+  nav), `adoptCustomNav(spec)` (tablist role / label / orientation + per-tab id /
+  `type="button"` / `aria-controls` / `aria-selected` on the author's markup);
+- **panel / tab state** — `syncPanels(spec)` (id / `tabindex` / `role` /
+  `hidden` / open-class / `aria-labelledby`), `togglePanels(old, new, class)`,
+  `applyRovingTabIndex(tabButtons, index)`, `markSelected(oldTab, newTab)`
+  (aria-selected + tabindex + focus), `moveRovingFocus(oldTab, newTab)`,
+  `removeAll(nodes)`;
+- **reads** — `isTabDisabled(tab)`, `isRtl(element)`, `isSourceDisabled(source,
+  index)`, `selectedIndex(tabButtons)`, `tabIndexByControls(tabButtons, target)`,
+  `panelForTab(tab, doc)`, `titleText(titleElement)`.
+- remaining in `Tabs`: thin adapters `#isSourceDisabled()` / `#generatePanelIds()`,
+  and `#getNavTitle()` (the label priority — `customNavTitles` → title element →
+  `#navTitleByPanel` cache → `""` — and the cache itself are instance concerns;
+  it calls `dom.titleText()` for the element read). The orchestrator resolves the
+  labels and disabled flags and hands them to `dom.buildNavHtml()`.
+- `document` is now used in only one place — the bootstrap context lookup in
+  `#initElements()`, before `#context` (and its document) is known; everything
+  else threads `this.#context.ownerDocument`.
 
 **keyboard navigation — extracted (MAINT-3).** `src/js/internal/keyboard.js`,
 exporting `resolveTargetIndex(key, state)` and `adjacentEnabledIndex(from,
 direction, enabled)`. Pure: given `key`, `orientation`, `rtl`, `currentIndex`,
 and an `enabled` boolean array, it returns the target tab index (or `null` for a
 non-navigation key). It does not know about `activationMode` — the orchestrator
-applies the index as a selection (`#setSelectedTab`) or a focus move
-(`#moveFocusTo`). `adjacentEnabledIndex` is shared by arrow keys and swipe.
+applies the index as a selection (`#setSelectedTab` → `dom.markSelected`) or a
+focus move (`dom.moveRovingFocus`). `adjacentEnabledIndex` is shared by arrow
+keys and swipe.
 
 - remaining in `Tabs`: `#onKeyDown()` / `#onTouchEnd()` (gather state, apply the
-  result), `#enabledTabs()` (build the boolean array), `#isRTL()` (computed
-  `direction` of the focused tab — a DOM read, moves to the DOM layer in
-  MAINT-4), `#moveFocusTo()`, `#getClickedTabIndex()`, `#onTouchStart()` /
-  `#initSwipe()` / `#touchStartX/Y` / `#swipeThreshold` (the swipe plumbing).
+  result), `#enabledTabs()` (build the boolean array from `dom.isTabDisabled`),
+  `#onTouchStart()` / `#initSwipe()` / `#touchStartX/Y` / `#swipeThreshold` (the
+  swipe plumbing). `#isRTL`, `#moveFocusTo`, `#getClickedTabIndex` moved to
+  `dom.js` (as `isRtl`, `moveRovingFocus`, `tabIndexByControls`) in MAINT-4.
 - the eight near-duplicate `#setSelectedTo*` / `#moveFocusTo*` wrappers and the
   `#get{Previous,Next,Adjacent,First,Last}…Tab` family are gone — collapsed into
   "ask keyboard for the index, then apply".
 
-**selection.** `getSelectedIndex()`; `selectTab()` (range + disabled guard →
-`#setSelectedTab()`); `#setSelectedTab()` (the transition: no-op guard, resolve
-indices/panels, dispatch `beforechange`, cancel path, write `aria-selected` +
-`tabindex` + focus, toggle panels, dispatch `change`); the automatic-mode
-wrappers; the selection path in `#onClick()`; `#resolveActiveIndex()`.
+**selection.** `getSelectedIndex()` (→ `dom.selectedIndex`); `selectTab()` (range
++ disabled guard → `#setSelectedTab()`); `#setSelectedTab()` (the transition:
+no-op guard, resolve indices/panels, dispatch `beforechange`, cancel path,
+`dom.markSelected` + `dom.togglePanels`, dispatch `change`); the selection path
+in `#onClick()`; `#resolveActiveIndex()`.
 
 **events.** `#dispatchBeforeChangeEvent()`, `#dispatchChangeEvent()`,
 `#restoreFocusAfterCancel()` (undo the browser's focus move when a change is
 vetoed). The payload shape is public contract; the logic is short and interwoven
 with `#setSelectedTab()`.
 
-**disabled state.** `#isTabDisabled()` (post-render: native `disabled` or
-`aria-disabled="true"` on the tab); `#isSourceDisabled()` (pre-render: the
+**disabled state.** `dom.isTabDisabled(tab)` (post-render: native `disabled` or
+`aria-disabled="true"`); `dom.isSourceDisabled(source, index)` (pre-render: the
 author DOM — the custom-nav tab element, or `aria-disabled` on
-`.tab-panel__title`). Consumers: config validation, keyboard / swipe navigation,
-`selectTab()`, `#resolveActiveIndex()`, `#createNav()`. Two readers for two
-sources, by design — at validation time there is no tab element yet for the
-default nav.
+`.tab-panel__title`), reached through the thin `#isSourceDisabled()` adapter.
+Consumers: config validation, keyboard / swipe navigation, `selectTab()`,
+`#resolveActiveIndex()`, `dom.buildNavHtml()`. Two readers for two sources, by
+design — at validation time there is no tab element yet for the default nav.
 
 **refresh / reconciliation.** `refresh()` (snapshot → re-read + re-validate →
 tear down old listeners → regenerate IDs / nav →
 `#initTabs(#resolveActiveIndex(...))` → optional title removal → restore focus);
 `#resolveActiveIndex()` (keep the active panel, else a positional fallback, else
-skip disabled); the `isRefresh` branches in `config.js`; `#panelForTab()`.
+skip disabled); the `isRefresh` branches in `config.js`; `dom.panelForTab()`.
 
 **lifecycle.** `constructor()`; `destroy()` → `#teardownListeners()`;
-`#initTabs()` ((re)build nav, wire `keydown` / `click` per tab
-remove-before-add, prepare panels, optional swipe); `#initSwipe()`; the
-bound-handler fields `#boundOnKeyDown/Click/TouchStart/TouchEnd` (stable
-identities for `add` / `removeEventListener`).
+`#initTabs()` (rebuild nav via `dom`, `dom.applyRovingTabIndex`, wire
+`keydown` / `click` per tab remove-before-add, `dom.syncPanels`, optional
+swipe); `#initSwipe()`; the bound-handler fields
+`#boundOnKeyDown/Click/TouchStart/TouchEnd` (stable identities for `add` /
+`removeEventListener`).
 
 **utilities.** `#throwError()` (prefix + throw `Error` — the one genuinely
-shared primitive, candidate for `internal/error.js` in MAINT-12);
-`#makeUniqueId()` (moves to the DOM layer); `#getClickedTabIndex()` (moves to
-keyboard/selection); `#appendElement()` (trivial; likely disappears).
+shared primitive, candidate for `internal/error.js` in MAINT-12). `#makeUniqueId`,
+`#getClickedTabIndex`, `#appendElement` are gone — folded into `dom.js`
+(`ensurePanelIds`, `tabIndexByControls`) or inlined.
 
 ### Deliberately not separate modules
 
-- **disabled state** — a two-function predicate pair (`#isTabDisabled` /
-  `#isSourceDisabled`). Co-locate with the DOM layer (they read the DOM). The
-  keyboard layer never sees them — the orchestrator passes it a pre-computed
-  `enabled` boolean array. Not its own file.
+- **disabled state** — a two-function predicate pair, now `dom.isTabDisabled` /
+  `dom.isSourceDisabled` (they read the DOM). The keyboard layer never sees them
+  — the orchestrator passes it a pre-computed `enabled` boolean array.
 - **events** — `tabs:beforechange` / `tabs:change` construction is ~15 lines and
   its payload is public contract; it stays in orchestration next to
   `#setSelectedTab`.
 - **utilities** — distributed to their owners; only the error primitive is
   shared widely enough to stand alone.
 
-### Open coupling to resolve during extraction
+### Open coupling still to resolve (MAINT-5)
 
 - `#objectsHTML` is a shared mutable bag keyed partly by config class-names and
-  partly by an injected `tabsNavBtn` list; almost every method reads it.
-  Extraction needs an explicit "resolved elements" value object passed between
-  layers.
-- Global `document` vs scoped `#context`: `#panelForTab`, `#makeUniqueId`,
-  `#setSelectedTab`, `#onClick` use `document.*` directly; others use
-  `#context.querySelector` / `#context.ownerDocument`. Normalize on
-  `#context.ownerDocument` when moving into the DOM layer.
+  partly by an injected `tabsNavBtn` list; the orchestrator still threads it into
+  every `dom.*` call as loose fields. An explicit "resolved elements" value
+  object would tighten the boundary.
+- `#getNavTitle` + the `#navTitleByPanel` `WeakMap` (refresh-support label cache)
+  stay in the orchestrator — `dom.js` only does the leaf `dom.titleText()` read.
+  Whether the whole label resolution belongs in `dom.js` is a MAINT-5 call.
 - ~~Keyboard logic reaches selection/focus through eight near-duplicate
-  wrappers~~ — resolved in MAINT-3: `keyboard.resolveTargetIndex()` returns an
-  index, the orchestrator applies it.
-- `#navTitleByPanel` (a `WeakMap`) is `refresh()`-support state embedded in label
-  derivation — it moves with `#getNavTitle` into the DOM layer.
+  wrappers~~ — resolved in MAINT-3.
+- ~~Global `document` vs scoped `#context`~~ — resolved in MAINT-4: only the
+  bootstrap context lookup in `#initElements()` still uses the global `document`
+  (nothing else is available before `#context` is set).
 - Naming: `classes.tabsNavButton` (a config selector) vs
   `#objectsHTML.tabsNavBtn` (the resolved `role="tab"` list) — different things,
   near-identical names (MAINT-10).
@@ -424,13 +427,13 @@ mergeConfig(config)                 internal/config.js
 ↓
 validateConfig()                    internal/config.js — throws on bad config
 ↓
-#initElements()                     resolve context + query classes.* into #objectsHTML
+#initElements()                     resolve context + dom.discoverElements()
 ↓
 #validateDomStructure()             internal/config.js — throws on bad structure
 ↓
-#generatePanelIds()                 assign / keep unique ids
+#generatePanelIds()                 dom.ensurePanelIds() — assign / keep unique ids
 ↓
-#initTabs(initSelectedItem)         build / adopt nav, wire listeners, prepare panels
+#initTabs(initSelectedItem)         dom.buildNavHtml/adoptCustomNav + roving tabindex + wire listeners + dom.syncPanels
 ↓
 (removeTabPanelTitle) #removeTabPanelTitle()
 ```

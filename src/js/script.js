@@ -1,5 +1,6 @@
 import * as config from './internal/config.js';
 import * as keyboard from './internal/keyboard.js';
+import * as dom from './internal/dom.js';
 
 class Tabs {
 
@@ -82,13 +83,10 @@ class Tabs {
     }
 
     /**
-     * Whether the tab at panel index `index` is disabled, read from the
-     * as-authored DOM before nav generation. Custom nav reads the
-     * author's own tab element directly (it already exists); the
-     * default nav reads `aria-disabled="true"` from the panel's title
-     * element, since no tab element exists yet to carry it — the
-     * generated `<button>` gets a native `disabled` attribute from this
-     * flag once it's created (see #createNav()).
+     * Adapter around dom.isSourceDisabled(): whether the tab at panel
+     * index `index` is disabled in the as-authored DOM, before the
+     * default nav exists. Consulted by config validation, refresh
+     * reconciliation, and the `disabled` flags passed to dom.buildNavHtml().
      *
      * @param {number} index
      *   Panel index.
@@ -96,26 +94,15 @@ class Tabs {
      * @returns {boolean}
      */
     #isSourceDisabled(index) {
-        if (this.#configs.options.useCustomNav) {
-            return this.#isTabDisabled(this.#objectsHTML['tabsNavButton'][index]);
-        }
-
-        const title = this.#objectsHTML['tabPanel'][index].querySelector(this.#configs.classes.tabPanelTitle);
-
-        return title ? title.getAttribute('aria-disabled') === 'true' : false;
-    }
-
-    /**
-     * Whether a tab element is disabled: native `disabled` (buttons,
-     * preferred) or `aria-disabled="true"` (custom non-button tabs).
-     *
-     * @param {HTMLElement} tab
-     *   Tab element.
-     *
-     * @returns {boolean}
-     */
-    #isTabDisabled(tab) {
-        return tab.disabled === true || tab.getAttribute('aria-disabled') === 'true';
+        return dom.isSourceDisabled(
+            {
+                useCustomNav: this.#configs.options.useCustomNav,
+                navButtons: this.#objectsHTML['tabsNavButton'],
+                panels: this.#objectsHTML['tabPanel'],
+                titleSelector: this.#configs.classes.tabPanelTitle,
+            },
+            index,
+        );
     }
 
     /**
@@ -175,7 +162,7 @@ class Tabs {
         const previous_buttons = this.#objectsHTML['tabsNavBtn'];
         const previous_panels = this.#objectsHTML['tabPanel'];
         const previous_index = this.getSelectedIndex();
-        const previous_selected_panel = this.#panelForTab(previous_buttons[previous_index]);
+        const previous_selected_panel = dom.panelForTab(previous_buttons[previous_index], this.#context.ownerDocument);
         const focus_was_in_tablist =
             Array.prototype.indexOf.call(previous_buttons, this.#context.ownerDocument.activeElement) !== -1;
 
@@ -199,19 +186,6 @@ class Tabs {
         if (focus_was_in_tablist) {
             this.#objectsHTML['tabsNavBtn'][this.getSelectedIndex()].focus();
         }
-    }
-
-    /**
-     * The panel a tab controls, or null when there is no such tab (e.g.
-     * nothing was selected before a refresh()).
-     *
-     * @param {HTMLElement} [tab]
-     *   Tab button.
-     *
-     * @returns {HTMLElement|null}
-     */
-    #panelForTab(tab) {
-        return tab ? document.getElementById(tab.getAttribute('aria-controls')) : null;
     }
 
     /**
@@ -255,9 +229,7 @@ class Tabs {
      *   Return the index of the currently selected tab, or -1 if none is selected.
      */
     getSelectedIndex() {
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
-
-        return Array.from(tab_buttons).findIndex((item) => item.getAttribute('aria-selected') === 'true');
+        return dom.selectedIndex(this.#objectsHTML['tabsNavBtn']);
     }
 
     /**
@@ -274,7 +246,7 @@ class Tabs {
             this.#throwError(`selectTab: no tab exists at index ${index}.`);
         }
 
-        if (this.#isTabDisabled(new_tab)) {
+        if (dom.isTabDisabled(new_tab)) {
             this.#throwError(`Cannot select disabled tab at index ${index}.`);
         }
 
@@ -298,15 +270,22 @@ class Tabs {
 
         const tab_buttons = this.#objectsHTML['tabsNavBtn'];
 
+        dom.applyRovingTabIndex(tab_buttons, selected_index);
+
         for (let i = 0; i < tab_buttons.length; i++) {
-            tab_buttons[i].tabIndex = selected_index === i ? 0 : -1;
             tab_buttons[i].removeEventListener('keydown', this.#boundOnKeyDown);
             tab_buttons[i].removeEventListener('click', this.#boundOnClick);
             tab_buttons[i].addEventListener('keydown', this.#boundOnKeyDown);
             tab_buttons[i].addEventListener('click', this.#boundOnClick);
         }
 
-        this.#prepareTabContent(selected_index);
+        dom.syncPanels({
+            panels: this.#objectsHTML['tabPanel'],
+            panelIds: this.#panelIds,
+            tabButtons: tab_buttons,
+            selectedIndex: selected_index,
+            openClass: this.#configs.selectors.tabPanelOpen,
+        });
 
         if (this.#configs.options.swipeable) {
             this.#initSwipe();
@@ -380,7 +359,7 @@ class Tabs {
     #onClick(event) {
         const new_tab = event.currentTarget;
 
-        if (this.#isTabDisabled(new_tab)) {
+        if (dom.isTabDisabled(new_tab)) {
             return;
         }
 
@@ -403,7 +382,7 @@ class Tabs {
     #onKeyDown(event) {
         const target = event.currentTarget;
 
-        if (this.#isTabDisabled(target)) {
+        if (dom.isTabDisabled(target)) {
             return;
         }
 
@@ -412,8 +391,8 @@ class Tabs {
 
         const target_index = keyboard.resolveTargetIndex(event.key, {
             orientation: options.orientation,
-            rtl: options.orientation === 'horizontal' && this.#isRTL(target),
-            currentIndex: this.#getClickedTabIndex(tab_buttons, target),
+            rtl: options.orientation === 'horizontal' && dom.isRtl(target),
+            currentIndex: dom.tabIndexByControls(tab_buttons, target),
             enabled: this.#enabledTabs(tab_buttons),
         });
 
@@ -424,7 +403,7 @@ class Tabs {
         const new_tab = tab_buttons[target_index];
 
         if (options.activationMode === 'manual') {
-            this.#moveFocusTo(target, new_tab);
+            dom.moveRovingFocus(target, new_tab);
         } else {
             this.#setSelectedTab(target, new_tab);
         }
@@ -443,44 +422,7 @@ class Tabs {
      * @returns {boolean[]}
      */
     #enabledTabs(tab_buttons) {
-        return Array.from(tab_buttons, (button) => !this.#isTabDisabled(button));
-    }
-
-    /**
-     * Whether `element`'s reading direction is right-to-left, per the
-     * cascaded CSS `direction` property. `direction` is exactly what the
-     * UA stylesheet derives from `dir="rtl"` on `<html>` or any closer
-     * ancestor (e.g. a wrapper around just this tablist), so reading it
-     * here — instead of adding an `options.rtl` flag — keeps the page's
-     * own markup as the single source of truth for direction.
-     *
-     * Only meaningful for horizontal orientation: vertical arrow keys
-     * (Up/Down) don't have a left/right reading direction to flip.
-     *
-     * @param {HTMLElement} element
-     *   Element to read the computed direction of (typically the
-     *   focused tab).
-     *
-     * @returns {boolean}
-     */
-    #isRTL(element) {
-        return element.ownerDocument.defaultView.getComputedStyle(element).direction === 'rtl';
-    }
-
-    /**
-     * Move the roving tabindex and keyboard focus to a tab, without
-     * touching aria-selected or the visible panel.
-     *
-     * @param {HTMLElement} old_tab
-     *   Previously focused tab.
-     *
-     * @param {HTMLElement} new_tab
-     *   Tab to move focus to.
-     */
-    #moveFocusTo(old_tab, new_tab) {
-        old_tab.tabIndex = -1;
-        new_tab.tabIndex = 0;
-        new_tab.focus();
+        return Array.from(tab_buttons, (button) => !dom.isTabDisabled(button));
     }
 
     /**
@@ -503,10 +445,11 @@ class Tabs {
         }
 
         const tab_buttons = this.#objectsHTML['tabsNavBtn'];
+        const doc = this.#context.ownerDocument;
         const from_index = Array.prototype.indexOf.call(tab_buttons, old_tab);
         const to_index = Array.prototype.indexOf.call(tab_buttons, new_tab);
-        const old_panel = document.getElementById(old_tab.getAttribute('aria-controls'));
-        const new_panel = document.getElementById(new_tab.getAttribute('aria-controls'));
+        const old_panel = dom.panelForTab(old_tab, doc);
+        const new_panel = dom.panelForTab(new_tab, doc);
 
         const allowed = this.#dispatchBeforeChangeEvent(from_index, to_index, old_tab, new_tab, old_panel, new_panel);
 
@@ -515,13 +458,8 @@ class Tabs {
             return;
         }
 
-        old_tab.setAttribute('aria-selected', 'false');
-        old_tab.tabIndex = -1;
-        new_tab.setAttribute('aria-selected', 'true');
-        new_tab.tabIndex = 0;
-        new_tab.focus();
-
-        this.#toggleTabContent(old_panel, new_panel);
+        dom.markSelected(old_tab, new_tab);
+        dom.togglePanels(old_panel, new_panel, this.#configs.selectors.tabPanelOpen);
         this.#dispatchChangeEvent(to_index, new_tab, new_panel);
     }
 
@@ -582,7 +520,7 @@ class Tabs {
      *   Still-selected tab to restore focus to.
      */
     #restoreFocusAfterCancel(tab_buttons, old_tab) {
-        const active = document.activeElement;
+        const active = this.#context.ownerDocument.activeElement;
 
         if (active !== old_tab && Array.prototype.indexOf.call(tab_buttons, active) !== -1) {
             old_tab.focus();
@@ -609,102 +547,63 @@ class Tabs {
     }
 
     /**
-     * Prepared tab content by adding appropriate attributes.
+     * Build or adopt the tab navigation, then cache the resulting
+     * `role="tab"` elements as `tabsNavBtn`. The markup is produced by
+     * internal/dom.js; this method only resolves the button labels and
+     * disabled flags that layer needs.
      *
-     * `hidden` is the semantic source of truth for panel visibility: it
-     * hides inactive panels natively, without depending on bundled CSS.
-     * The `tab-panel--open` class is kept in sync purely as a styling hook.
-     */
-    #prepareTabContent(selected_index) {
-        const tab_buttons = this.#objectsHTML['tabsNavBtn'];
-        const open_class_selector = this.#configs.selectors.tabPanelOpen;
-
-        this.#objectsHTML['tabPanel'].forEach((item, index) => {
-            const is_selected = selected_index === index;
-
-            item.setAttribute('id', this.#panelIds[index]);
-            item.setAttribute('tabindex', '0');
-            item.setAttribute('role', 'tabpanel');
-            item.hidden = !is_selected;
-            item.classList.toggle(open_class_selector, is_selected);
-
-            if (tab_buttons[index]) {
-                item.setAttribute('aria-labelledby', tab_buttons[index].id);
-            }
-        });
-    }
-
-    /**
-     * Toggle tab panel visibility.
-     *
-     * Sets `hidden` on the outgoing/incoming panel as the source of truth
-     * for their visibility, and keeps the `tab-panel--open` class in sync
-     * as a styling hook. `hidden` is never delayed for animation purposes.
-     *
-     * @param {HTMLElement} old_panel
-     *   Outgoing panel element.
-     *
-     * @param {HTMLElement} new_panel
-     *   Incoming panel element.
-     */
-    #toggleTabContent(old_panel, new_panel) {
-        const open_selector = this.#configs.selectors.tabPanelOpen;
-
-        old_panel.classList.remove(open_selector);
-        old_panel.hidden = true;
-
-        new_panel.classList.add(open_selector);
-        new_panel.hidden = false;
-    }
-
-    /**
-     * Get clicked nav button index.
-     *
-     * @param {NodeList} tab_buttons
-     *   Nav buttons.
-     *
-     * @param {HTMLElement} target
-     *   Clicked nav button.
-     *
-     * @returns {number}
-     *   Return current clicked nav button index.
-     */
-    #getClickedTabIndex(tab_buttons, target) {
-        return Array.from(tab_buttons).findIndex((item) => {
-            return item.getAttribute('aria-controls') === target.getAttribute('aria-controls');
-        });
-    }
-
-    /**
-     * Prepare and insert tab navigation.
+     * @param {number} selected_index
+     *   Index of the tab that should be active.
      */
     #insertNav(selected_index) {
-        if (!this.#configs.options.useCustomNav) {
-            this.#objectsHTML['tabsNavContainer'][0].innerHTML = this.#createNav(selected_index);
+        const options = this.#configs.options;
+
+        if (!options.useCustomNav) {
+            const panels = this.#objectsHTML['tabPanel'];
+
+            this.#objectsHTML['tabsNavContainer'][0].innerHTML = dom.buildNavHtml({
+                panelIds: this.#panelIds,
+                navTitles: Array.from(panels, (_panel, i) => this.#getNavTitle(i)),
+                disabledFlags: Array.from(panels, (_panel, i) => this.#isSourceDisabled(i)),
+                selectedIndex: selected_index,
+                listClass: this.#configs.classes.tabsNavList.substring(1),
+                buttonClass: this.#configs.classes.tabsNavButton.substring(1),
+                ariaLabel: options.ariaLabel,
+                vertical: options.orientation === 'vertical',
+            });
         } else {
-            this.#preparedCustomNavButton(selected_index);
+            dom.adoptCustomNav({
+                tablist: this.#objectsHTML['tabsNavList'][0],
+                navButtons: this.#objectsHTML['tabsNavButton'],
+                panelIds: this.#panelIds,
+                selectedIndex: selected_index,
+                ariaLabel: options.ariaLabel,
+                vertical: options.orientation === 'vertical',
+            });
         }
 
-        this.#appendElement('tabsNavBtn', this.#context.querySelectorAll('[role = "tab"]'));
+        this.#objectsHTML['tabsNavBtn'] = dom.queryTabs(this.#context);
     }
 
     /**
-     * Remove title from tab panel.
+     * Remove the `.tab-panel__title` elements once their text has been
+     * copied into the nav buttons (options.removeTabPanelTitle).
      */
     #removeTabPanelTitle() {
-        this.#objectsHTML['tabPanelTitle'].forEach((item) => {
-            item.remove();
-        });
+        dom.removeAll(this.#objectsHTML['tabPanelTitle']);
     }
 
     /**
-     * Get nav title.
+     * The label for the nav button of panel `index`: options.customNavTitles
+     * wins, then the panel's title element (`data-nav-title` or its text),
+     * then the label that element produced on an earlier build (kept in
+     * #navTitleByPanel so a refresh() after options.removeTabPanelTitle can
+     * still regenerate the tab), then "".
      *
      * @param {number} index
-     *   Nav title index.
+     *   Panel index.
      *
      * @returns {string}
-     *   Return title string.
      */
     #getNavTitle(index) {
         const panel = this.#objectsHTML['tabPanel'][index];
@@ -715,12 +614,7 @@ class Tabs {
         } else {
             const title_element = panel.querySelector(this.#configs.classes.tabPanelTitle);
 
-            // options.removeTabPanelTitle deletes the source element after the
-            // first build, so a later refresh() falls back to the label that
-            // element produced back then, kept per-panel in #navTitleByPanel.
-            title = title_element
-                ? (title_element.getAttribute('data-nav-title') ?? title_element.innerText)
-                : this.#navTitleByPanel.get(panel);
+            title = title_element ? dom.titleText(title_element) : this.#navTitleByPanel.get(panel);
         }
 
         if (title === undefined) {
@@ -733,126 +627,23 @@ class Tabs {
     }
 
     /**
-     * Create default raw nav HTML.
-     *
-     * @returns {string}
-     *   Return raw nav HTML.
-     */
-    #createNav(selected_index) {
-        const tab_nav_list_selector = this.#configs.classes.tabsNavList.substring(1);
-        const tab_nav_btn_selector = this.#configs.classes.tabsNavButton.substring(1);
-        const aria_label = this.#configs.options.ariaLabel;
-        const aria_label_attr = aria_label ? ` aria-label="${aria_label}"` : '';
-        const is_vertical = this.#configs.options.orientation === 'vertical';
-        const aria_orientation_attr = is_vertical ? ` aria-orientation="vertical"` : '';
-
-        let html = `<div class="${tab_nav_list_selector}" role="tablist"${aria_label_attr}${aria_orientation_attr}>`;
-
-        for (let i = 0; i < this.#objectsHTML['tabPanel'].length; i++) {
-            let tab_panel_id = this.#panelIds[i];
-            let tab_id = tab_panel_id + '-tab';
-            let is_selected = selected_index === i;
-            let disabled_attr = this.#isSourceDisabled(i) ? ' disabled' : '';
-
-            html += `<button type="button" id="${tab_id}" class="${tab_nav_btn_selector}" role="tab" aria-selected="${is_selected ? 'true' : 'false'}" aria-controls="${tab_panel_id}"${disabled_attr}>${this.#getNavTitle(i)}</button>`
-        }
-
-        html += '</div>';
-        return html;
-    }
-
-    /**
-     * Prepared custom nav buttons by adding aria attributes.
-     *
-     * If a nav element is a `<button>` without an explicit `type`, it is
-     * given `type="button"` so it can't accidentally submit an enclosing
-     * `<form>`. Elements other than `<button>` are left untouched.
-     */
-    #preparedCustomNavButton(selected_index) {
-        if (this.#objectsHTML['tabsNavList'].length > 0) {
-            const tablist = this.#objectsHTML['tabsNavList'][0];
-
-            tablist.setAttribute('role', 'tablist');
-
-            if (this.#configs.options.ariaLabel) {
-                tablist.setAttribute('aria-label', this.#configs.options.ariaLabel);
-            }
-
-            if (this.#configs.options.orientation === 'vertical') {
-                tablist.setAttribute('aria-orientation', 'vertical');
-            }
-        }
-
-        for (let i = 0; i < this.#objectsHTML['tabsNavButton'].length; i++) {
-            const button = this.#objectsHTML['tabsNavButton'][i];
-            let tab_panel_id = this.#panelIds[i];
-            let is_selected = selected_index === i;
-
-            if (!button.id) {
-                button.setAttribute('id', tab_panel_id + '-tab');
-            }
-
-            if (button.tagName === 'BUTTON' && !button.hasAttribute('type')) {
-                button.setAttribute('type', 'button');
-            }
-
-            button.setAttribute('aria-controls', tab_panel_id);
-            button.setAttribute('aria-selected', is_selected ? 'true' : 'false');
-        }
-    }
-
-    /**
-     * Pre-compute a unique DOM id for each tab panel, so multiple Tabs
-     * instances with the default tabPanelIdPrefix on the same page
-     * don't collide (which would produce invalid duplicate-id HTML and
-     * make document.getElementById resolve to the wrong instance).
+     * Assign every panel a stable, collision-free id (see
+     * internal/dom.js → ensurePanelIds).
      */
     #generatePanelIds() {
-        const prefix = this.#configs.selectors.tabPanelIdPrefix;
-        const ids = [];
-
-        this.#objectsHTML['tabPanel'].forEach((panel, index) => {
-            // Keep an id a panel already has — its own from a previous build,
-            // or one the consumer set — so refresh() doesn't rename surviving
-            // panels (and break bookmarked in-page links to them). Only newly
-            // added panels get a fresh id, made unique against the whole
-            // document so it can't clash with another instance or a kept id.
-            if (!panel.id) {
-                panel.id = this.#makeUniqueId(`${prefix}-${index}`);
-            }
-
-            ids.push(panel.id);
-        });
-
-        this.#panelIds = ids;
+        this.#panelIds = dom.ensurePanelIds(
+            this.#objectsHTML['tabPanel'],
+            this.#configs.selectors.tabPanelIdPrefix,
+            this.#context.ownerDocument,
+        );
     }
 
     /**
-     * Return base_id, or base_id with an incrementing numeric suffix
-     * if an element with that id already exists elsewhere in the
-     * document (e.g. from another Tabs instance on the same page).
-     *
-     * @param {string} base_id
-     *
-     * @returns {string}
-     */
-    #makeUniqueId(base_id) {
-        let id = base_id;
-        let suffix = 2;
-
-        while (document.getElementById(id)) {
-            id = `${base_id}-${suffix}`;
-            suffix++;
-        }
-
-        return id;
-    }
-
-    /**
-     * Init HTML element based on configs css class selectors.
+     * Resolve the context element and query it for every configured
+     * selector. The context lookup stays here — it is the entry point,
+     * before #context (and its document) is known.
      */
     #initElements() {
-        const classes = this.#configs.classes;
         const context_id = this.#configs.contextID;
         const context = context_id instanceof HTMLElement ? context_id : document.getElementById(context_id);
 
@@ -862,22 +653,7 @@ class Tabs {
 
         this.#context = context;
 
-        for (const el in classes) {
-            this.#objectsHTML[el] = context.querySelectorAll(classes[el]);
-        }
-    }
-
-    /**
-     * Append NodeList elements to array.
-     *
-     * @param {string} name
-     *   Element name.
-     *
-     * @param {NodeList} value
-     *   HTML node list.
-     */
-    #appendElement(name, value) {
-        this.#objectsHTML[name] = value;
+        Object.assign(this.#objectsHTML, dom.discoverElements(context, this.#configs.classes));
     }
 }
 
