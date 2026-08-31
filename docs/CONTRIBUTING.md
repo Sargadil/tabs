@@ -211,6 +211,11 @@ The last one only if it was actually verified.
 
 # Manual accessibility tests
 
+The step-by-step script to run — per browser + assistive-technology combination,
+with the pages to use and a results grid — is
+[`MANUAL_ACCESSIBILITY_CHECKLIST.md`](./MANUAL_ACCESSIBILITY_CHECKLIST.md). The
+summary matrix lives in [`ACCESSIBILITY.md`](../ACCESSIBILITY.md#manual-assistive-technology-test-matrix).
+
 AI must not mark screen reader tests as done.
 
 Tests such as:
