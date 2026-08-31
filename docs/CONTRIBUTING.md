@@ -267,9 +267,12 @@ Tests should verify behavior, not just internal implementation.
 They live in `test/`, one `*.test.js` file per behavior area (`initialization`,
 `configuration`, `selection`, `keyboard-navigation`, `disabled`, `events`,
 `refresh`, `lifecycle`), plus `keyboard.test.mjs` for the pure keyboard module.
-Shared `setup()` / event helpers / cross-suite fixtures are in
-`test/helpers/setup.js`; fixtures used by a single area stay next to it. Add a
-new test to the file whose behavior it exercises.
+`test/helpers/setup.js` has the shared `setup()` boot and event helpers;
+`test/helpers/fixtures.js` has the markup builders (`tabsHtml`, `customNavHtml`,
+`panels`, `customNavConfig`). Keep fixture specs explicit at the call site
+(which tab is disabled, how many, their labels); deliberately malformed markup
+stays inline in the test that checks it. Add a new test to the file whose
+behavior it exercises.
 
 ---
 
