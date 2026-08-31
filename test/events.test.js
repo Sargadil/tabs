@@ -1,7 +1,8 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { setup, click, keydown, DEFAULT_HTML } = require('./helpers/setup');
+const { setup, click, keydown } = require('./helpers/setup');
+const { DEFAULT_HTML } = require('./helpers/fixtures');
 
 describe('tabs:beforechange event', () => {
     test('fires with {fromIndex, toIndex, fromTab, toTab, fromPanel, toPanel} before tabs:change, and is cancelable + bubbles', () => {

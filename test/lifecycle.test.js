@@ -1,7 +1,8 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { setup, click, touch, DEFAULT_HTML } = require('./helpers/setup');
+const { setup, click, touch } = require('./helpers/setup');
+const { tabsHtml, DEFAULT_HTML } = require('./helpers/fixtures');
 
 describe('public API', () => {
     test('selectTab()/getSelectedIndex() switch tabs and validate the index', () => {
@@ -73,21 +74,7 @@ describe('public API', () => {
 
 describe('multiple instances on one page', () => {
     test('default tabPanelIdPrefix does not collide across instances', () => {
-        const html = `
-        <div class="tabs" id="tabs-a">
-            <div class="tabs__nav"></div>
-            <div class="tabs__panels">
-                <div class="tab-panel"><h3 class="tab-panel__title">A1</h3><div class="tab-panel__content">a1</div></div>
-                <div class="tab-panel"><h3 class="tab-panel__title">A2</h3><div class="tab-panel__content">a2</div></div>
-            </div>
-        </div>
-        <div class="tabs" id="tabs-b">
-            <div class="tabs__nav"></div>
-            <div class="tabs__panels">
-                <div class="tab-panel"><h3 class="tab-panel__title">B1</h3><div class="tab-panel__content">b1</div></div>
-                <div class="tab-panel"><h3 class="tab-panel__title">B2</h3><div class="tab-panel__content">b2</div></div>
-            </div>
-        </div>`;
+        const html = tabsHtml(['A1', 'A2'], { id: 'tabs-a' }) + tabsHtml(['B1', 'B2'], { id: 'tabs-b' });
         const { Tabs, dom, document } = setup(html);
 
         const instanceA = new Tabs({ contextID: 'tabs-a' });
@@ -162,16 +149,7 @@ describe('swipeable', () => {
     });
 
     test('a swipe skips a disabled middle tab instead of throwing', () => {
-        const html = `
-        <div class="tabs" id="tabs">
-            <div class="tabs__nav"></div>
-            <div class="tabs__panels">
-                <div class="tab-panel"><h3 class="tab-panel__title">One</h3><div class="tab-panel__content">1</div></div>
-                <div class="tab-panel"><h3 class="tab-panel__title" aria-disabled="true">Two</h3><div class="tab-panel__content">2</div></div>
-                <div class="tab-panel"><h3 class="tab-panel__title">Three</h3><div class="tab-panel__content">3</div></div>
-            </div>
-        </div>
-        `;
+        const html = tabsHtml(['One', { title: 'Two', disabled: true }, 'Three']);
         const { Tabs, dom, document } = setup(html);
         const instance = new Tabs({ options: { swipeable: true } });
         const panels = document.querySelectorAll('#tabs [role="tabpanel"]');
@@ -184,16 +162,7 @@ describe('swipeable', () => {
     });
 
     test('a swipe wraps past a disabled edge to the other enabled end', () => {
-        const html = `
-        <div class="tabs" id="tabs">
-            <div class="tabs__nav"></div>
-            <div class="tabs__panels">
-                <div class="tab-panel"><h3 class="tab-panel__title">One</h3><div class="tab-panel__content">1</div></div>
-                <div class="tab-panel"><h3 class="tab-panel__title">Two</h3><div class="tab-panel__content">2</div></div>
-                <div class="tab-panel"><h3 class="tab-panel__title" aria-disabled="true">Three</h3><div class="tab-panel__content">3</div></div>
-            </div>
-        </div>
-        `;
+        const html = tabsHtml(['One', 'Two', { title: 'Three', disabled: true }]);
         const { Tabs, dom, document } = setup(html);
         const instance = new Tabs({ options: { swipeable: true, initSelectedItem: 1 } });
         const panels = document.querySelectorAll('#tabs [role="tabpanel"]');

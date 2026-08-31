@@ -45,7 +45,8 @@ src/scss/                Style source
 dist/                    Generated build output — COMMITTED (see "Generated files")
 test/*.test.js           Unit/integration tests (node --test, jsdom), one file per behavior area
 test/keyboard.test.mjs   Isolated unit tests for src/js/internal/keyboard.js (pure, no jsdom)
-test/helpers/setup.js    Shared setup() + event helpers + the two cross-suite HTML fixtures
+test/helpers/setup.js    Shared setup() boot + click/keydown/touch event helpers
+test/helpers/fixtures.js HTML fixture builders (tabsHtml/customNavHtml/panels) + customNavConfig()
 e2e/                     Playwright: specs, fixtures/, axe scans, static server
 examples/                Small runnable public-API examples (also smoke-tested in CI)
 index.html               Live demo (served at github.io via Pages-from-branch)

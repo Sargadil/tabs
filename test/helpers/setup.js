@@ -1,47 +1,22 @@
 'use strict';
 
 /**
- * Shared setup for the unit/integration suites (`test/*.test.js`).
+ * Shared boot for the unit/integration suites (`test/*.test.js`).
  *
- * `setup()` boots a fresh jsdom document, wires the globals the bundle
+ * `setup()` starts a fresh jsdom document, wires the globals the bundle
  * needs, and re-requires `dist/js/tabs.cjs` so each test starts from a
  * clean module state. `click` / `keydown` / `touch` dispatch the DOM
  * events the specs use.
  *
- * Per-suite HTML fixtures live next to the suites that use them; only the
- * two markup shapes shared across suites are exported here.
+ * HTML fixtures live in `./fixtures`.
  */
 
 const path = require('node:path');
 const { JSDOM } = require('jsdom');
 
+const { DEFAULT_HTML } = require('./fixtures');
+
 const TABS_CJS = path.join(__dirname, '..', '..', 'dist', 'js', 'tabs.cjs');
-
-const DEFAULT_HTML = `
-<div class="tabs" id="tabs">
-    <div class="tabs__nav"></div>
-    <div class="tabs__panels">
-        <div class="tab-panel"><h3 class="tab-panel__title">One</h3><div class="tab-panel__content">1</div></div>
-        <div class="tab-panel"><h3 class="tab-panel__title">Two</h3><div class="tab-panel__content">2</div></div>
-        <div class="tab-panel"><h3 class="tab-panel__title">Three</h3><div class="tab-panel__content">3</div></div>
-    </div>
-</div>
-`;
-
-const CUSTOM_NAV_HTML = `
-<div class="tabs" id="tabs">
-    <div class="custom-tabs__nav">
-        <div class="custom-tabs__nav-inner">
-            <button class="custom-tabs__nav-button" role="tab">Tab 1</button>
-            <button class="custom-tabs__nav-button" role="tab">Tab 2</button>
-        </div>
-    </div>
-    <div class="tabs__panels">
-        <div class="tab-panel"><h3 class="tab-panel__title">One</h3><div class="tab-panel__content">1</div></div>
-        <div class="tab-panel"><h3 class="tab-panel__title">Two</h3><div class="tab-panel__content">2</div></div>
-    </div>
-</div>
-`;
 
 function setup(html = DEFAULT_HTML) {
     const dom = new JSDOM(html, { runScripts: 'outside-only' });
@@ -71,4 +46,4 @@ function touch(el, dom, type, x, y) {
     el.dispatchEvent(event);
 }
 
-module.exports = { setup, click, keydown, touch, DEFAULT_HTML, CUSTOM_NAV_HTML };
+module.exports = { setup, click, keydown, touch };

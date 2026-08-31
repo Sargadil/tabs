@@ -1,7 +1,8 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { setup, click, keydown, DEFAULT_HTML } = require('./helpers/setup');
+const { setup, click, keydown } = require('./helpers/setup');
+const { tabsHtml, DEFAULT_HTML } = require('./helpers/fixtures');
 
 describe('keyboard navigation', () => {
     test('Home/End select the first/last tab', () => {
@@ -230,17 +231,9 @@ describe('RTL + disabled tabs interaction', () => {
     // First ("One") and last ("Four") disabled, same shape as DISABLED_EDGES_HTML in the
     // "disabled tabs" suite, so Home/End/wrap-around all have to skip past a disabled edge
     // to reach an enabled tab — now combined with a reversed RTL key mapping.
-    const RTL_DISABLED_EDGES_HTML = `
-    <div class="tabs" id="tabs">
-        <div class="tabs__nav"></div>
-        <div class="tabs__panels">
-            <div class="tab-panel"><h3 class="tab-panel__title" aria-disabled="true">One</h3><div class="tab-panel__content">1</div></div>
-            <div class="tab-panel"><h3 class="tab-panel__title">Two</h3><div class="tab-panel__content">2</div></div>
-            <div class="tab-panel"><h3 class="tab-panel__title">Three</h3><div class="tab-panel__content">3</div></div>
-            <div class="tab-panel"><h3 class="tab-panel__title" aria-disabled="true">Four</h3><div class="tab-panel__content">4</div></div>
-        </div>
-    </div>
-    `;
+    const RTL_DISABLED_EDGES_HTML = tabsHtml([
+        { title: 'One', disabled: true }, 'Two', 'Three', { title: 'Four', disabled: true },
+    ]);
 
     function setupRTLDisabled(options = {}) {
         const { Tabs, dom, document } = setup(RTL_DISABLED_EDGES_HTML);
