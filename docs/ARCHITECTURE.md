@@ -189,7 +189,10 @@ Both are `CustomEvent`s dispatched on the context element, `bubbles: true`.
 #### TypeScript surface
 
 `dist/js/tabs.d.ts` is hand-maintained as `src/js/script.d.ts` and copied into
-`dist/` by the build.
+`dist/` by the build. The package smoke test compiles a real consumer project
+(`scripts/package-smoke/consumer-ts/`) against the packed tarball with
+`tsc --noEmit`, so the shipped declarations are checked the way an npm consumer
+sees them — including snippets that must stay type errors.
 
 - `export default class Tabs` with `constructor(configs?: TabsConfig)`,
   `destroy(): void`, `getSelectedIndex(): number`,
@@ -508,7 +511,7 @@ per-behavior inventory is in
 | --- | --- | --- |
 | pure unit (`test/keyboard.test.mjs`, no jsdom) | the keyboard / swipe decision function in isolation — key + orientation + RTL + position + `enabled` array → target index | anything DOM-, focus-, or event-related |
 | unit / integration (`test/*.test.js`, jsdom) | config validation and its message text, state transitions, `aria-*` / `hidden` / roving `tabindex` wiring, event `detail` shape and order, `refresh()` reconciliation, `selectTab()` / `getSelectedIndex()` / `destroy()`, multiple-instance isolation | real focus, real computed styles / layout, real hit-testing, the browser accessibility tree, cross-browser differences |
-| package smoke (`scripts/package-smoke/`) | the real `npm pack` tarball — `exports`, ESM/CJS, CSS, `.d.ts`, file list | anything about component behavior |
+| package smoke (`scripts/package-smoke/`) | the real `npm pack` tarball — `exports`, ESM/CJS, CSS, `.d.ts` shape, file list, plus a real `tsc --noEmit` compile of a consumer project (`consumer-ts/`) against the installed tarball | anything about component behavior |
 | Playwright (`e2e/`) | real focus movement, real key events over the rendered nav, the accessibility tree (`getByRole` seeing exactly one `tabpanel`), `Enter` / `Space` activation, cascaded `direction` resolution, touch / swipe, the mousedown-focuses-target quirk, that the shipped bundle behaves the same in Chromium / Firefox / WebKit | logic a unit test already pins down cheaply — validation branches, message text, payload keys |
 | axe (`e2e/accessibility.spec.js`) | automated ARIA / contrast / naming regression detection, on initial render and after interaction | whether the component is actually usable with a screen reader |
 | manual AT | VoiceOver / NVDA / other assistive technology | — never marked PASS by automation |

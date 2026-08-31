@@ -50,7 +50,7 @@ test/helpers/fixtures.js HTML fixture builders (tabsHtml/customNavHtml/panels) +
 e2e/                     Playwright: specs, fixtures/, axe scans, static server
 examples/                Small runnable public-API examples (also smoke-tested in CI)
 index.html               Live demo (served at github.io via Pages-from-branch)
-scripts/package-smoke/   Packs the tarball and verifies it in a throwaway fixture project
+scripts/package-smoke/   Packs the tarball and verifies it in a throwaway fixture project (incl. a tsc consumer compile in consumer-ts/)
 .github/workflows/       CI (ci.yml) and release (publish.yml)
 ```
 
@@ -118,7 +118,7 @@ npm ci
 npm run build           vite build + copy script.d.ts into dist/ + sass
 npm test                node --test
 npm run test:coverage   same, gated at 100% branch + 100% function — do not lower the threshold
-npm run test:package    npm pack, install the tarball into a fixture, check CJS/ESM/CSS/types
+npm run test:package    npm pack, install the tarball into a fixture, check CJS/ESM/CSS/types + tsc consumer compile
 npm run test:e2e        Playwright on Chromium/Firefox/WebKit, incl. @axe-core/playwright
 npm run examples        static server for examples/ (http://127.0.0.1:4173/examples/<file>)
 npm pack                inspect tarball contents

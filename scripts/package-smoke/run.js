@@ -12,6 +12,11 @@
  *
  * Assumes `npm run build` has already produced a fresh dist/. Does not
  * replace or overlap with the unit tests in test/ (run via `npm test`).
+ *
+ * The TypeScript declarations are verified the way a real npm consumer would
+ * see them: a small consumer project (scripts/package-smoke/consumer-ts/) is
+ * compiled with `tsc --noEmit` against the installed tarball, not against
+ * src/ (MAINT-9).
  */
 
 const assert = require('node:assert/strict');
@@ -109,6 +114,28 @@ function installTarball(fixtureDir, tarballPath) {
     );
 }
 
+function runTypeScriptConsumerCheck(fixtureDir) {
+    const source = path.join(__dirname, 'consumer-ts');
+    const destination = path.join(fixtureDir, 'consumer-ts');
+    fs.cpSync(source, destination, { recursive: true });
+
+    const tscEntry = require.resolve('typescript/bin/tsc', { paths: [PROJECT_ROOT] });
+
+    try {
+        const stdout = execFileSync(process.execPath, [tscEntry, '--project', destination], {
+            cwd: destination,
+            encoding: 'utf8',
+        });
+        const summary = stdout.trim() || 'consumer project compiled with tsc --noEmit';
+        log(`PASS  real TypeScript consumer project — ${summary}`);
+    } catch (error) {
+        log('FAIL  real TypeScript consumer project');
+        if (error.stdout) log(error.stdout.toString());
+        if (error.stderr) log(error.stderr.toString());
+        throw new Error('Package smoke check "real TypeScript consumer project" failed.');
+    }
+}
+
 function runCheck(name, fixtureFile, fixtureDir) {
     const source = path.join(FIXTURES_DIR, fixtureFile);
     const destination = path.join(fixtureDir, fixtureFile);
@@ -151,7 +178,8 @@ function main() {
         runCheck('CommonJS import', 'check-cjs.cjs', fixtureDir);
         runCheck('ESM import', 'check-esm.mjs', fixtureDir);
         runCheck('CSS export', 'check-css.cjs', fixtureDir);
-        runCheck('TypeScript declarations', 'check-types.cjs', fixtureDir);
+        runCheck('TypeScript declarations shape', 'check-types.cjs', fixtureDir);
+        runTypeScriptConsumerCheck(fixtureDir);
 
         log('==> Package smoke test passed');
     } finally {
