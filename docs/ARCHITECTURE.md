@@ -36,16 +36,16 @@ public, and free to change without a major version:
 - generated internal IDs;
 - any package path other than those in [Package contract](#package-contract).
 
-Because of this boundary the internal architecture can be refactored
-(MAINT-2…5) without a breaking change.
+Because of this boundary the internal architecture can be refactored without a
+breaking change.
 
 ---
 
 ## Public contract
 
-The **frozen baseline**, captured in MAINT-0 from the real code of
-`@sargadil/tabs@1.3.0`: a maintenance refactor must not change anything here
-without an explicit maintainer decision and a SemVer assessment.
+The **frozen baseline**, taken from `@sargadil/tabs@1.3.0`: a maintenance
+refactor must not change anything here without an explicit maintainer decision
+and a SemVer assessment.
 
 Full usage examples are in [`README.md`](../README.md); the authoritative
 keyboard and ARIA tables are in [`ACCESSIBILITY.md`](../ACCESSIBILITY.md). This
@@ -274,217 +274,80 @@ object / spec properties and configuration keys.
 
 ## Responsibility boundaries
 
-### Target
+The implementation is one orchestrator class plus four internal helper modules.
+The split is by responsibility and goes no finer than readability requires.
 
-The architecture separates at least four responsibilities. Split no further than
-readability requires.
+| Layer | File | Owns | Does not touch |
+| --- | --- | --- | --- |
+| **Orchestration** | `src/js/script.js` — the `Tabs` class | initialization, the selection transition, `refresh()` reconciliation, event dispatch, lifecycle — *what should happen, and in what order* | low-level DOM writes, key interpretation, the wording of validation errors |
+| **Configuration** | `src/js/internal/config.js` | option defaults, the deep config merge, every config- and DOM-structure validation rule together with its exact `[@sargadil/tabs] …` message | reading or mutating the DOM, selection, keyboard, events |
+| **Keyboard** | `src/js/internal/keyboard.js` | pure key / swipe → target-index decisions: orientation, RTL direction, wrap-around, skipping disabled tabs | the DOM, a `Tabs` instance, `activationMode` |
+| **DOM / ARIA** | `src/js/internal/dom.js` | element discovery, unique id generation, nav markup, and every `aria-*` / `tabindex` / `hidden` / focus write — *how a resolved state is represented in the DOM* | deciding which tab is selected |
+| **Error** | `src/js/internal/error.js` | the one throw primitive — `ERROR_PREFIX` + `fail(message)`, always a plain prefixed `Error` (never `TypeError`, never a raw low-level exception) | anything else |
 
-| Layer | Owns |
+The keyboard and DOM layers never decide selection. Keyboard returns an index;
+the orchestrator applies it as a selection or a focus move depending on
+`activationMode`; the DOM layer is handed the resolved index, labels, and
+disabled flags and writes them out.
+
+### Orchestrator ↔ helper contract
+
+The helpers are pure functions or DOM leaves. The orchestrator is the only
+stateful piece and the sole holder of instance state:
+
+| Private field | Holds |
 | --- | --- |
-| **Tabs orchestration** (`src/js/script.js`) | initialization, the selection flow, `refresh`, events, lifecycle — *what should happen* |
-| **Configuration** (`src/js/internal/config.js`) | defaults, merge, validation, configuration errors |
-| **Keyboard** (`src/js/internal/keyboard.js`) | interpreting keys / swipes — orientation, RTL direction, wrapping, enabled/disabled navigation → *which tab to move to* |
-| **DOM / ARIA** (`src/js/internal/dom.js`) | element discovery, id generation, nav markup, ARIA / `tabindex` / `hidden` synchronization — *how to represent that state* |
-| **Error** (`src/js/internal/error.js`) | the single throw primitive — `ERROR_PREFIX` + `fail(message)`, a plain prefixed `Error` |
+| `#context` | the resolved context element. Every document access goes through `#context.ownerDocument`; the one exception is the bootstrap `document.getElementById()` in `#initElements()`, which runs before `#context` exists |
+| `#elements` | the queried `NodeList`s keyed by the config `classes` names, plus the resolved `tabButtons` (`role="tab"` list). Re-read from the live DOM on construction and on every `refresh()` |
+| `#configs` | the effective configuration — defaults deep-merged with the caller's object |
+| `#panelIds` | the resolved, collision-free panel ids |
+| `#navTitleByPanel` | a `WeakMap` label cache, so a `refresh()` after `options.removeTabPanelTitle` (which deletes the source `.tab-panel__title`) can still regenerate a tab's label |
 
-The keyboard and DOM layers must not decide which tab is *selected* (keyboard
-returns an index; the orchestrator applies it as a selection or a focus move
-depending on `activationMode`; the DOM layer receives the resolved index,
-labels, and disabled flags and writes them out).
+`config.validateDomStructure()` does not read the DOM: the orchestrator runs
+discovery, then passes it element counts plus an `isSourceDisabled(index)` probe,
+so the rules stay unit-testable in isolation. The two construction-only checks
+(the `initSelectedItem` range check and the missing-title check) are relaxed on
+`refresh()` via an `isRefresh` flag.
 
-### Extraction status
+The nav label priority — `options.customNavTitles` → the panel's
+`.tab-panel__title` (`data-nav-title` or its text) → the `#navTitleByPanel` cache
+→ `""` — lives in the orchestrator (`#getNavTitle`); `dom.js` only performs the
+leaf element read (`titleText`). The priority and the cache are instance
+concerns, so that split is deliberate.
 
-| Ticket | Area | Status |
-| --- | --- | --- |
-| MAINT-2 | configuration | ✅ `src/js/internal/config.js` |
-| MAINT-3 | keyboard | ✅ `src/js/internal/keyboard.js` |
-| MAINT-4 | DOM / ARIA | ✅ `src/js/internal/dom.js` |
-| MAINT-5 | orchestration cleanup | ✅ `Tabs` now coordinates initialize / select / refresh / destroy / events; helpers do the rest |
-| MAINT-12 | error primitive | ✅ `src/js/internal/error.js` — one `fail()` for config, DOM, and API errors |
+### Disabled state — two readers, by design
 
-### Current internal map
+Disabled is read from two different sources at two different times, so there are
+two predicates in `dom.js`:
 
-Inventory of the `Tabs` class as it stands, by responsibility. Where a category
-is already extracted it names the module; otherwise it names the private members
-that will move.
+- `isSourceDisabled(source, index)` — the **as-authored** DOM, consulted during
+  validation and `refresh()` reconciliation, before the default nav exists (the
+  custom-nav tab element, or `aria-disabled` on `.tab-panel__title`);
+- `isTabDisabled(tab)` — the **rendered** tab button (native `disabled` or
+  `aria-disabled="true"`), consulted by click / keyboard / swipe handlers and
+  `selectTab()`.
 
-**configuration — extracted (MAINT-2).** `src/js/internal/config.js`, exporting
-`mergeConfig()`, `validateConfig()`, `validateDomStructure()`.
-
-- defaults + `deepMerge()` (objects recursively, arrays concatenated, scalars
-  replaced); the `createDefaultConfig()` factory gives each instance its own
-  config tree;
-- `validateConfig()` — pure, no DOM: `contextID` type, `orientation`,
-  `activationMode`, `initSelectedItem` shape;
-- `validateDomStructure()` — structural rules + "≥1 enabled tab" +
-  "`initSelectedItem` not disabled", with the full `[@sargadil/tabs] …` message
-  text. It does not read or mutate the DOM: the orchestrator runs discovery and
-  passes element counts plus an `isSourceDisabled(index)` probe; the `refresh()`
-  relaxations are driven by an `isRefresh` flag;
-- remaining in `Tabs`: a thin `#validateDomStructure()` adapter (counts from
-  `#elements` + a closure over `#isSourceDisabled`);
-- it raises every failure through `internal/error.js` → `fail()` (MAINT-12), the
-  same primitive the orchestrator uses.
-
-**DOM / ARIA — extracted (MAINT-4).** `src/js/internal/dom.js`. Low-level reads
-and writes; it represents state but never decides which tab that state describes.
-
-- **discovery / ids** — `discoverElements(context, classes)`,
-  `queryTabButtons(context)`, `ensurePanelIds(panels, prefix, doc)` (keeps an id a
-  panel already has; assigns fresh document-unique ones otherwise);
-- **nav markup** — `buildNavHtml(spec)` (pure string builder for the default
-  nav), `adoptCustomNav(spec)` (tablist role / label / orientation + per-tab id /
-  `type="button"` / `aria-controls` / `aria-selected` on the author's markup);
-- **panel / tab state** — `syncPanels(spec)` (id / `tabindex` / `role` /
-  `hidden` / open-class / `aria-labelledby`), `togglePanels(old, new, class)`,
-  `applyRovingTabIndex(tabButtons, index)`, `markSelected(oldTab, newTab)`
-  (aria-selected + tabindex + focus), `moveRovingFocus(oldTab, newTab)`,
-  `removeAll(nodes)`;
-- **reads** — `isTabDisabled(tab)`, `isRtl(element)`, `isSourceDisabled(source,
-  index)`, `selectedIndex(tabButtons)`, `tabIndexByControls(tabButtons, target)`,
-  `panelForTab(tab, doc)`, `titleText(titleElement)`.
-- remaining in `Tabs`: thin adapters `#isSourceDisabled()` / `#generatePanelIds()`,
-  and `#getNavTitle()` (the label priority — `customNavTitles` → title element →
-  `#navTitleByPanel` cache → `""` — and the cache itself are instance concerns;
-  it calls `dom.titleText()` for the element read). The orchestrator resolves the
-  labels and disabled flags and hands them to `dom.buildNavHtml()`.
-- `document` is now used in only one place — the bootstrap context lookup in
-  `#initElements()`, before `#context` (and its document) is known; everything
-  else threads `this.#context.ownerDocument`.
-
-**keyboard navigation — extracted (MAINT-3).** `src/js/internal/keyboard.js`,
-exporting `resolveTargetIndex(key, state)` and `adjacentEnabledIndex(from,
-direction, enabled)`. Pure: given `key`, `orientation`, `rtl`, `currentIndex`,
-and an `enabled` boolean array, it returns the target tab index (or `null` for a
-non-navigation key). It does not know about `activationMode` — the orchestrator
-applies the index as a selection (`#setSelectedTab` → `dom.markSelected`) or a
-focus move (`dom.moveRovingFocus`). `adjacentEnabledIndex` is shared by arrow
-keys and swipe.
-
-- remaining in `Tabs`: `#onKeyDown()` / `#onTouchEnd()` (gather state, apply the
-  result), `#enabledTabs()` (build the boolean array from `dom.isTabDisabled`),
-  `#onTouchStart()` / `#initSwipe()` / `#touchStartX/Y` / `#swipeThreshold` (the
-  swipe plumbing). `#isRTL`, `#moveFocusTo`, `#getClickedTabIndex` moved to
-  `dom.js` (as `isRtl`, `moveRovingFocus`, `tabIndexByControls`) in MAINT-4.
-- the eight near-duplicate `#setSelectedTo*` / `#moveFocusTo*` wrappers and the
-  `#get{Previous,Next,Adjacent,First,Last}…Tab` family are gone — collapsed into
-  "ask keyboard for the index, then apply".
-
-**selection.** `getSelectedIndex()` (→ `dom.selectedIndex`); `selectTab()` (range
-+ disabled guard → `#setSelectedTab()`); `#setSelectedTab()` (the transition:
-no-op guard, resolve indices/panels, dispatch `beforechange`, cancel path,
-`dom.markSelected` + `dom.togglePanels`, dispatch `change`); the selection path
-in `#onClick()`; `#resolveSelectedIndex()`.
-
-**events.** `#dispatchBeforeChangeEvent()`, `#dispatchChangeEvent()`,
-`#restoreFocusAfterCancel()` (undo the browser's focus move when a change is
-vetoed). The payload shape is public contract; the logic is short and interwoven
-with `#setSelectedTab()`.
-
-**disabled state.** `dom.isTabDisabled(tab)` (post-render: native `disabled` or
-`aria-disabled="true"`); `dom.isSourceDisabled(source, index)` (pre-render: the
-author DOM — the custom-nav tab element, or `aria-disabled` on
-`.tab-panel__title`), reached through the thin `#isSourceDisabled()` adapter.
-Consumers: config validation, keyboard / swipe navigation, `selectTab()`,
-`#resolveSelectedIndex()`, `dom.buildNavHtml()`. Two readers for two sources, by
-design — at validation time there is no tab element yet for the default nav.
-
-**refresh / reconciliation.** `refresh()` (snapshot → re-read + re-validate →
-tear down old listeners → regenerate IDs / nav →
-`#initTabs(#resolveSelectedIndex(...))` → optional title removal → restore focus);
-`#resolveSelectedIndex()` (keep the selected panel, else a positional fallback,
-else skip disabled); the `isRefresh` branches in `config.js`; `dom.panelForTab()`.
-
-**lifecycle.** `constructor()`; `destroy()` → `#teardownListeners()`;
-`#initTabs()` (rebuild nav via `dom`, `dom.applyRovingTabIndex`, wire
-`keydown` / `click` per tab remove-before-add, `dom.syncPanels`, optional
-swipe); `#initSwipe()`; the bound-handler fields
-`#boundOnKeyDown/Click/TouchStart/TouchEnd` (stable identities for `add` /
-`removeEventListener`).
-
-**error — extracted (MAINT-12).** `src/js/internal/error.js`, exporting
-`ERROR_PREFIX` and `fail(message)`. The one throw primitive for the whole
-library: a plain `Error` (never `TypeError`), message prefixed
-`[@sargadil/tabs] `. `config.js` (config + DOM-structure errors) and `script.js`
-(`selectTab()` range / disabled guards, missing context element) both call it, so
-`#throwError()` and the second `ERROR_PREFIX` copy in `config.js` are gone.
-
-**utilities.** `#makeUniqueId`, `#getClickedTabIndex`, `#appendElement` are gone —
-folded into `dom.js` (`ensurePanelIds`, `tabIndexByControls`) or inlined.
+The keyboard layer never calls either — the orchestrator hands it a pre-computed
+`enabled` boolean array.
 
 ### Deliberately not separate modules
 
-- **disabled state** — a two-function predicate pair, now `dom.isTabDisabled` /
-  `dom.isSourceDisabled` (they read the DOM). The keyboard layer never sees them
-  — the orchestrator passes it a pre-computed `enabled` boolean array.
-- **events** — `tabs:beforechange` / `tabs:change` construction is ~15 lines and
-  its payload is public contract; it stays in orchestration next to
-  `#setSelectedTab`.
-- **utilities** — distributed to their owners; only the error primitive
-  (`internal/error.js`, MAINT-12) is shared widely enough to stand alone.
+- **selection** and **events** — the transition (`#setSelectedTab`) and the two
+  `CustomEvent`s are short, tightly interwoven, and the event payload is public
+  contract; they stay in the orchestrator.
+- **swipe** — the touch plumbing stays in the orchestrator; the "which tab"
+  decision is `keyboard.adjacentEnabledIndex()`, shared with the arrow keys.
+- **utilities** — distributed to their owners. Only the error primitive is shared
+  widely enough to stand alone as a module.
 
-### Open coupling — remaining notes
+### One resolved-elements object, not passed around
 
-- `#elements` (renamed from `#objectsHTML` in MAINT-5) holds the queried
-  `NodeList`s keyed by the config `classes` names, plus the resolved
-  `tabButtons`. The orchestrator still threads individual entries into each
-  `dom.*` call rather than passing one "resolved elements" value object — a
-  deliberate stop: the current shape is readable and every `dom.*` signature is
-  explicit about what it needs.
-- `#getNavTitle` + the `#navTitleByPanel` `WeakMap` (refresh-support label cache)
-  stay in the orchestrator — `dom.js` only does the leaf `dom.titleText()` read.
-  The label *priority* (option → element → cache → `""`) and the cache are
-  instance concerns, so this split was kept.
-- ~~Keyboard logic reaches selection/focus through eight near-duplicate
-  wrappers~~ — resolved in MAINT-3.
-- ~~Global `document` vs scoped `#context`~~ — resolved in MAINT-4: only the
-  bootstrap context lookup in `#initElements()` still uses the global `document`
-  (nothing else is available before `#context` is set).
-- ~~Naming: `classes.tabsNavButton` (a config selector) vs `#elements.tabsNavBtn`
-  (the resolved `role="tab"` list) — different things, near-identical names~~ —
-  resolved in MAINT-10: the resolved list is `#elements.tabButtons`, produced by
-  `dom.queryTabButtons()`. See [Naming (internal)](#naming-internal) for the
-  selected / focused / tab-button / active vocabulary.
-- ~~`#onClick()` located the outgoing tab with its own
-  `querySelector('[aria-selected="true"]')` — a second "which tab is selected"
-  mechanism next to `getSelectedIndex()` / `dom.selectedIndex()`~~ — resolved in
-  MAINT-11: it now reads `#elements.tabButtons[this.getSelectedIndex()]` like
-  every other caller of `#setSelectedTab()`.
+The orchestrator threads individual `#elements` entries into each `dom.*` call
+rather than passing one "resolved elements" value object. This is a deliberate
+stop: the current shape is readable and every `dom.*` signature stays explicit
+about exactly what it needs.
 
-### Duplication & dead-code audit (MAINT-11)
-
-A full sweep of `src/js/` after MAINT-2…5 and MAINT-10 found no dead branches,
-unreachable code, unused helpers, or leftover compatibility paths to remove. The
-one consolidation was `#onClick()`'s selected-tab lookup (above); the one unused
-test export (`CUSTOM_NAV_CLASSES`, still used internally by `customNavConfig()`)
-was dropped from `test/helpers/fixtures.js`. Deliberately kept: the
-remove-before-add listener wiring in `#initTabs()` / `#initSwipe()` (idempotent
-rebuilds), the field initializers that document `#elements` / `#panelIds` shape,
-and the per-panel title `querySelector` that a default-nav build runs twice (once
-for the label, once for the disabled flag) — trivial cost, and merging the passes
-would couple `dom.buildNavHtml()`'s inputs for no real gain.
-
-### Error handling audit (MAINT-12)
-
-Every error the library throws is now raised through one primitive,
-`internal/error.js` → `fail(message)`: a plain `Error` (never `TypeError`, never a
-raw low-level exception), message prefixed `[@sargadil/tabs] `. Before MAINT-12
-the prefix and the throw lived in two places — `#throwError()` in `script.js` and
-a private `ERROR_PREFIX` + `fail()` in `config.js`; both now import the shared
-module. No behavior change: the constructor sequence, the `Error` type, and every
-message string are unchanged.
-
-The message wording was audited and left as-is — it is frozen public contract
-(README → "Errors", `test/configuration.test.js`, `test/disabled.test.js`,
-`e2e/public-api.spec.js`, `e2e/disabled-tabs.spec.js` all match on exact text).
-The conventions it already follows: config option names quoted when the message
-states the option's contract (`"orientation" must be …`), bare when naming a
-specific offending value (`initSelectedItem 5 is out of range`); selectors always
-quoted; received values rendered with `JSON.stringify` (`Received "diagonal".`),
-except the `contextID` type check which reports the bare `typeof` word; indices
-bare. Low-level accidental errors do not reach the consumer on any reachable
-path — `selectTab()` range-guards before indexing, `refresh()` re-validates the
-DOM before mutating, and config/DOM validation runs before anything is read.
+---
 
 ## Flows
 
