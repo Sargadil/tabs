@@ -3,7 +3,7 @@
 /**
  * Real-browser coverage for the public refresh() API (ROADMAP-11).
  *
- * The unit suite (test/tabs.test.js) already covers the state machine in
+ * The unit suite (test/refresh.test.js) already covers the state machine in
  * jsdom; these tests exercise the parts that only a real engine gets right:
  * actual focus movement, keyboard navigation over the rebuilt nav, and that
  * repeated refresh() calls don't leave duplicate event listeners behind.

@@ -5,7 +5,8 @@ import { resolveTargetIndex, adjacentEnabledIndex } from '../src/js/internal/key
 
 // The keyboard layer is pure — no DOM, no Tabs instance — so it can be
 // exercised directly with plain values (MAINT-3). The same rules are also
-// covered end to end through test/tabs.test.js and the Playwright specs.
+// covered end to end through the jsdom suites (test/keyboard-navigation.test.js,
+// test/disabled.test.js) and the Playwright specs.
 
 const ALL_ENABLED = [true, true, true, true];
 
