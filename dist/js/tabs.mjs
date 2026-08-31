@@ -1,6 +1,8 @@
 function e(e) {
 	throw Error(`[@sargadil/tabs] ${e}`);
 }
+//#endregion
+//#region src/js/internal/config.js
 function t() {
 	return {
 		contextID: "tabs",
@@ -166,30 +168,27 @@ var A = class {
 	#e = {};
 	#t;
 	#n = 50;
-	#r = this.#S.bind(this);
-	#i = this.#x.bind(this);
-	#a = this.#y.bind(this);
-	#o = this.#b.bind(this);
+	#r = this.#x.bind(this);
+	#i = this.#b.bind(this);
+	#a = this.#v.bind(this);
+	#o = this.#y.bind(this);
 	#s = null;
 	#c = [];
 	#l = 0;
 	#u = 0;
 	#d = /* @__PURE__ */ new WeakMap();
 	constructor(e) {
-		this.#t = r(e), i(this.#t), this.#j(), this.#p(), this.#A(), this.#_(this.#t.options.initSelectedItem);
+		this.#t = r(e), i(this.#t), this.#A(), this.#f(), this.#k(), this.#g(this.#t.options.initSelectedItem);
 	}
-	#f(e) {
-		throw Error(`[@sargadil/tabs] ${e}`);
-	}
-	#p(e = !1) {
+	#f(e = !1) {
 		a(this.#t, {
 			panelCount: this.#e.tabPanel.length,
 			navButtonCount: this.#e.tabsNavButton.length,
 			navContainerCount: this.#e.tabsNavContainer.length,
 			titleCount: this.#e.tabPanelTitle.length
-		}, (e) => this.#m(e), e);
+		}, (e) => this.#p(e), e);
 	}
-	#m(e) {
+	#p(e) {
 		return p({
 			useCustomNav: this.#t.options.useCustomNav,
 			navButtons: this.#e.tabsNavButton,
@@ -198,9 +197,9 @@ var A = class {
 		}, e);
 	}
 	destroy() {
-		this.#h(this.#e.tabButtons, this.#e.tabPanel);
+		this.#m(this.#e.tabButtons, this.#e.tabPanel);
 	}
-	#h(e, t) {
+	#m(e, t) {
 		for (let t = 0; t < e.length; t++) e[t].removeEventListener("keydown", this.#r), e[t].removeEventListener("click", this.#i);
 		t.forEach((e) => {
 			e.removeEventListener("touchstart", this.#a), e.removeEventListener("touchend", this.#o);
@@ -208,24 +207,24 @@ var A = class {
 	}
 	refresh() {
 		let e = this.#e.tabButtons, t = this.#e.tabPanel, n = this.getSelectedIndex(), r = g(e[n], this.#s.ownerDocument), i = Array.prototype.indexOf.call(e, this.#s.ownerDocument.activeElement) !== -1;
-		this.#j(), this.#p(!0), this.#h(e, t), this.#A(), this.#_(this.#g(r, n)), i && this.#e.tabButtons[this.getSelectedIndex()].focus();
+		this.#A(), this.#f(!0), this.#m(e, t), this.#k(), this.#g(this.#h(r, n)), i && this.#e.tabButtons[this.getSelectedIndex()].focus();
 	}
-	#g(e, t) {
+	#h(e, t) {
 		let n = this.#e.tabPanel, r = Array.prototype.indexOf.call(n, e);
-		for (r === -1 && (r = Math.min(Math.max(t, 0), n.length - 1)); this.#m(r);) r = (r + 1) % n.length;
+		for (r === -1 && (r = Math.min(Math.max(t, 0), n.length - 1)); this.#p(r);) r = (r + 1) % n.length;
 		return r;
 	}
 	getSelectedIndex() {
 		return m(this.#e.tabButtons);
 	}
-	selectTab(e) {
-		let t = this.#e.tabButtons, n = t[e];
-		n || this.#f(`selectTab: no tab exists at index ${e}.`), d(n) && this.#f(`Cannot select disabled tab at index ${e}.`);
-		let r = t[this.getSelectedIndex()];
-		this.#w(r, n);
+	selectTab(t) {
+		let n = this.#e.tabButtons, r = n[t];
+		r || e(`selectTab: no tab exists at index ${t}.`), d(r) && e(`Cannot select disabled tab at index ${t}.`);
+		let i = n[this.getSelectedIndex()];
+		this.#C(i, r);
 	}
-	#_(e) {
-		this.#O(e);
+	#g(e) {
+		this.#D(e);
 		let t = this.#e.tabButtons;
 		E(t, e);
 		for (let e = 0; e < t.length; e++) t[e].removeEventListener("keydown", this.#r), t[e].removeEventListener("click", this.#i), t[e].addEventListener("keydown", this.#r), t[e].addEventListener("click", this.#i);
@@ -235,54 +234,54 @@ var A = class {
 			tabButtons: t,
 			selectedIndex: e,
 			openClass: this.#t.selectors.tabPanelOpen
-		}), this.#t.options.swipeable && this.#v(), this.#t.options.removeTabPanelTitle && k(this.#e.tabPanelTitle);
+		}), this.#t.options.swipeable && this.#_(), this.#t.options.removeTabPanelTitle && k(this.#e.tabPanelTitle);
 	}
-	#v() {
+	#_() {
 		this.#e.tabPanel.forEach((e) => {
 			e.style.touchAction = "pan-y", e.removeEventListener("touchstart", this.#a), e.removeEventListener("touchend", this.#o), e.addEventListener("touchstart", this.#a, { passive: !0 }), e.addEventListener("touchend", this.#o, { passive: !0 });
 		});
 	}
-	#y(e) {
+	#v(e) {
 		this.#l = e.changedTouches[0].screenX, this.#u = e.changedTouches[0].screenY;
 	}
-	#b(e) {
+	#y(e) {
 		let t = e.changedTouches[0], n = t.screenX - this.#l, r = t.screenY - this.#u;
 		if (Math.abs(n) < this.#n || Math.abs(n) <= Math.abs(r)) return;
-		let i = this.#e.tabButtons, a = this.getSelectedIndex(), o = l(a, n < 0 ? 1 : -1, this.#C());
-		this.#w(i[a], i[o]);
+		let i = this.#e.tabButtons, a = this.getSelectedIndex(), o = l(a, n < 0 ? 1 : -1, this.#S());
+		this.#C(i[a], i[o]);
 	}
-	#x(e) {
+	#b(e) {
 		let t = e.currentTarget;
 		if (d(t)) return;
 		let n = this.#e.tabButtons;
-		this.#w(n[this.getSelectedIndex()], t);
+		this.#C(n[this.getSelectedIndex()], t);
 	}
-	#S(e) {
+	#x(e) {
 		let t = e.currentTarget;
 		if (d(t)) return;
 		let n = this.#t.options, r = this.#e.tabButtons, i = u(e.key, {
 			orientation: n.orientation,
 			rtl: n.orientation === "horizontal" && f(t),
 			currentIndex: h(r, t),
-			enabled: this.#C()
+			enabled: this.#S()
 		});
 		if (i === null) return;
 		let a = r[i];
-		n.activationMode === "manual" ? O(t, a) : this.#w(t, a), e.stopPropagation(), e.preventDefault();
+		n.activationMode === "manual" ? O(t, a) : this.#C(t, a), e.stopPropagation(), e.preventDefault();
 	}
-	#C() {
+	#S() {
 		return Array.from(this.#e.tabButtons, (e) => !d(e));
 	}
-	#w(e, t) {
+	#C(e, t) {
 		if (e === t) return;
 		let n = this.#e.tabButtons, r = this.#s.ownerDocument, i = Array.prototype.indexOf.call(n, e), a = Array.prototype.indexOf.call(n, t), o = g(e, r), s = g(t, r);
-		if (!this.#T(i, a, e, t, o, s)) {
-			this.#E(n, e);
+		if (!this.#w(i, a, e, t, o, s)) {
+			this.#T(n, e);
 			return;
 		}
-		D(e, t), T(o, s, this.#t.selectors.tabPanelOpen), this.#D(a, t, s);
+		D(e, t), T(o, s, this.#t.selectors.tabPanelOpen), this.#E(a, t, s);
 	}
-	#T(e, t, n, r, i, a) {
+	#w(e, t, n, r, i, a) {
 		return this.#s.dispatchEvent(new CustomEvent("tabs:beforechange", {
 			bubbles: !0,
 			cancelable: !0,
@@ -296,11 +295,11 @@ var A = class {
 			}
 		}));
 	}
-	#E(e, t) {
+	#T(e, t) {
 		let n = this.#s.ownerDocument.activeElement;
 		n !== t && Array.prototype.indexOf.call(e, n) !== -1 && t.focus();
 	}
-	#D(e, t, n) {
+	#E(e, t, n) {
 		this.#s.dispatchEvent(new CustomEvent("tabs:change", {
 			bubbles: !0,
 			detail: {
@@ -310,7 +309,7 @@ var A = class {
 			}
 		}));
 	}
-	#O(e) {
+	#D(e) {
 		let t = this.#t.options;
 		if (t.useCustomNav) C({
 			tablist: this.#e.tabsNavList[0],
@@ -324,8 +323,8 @@ var A = class {
 			let n = this.#e.tabPanel;
 			this.#e.tabsNavContainer[0].innerHTML = S({
 				panelIds: this.#c,
-				navTitles: Array.from(n, (e, t) => this.#k(t)),
-				disabledFlags: Array.from(n, (e, t) => this.#m(t)),
+				navTitles: Array.from(n, (e, t) => this.#O(t)),
+				disabledFlags: Array.from(n, (e, t) => this.#p(t)),
 				selectedIndex: e,
 				listClass: this.#t.classes.tabsNavList.substring(1),
 				buttonClass: this.#t.classes.tabsNavButton.substring(1),
@@ -335,7 +334,7 @@ var A = class {
 		}
 		this.#e.tabButtons = y(this.#s);
 	}
-	#k(e) {
+	#O(e) {
 		let t = this.#e.tabPanel[e], n;
 		if (this.#t.options.customNavTitles.length) n = this.#t.options.customNavTitles[e];
 		else {
@@ -344,12 +343,12 @@ var A = class {
 		}
 		return n === void 0 && (n = ""), this.#d.set(t, n), n;
 	}
-	#A() {
+	#k() {
 		this.#c = x(this.#e.tabPanel, this.#t.selectors.tabPanelIdPrefix, this.#s.ownerDocument);
 	}
-	#j() {
-		let e = this.#t.contextID, t = e instanceof HTMLElement ? e : document.getElementById(e);
-		t || this.#f(`Context element was not found. Expected an element with id "${e}".`), this.#s = t, this.#e = v(t, this.#t.classes);
+	#A() {
+		let t = this.#t.contextID, n = t instanceof HTMLElement ? t : document.getElementById(t);
+		n || e(`Context element was not found. Expected an element with id "${t}".`), this.#s = n, this.#e = v(n, this.#t.classes);
 	}
 };
 //#endregion

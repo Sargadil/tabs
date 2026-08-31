@@ -1,6 +1,7 @@
 import * as config from './internal/config.js';
 import * as keyboard from './internal/keyboard.js';
 import * as dom from './internal/dom.js';
+import { fail } from './internal/error.js';
 
 class Tabs {
 
@@ -40,18 +41,6 @@ class Tabs {
         this.#validateDomStructure();
         this.#generatePanelIds();
         this.#initTabs(this.#configs.options.initSelectedItem);
-    }
-
-    /**
-     * Throw a public configuration/DOM error, consistently prefixed so
-     * callers get a readable, actionable message instead of a raw
-     * low-level exception (e.g. "Cannot read properties of undefined").
-     *
-     * @param {string} message
-     *   Error message, without the package prefix.
-     */
-    #throwError(message) {
-        throw new Error(`[@sargadil/tabs] ${message}`);
     }
 
     /**
@@ -236,11 +225,11 @@ class Tabs {
         const new_tab = tab_buttons[index];
 
         if (!new_tab) {
-            this.#throwError(`selectTab: no tab exists at index ${index}.`);
+            fail(`selectTab: no tab exists at index ${index}.`);
         }
 
         if (dom.isTabDisabled(new_tab)) {
-            this.#throwError(`Cannot select disabled tab at index ${index}.`);
+            fail(`Cannot select disabled tab at index ${index}.`);
         }
 
         const old_tab = tab_buttons[this.getSelectedIndex()];
@@ -636,7 +625,7 @@ class Tabs {
         const context = context_id instanceof HTMLElement ? context_id : document.getElementById(context_id);
 
         if (!context) {
-            this.#throwError(`Context element was not found. Expected an element with id "${context_id}".`);
+            fail(`Context element was not found. Expected an element with id "${context_id}".`);
         }
 
         this.#context = context;
