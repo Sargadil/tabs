@@ -4,7 +4,7 @@ import * as dom from './internal/dom.js';
 
 class Tabs {
 
-    // The queried DOM, keyed by the config `classes` names, plus `tabsNavBtn`
+    // The queried DOM, keyed by the config `classes` names, plus `tabButtons`
     // (the resolved `role="tab"` elements). Re-read from the live DOM by
     // #initElements() on construction and on every refresh().
     #elements = {};
@@ -109,7 +109,7 @@ class Tabs {
      * unmount in a framework) to avoid leaking listeners.
      */
     destroy() {
-        this.#teardownListeners(this.#elements.tabsNavBtn, this.#elements.tabPanel);
+        this.#teardownListeners(this.#elements.tabButtons, this.#elements.tabPanel);
     }
 
     /**
@@ -156,7 +156,7 @@ class Tabs {
      * tablist. No `tabs:beforechange`/`tabs:change` event is dispatched.
      */
     refresh() {
-        const previous_buttons = this.#elements.tabsNavBtn;
+        const previous_buttons = this.#elements.tabButtons;
         const previous_panels = this.#elements.tabPanel;
         const previous_index = this.getSelectedIndex();
         const previous_selected_panel = dom.panelForTab(previous_buttons[previous_index], this.#context.ownerDocument);
@@ -174,33 +174,33 @@ class Tabs {
         this.#teardownListeners(previous_buttons, previous_panels);
 
         this.#generatePanelIds();
-        this.#initTabs(this.#resolveActiveIndex(previous_selected_panel, previous_index));
+        this.#initTabs(this.#resolveSelectedIndex(previous_selected_panel, previous_index));
 
         if (focus_was_in_tablist) {
-            this.#elements.tabsNavBtn[this.getSelectedIndex()].focus();
+            this.#elements.tabButtons[this.getSelectedIndex()].focus();
         }
     }
 
     /**
-     * Decide which tab index should be active after a refresh().
+     * Decide which tab index should be selected after a refresh().
      *
      * Keeps the previous selection if its panel is still in the DOM. If
      * that panel was removed, falls back to whatever panel now sits at the
      * old position (visually "the next tab"), clamped to the new last
      * panel if the removed one was last ("the previous tab"). If the
-     * resulting tab is disabled — including when the still-present active
+     * resulting tab is disabled — including when the still-present selected
      * tab was just disabled — advances (wrapping) to the next enabled one.
      * #validateDomStructure() has already guaranteed at least one enabled tab.
      *
      * @param {HTMLElement|null} previous_selected_panel
-     *   The panel that was active before the refresh, if any.
+     *   The panel that was selected before the refresh, if any.
      *
      * @param {number} previous_index
-     *   The index that was active before the refresh (-1 if none).
+     *   The index that was selected before the refresh (-1 if none).
      *
      * @returns {number}
      */
-    #resolveActiveIndex(previous_selected_panel, previous_index) {
+    #resolveSelectedIndex(previous_selected_panel, previous_index) {
         const panels = this.#elements.tabPanel;
         let index = Array.prototype.indexOf.call(panels, previous_selected_panel);
 
@@ -222,7 +222,7 @@ class Tabs {
      *   Return the index of the currently selected tab, or -1 if none is selected.
      */
     getSelectedIndex() {
-        return dom.selectedIndex(this.#elements.tabsNavBtn);
+        return dom.selectedIndex(this.#elements.tabButtons);
     }
 
     /**
@@ -232,7 +232,7 @@ class Tabs {
      *   Index of the tab to select.
      */
     selectTab(index) {
-        const tab_buttons = this.#elements.tabsNavBtn;
+        const tab_buttons = this.#elements.tabButtons;
         const new_tab = tab_buttons[index];
 
         if (!new_tab) {
@@ -249,7 +249,7 @@ class Tabs {
     }
 
     /**
-     * Build (or rebuild) the tabs to the given active index: nav markup,
+     * Build (or rebuild) the tabs to the given selected index: nav markup,
      * roving tabindex, listeners, panel sync, and the optional swipe /
      * title-removal steps. Shared by the constructor and refresh(); the
      * listener wiring removes before it adds, so a rebuild over elements
@@ -257,12 +257,12 @@ class Tabs {
      * them bound twice.
      *
      * @param {number} selected_index
-     *   Index of the tab that should be active.
+     *   Index of the tab that should be selected.
      */
     #initTabs(selected_index) {
         this.#insertNav(selected_index);
 
-        const tab_buttons = this.#elements.tabsNavBtn;
+        const tab_buttons = this.#elements.tabButtons;
 
         dom.applyRovingTabIndex(tab_buttons, selected_index);
 
@@ -338,7 +338,7 @@ class Tabs {
             return;
         }
 
-        const tab_buttons = this.#elements.tabsNavBtn;
+        const tab_buttons = this.#elements.tabButtons;
         const current_index = this.getSelectedIndex();
         const target_index = keyboard.adjacentEnabledIndex(
             current_index,
@@ -386,7 +386,7 @@ class Tabs {
         }
 
         const options = this.#configs.options;
-        const tab_buttons = this.#elements.tabsNavBtn;
+        const tab_buttons = this.#elements.tabButtons;
 
         const target_index = keyboard.resolveTargetIndex(event.key, {
             orientation: options.orientation,
@@ -418,7 +418,7 @@ class Tabs {
      * @returns {boolean[]}
      */
     #enabledTabs() {
-        return Array.from(this.#elements.tabsNavBtn, (button) => !dom.isTabDisabled(button));
+        return Array.from(this.#elements.tabButtons, (button) => !dom.isTabDisabled(button));
     }
 
     /**
@@ -440,7 +440,7 @@ class Tabs {
             return;
         }
 
-        const tab_buttons = this.#elements.tabsNavBtn;
+        const tab_buttons = this.#elements.tabButtons;
         const doc = this.#context.ownerDocument;
         const from_index = Array.prototype.indexOf.call(tab_buttons, old_tab);
         const to_index = Array.prototype.indexOf.call(tab_buttons, new_tab);
@@ -516,9 +516,9 @@ class Tabs {
      *   Still-selected tab to restore focus to.
      */
     #restoreFocusAfterCancel(tab_buttons, old_tab) {
-        const active = this.#context.ownerDocument.activeElement;
+        const focused = this.#context.ownerDocument.activeElement;
 
-        if (active !== old_tab && Array.prototype.indexOf.call(tab_buttons, active) !== -1) {
+        if (focused !== old_tab && Array.prototype.indexOf.call(tab_buttons, focused) !== -1) {
             old_tab.focus();
         }
     }
@@ -544,12 +544,12 @@ class Tabs {
 
     /**
      * Build or adopt the tab navigation, then cache the resulting
-     * `role="tab"` elements as `tabsNavBtn`. The markup is produced by
+     * `role="tab"` elements as `tabButtons`. The markup is produced by
      * internal/dom.js; this method only resolves the button labels and
      * disabled flags that layer needs.
      *
      * @param {number} selected_index
-     *   Index of the tab that should be active.
+     *   Index of the tab that should be selected.
      */
     #insertNav(selected_index) {
         const options = this.#configs.options;
@@ -578,7 +578,7 @@ class Tabs {
             });
         }
 
-        this.#elements.tabsNavBtn = dom.queryTabs(this.#context);
+        this.#elements.tabButtons = dom.queryTabButtons(this.#context);
     }
 
     /**
@@ -641,7 +641,7 @@ class Tabs {
 
         this.#context = context;
 
-        // A fresh set each time; #insertNav() adds `tabsNavBtn` afterwards.
+        // A fresh set each time; #insertNav() adds `tabButtons` afterwards.
         this.#elements = dom.discoverElements(context, this.#configs.classes);
     }
 }

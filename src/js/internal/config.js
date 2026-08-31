@@ -175,7 +175,7 @@ export function validateDomStructure(configs, counts, isSourceDisabled, isRefres
     }
 
     // initSelectedItem only picks the tab shown at construction time; a
-    // later refresh() resolves its own active tab from the live DOM, so
+    // later refresh() resolves its own selected tab from the live DOM, so
     // it must not be re-measured against a now-shorter panel list.
     if (!isRefresh && options.initSelectedItem >= panel_count) {
         fail(`initSelectedItem ${options.initSelectedItem} is out of range. Found ${panel_count} tabs.`);
@@ -244,7 +244,7 @@ function validateEnabledTabs(options, panel_count, isSourceDisabled, isRefresh) 
     }
 
     // Only meaningful at construction time — refresh() never re-reads
-    // initSelectedItem (see #resolveActiveIndex()).
+    // initSelectedItem (see #resolveSelectedIndex()).
     if (!isRefresh && isSourceDisabled(options.initSelectedItem)) {
         fail(`initSelectedItem ${options.initSelectedItem} is disabled. Choose an enabled tab as the initial tab.`);
     }

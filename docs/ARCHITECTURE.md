@@ -208,7 +208,7 @@ sees them — including snippets that must stay type errors.
 A refactor may change *how* these are produced, but not the *result*:
 
 - panels: `id`, `role="tabpanel"`, `tabindex="0"`, `aria-labelledby`, `hidden`,
-  the `tab-panel--open` class (on the active one);
+  the `tab-panel--open` class (on the visible one);
 - default nav: `<div role="tablist">` containing
   `<button type="button" role="tab" aria-selected aria-controls [disabled]>` per
   tab; the tab `id` is `${panelId}-tab`;
@@ -230,7 +230,7 @@ The short list of things that break silently (the normative version is
 [`AGENTS.md` → Accessibility invariants](../AGENTS.md#accessibility-invariants)):
 
 - exactly one tab has `aria-selected="true"`;
-- exactly one tab in the active sequence has `tabindex="0"`;
+- exactly one tab is focusable (`tabindex="0"`), the rest `tabindex="-1"`;
 - `aria-controls` / `aria-labelledby` stay correct across `refresh()`;
 - inactive panels carry `hidden`, updated synchronously with `aria-selected`;
 - generated IDs stay unique across multiple instances on one page;
@@ -252,6 +252,23 @@ The component distinguishes four things that are not always the same element:
 State is not duplicated beyond this — there is no `data-state` mirror (see
 [`NON-GOALS.md`](./NON-GOALS.md)). The `tab-panel--open` class tracks the visible
 panel purely as a styling hook and is never the source of truth.
+
+### Naming (internal)
+
+The source keeps one word per concept, so *selected* and *focused* never blur:
+
+| Term | Meaning in the code |
+| --- | --- |
+| **selected** | the tab with `aria-selected="true"` and its visible panel — `getSelectedIndex()`, `#setSelectedTab()`, `#resolveSelectedIndex()`, `dom.markSelected()` |
+| **focused** | `document.activeElement` / the roving `tabindex="0"` target; only equals the selected tab outside `activationMode: 'manual'` mid-navigation — `dom.moveRovingFocus()`, `keyboard` `currentIndex` |
+| **tab button** | a resolved `role="tab"` element — `#elements.tabButtons`, `dom.queryTabButtons()`. Distinct from `classes.tabsNavButton`, the *config selector* for an author-supplied custom-nav element |
+| **active** | reserved for the platform's own `document.activeElement` — never used as a synonym for *selected* |
+
+The user-facing docs (`README.md`, `ACCESSIBILITY.md`) call the selected tab the
+"active tab"; that is the same thing as *selected* here.
+
+Convention: `snake_case` for locals and function parameters, `camelCase` for
+object / spec properties and configuration keys.
 
 ---
 
@@ -311,7 +328,7 @@ that will move.
 and writes; it represents state but never decides which tab that state describes.
 
 - **discovery / ids** — `discoverElements(context, classes)`,
-  `queryTabs(context)`, `ensurePanelIds(panels, prefix, doc)` (keeps an id a
+  `queryTabButtons(context)`, `ensurePanelIds(panels, prefix, doc)` (keeps an id a
   panel already has; assigns fresh document-unique ones otherwise);
 - **nav markup** — `buildNavHtml(spec)` (pure string builder for the default
   nav), `adoptCustomNav(spec)` (tablist role / label / orientation + per-tab id /
@@ -355,7 +372,7 @@ keys and swipe.
 + disabled guard → `#setSelectedTab()`); `#setSelectedTab()` (the transition:
 no-op guard, resolve indices/panels, dispatch `beforechange`, cancel path,
 `dom.markSelected` + `dom.togglePanels`, dispatch `change`); the selection path
-in `#onClick()`; `#resolveActiveIndex()`.
+in `#onClick()`; `#resolveSelectedIndex()`.
 
 **events.** `#dispatchBeforeChangeEvent()`, `#dispatchChangeEvent()`,
 `#restoreFocusAfterCancel()` (undo the browser's focus move when a change is
@@ -367,14 +384,14 @@ with `#setSelectedTab()`.
 author DOM — the custom-nav tab element, or `aria-disabled` on
 `.tab-panel__title`), reached through the thin `#isSourceDisabled()` adapter.
 Consumers: config validation, keyboard / swipe navigation, `selectTab()`,
-`#resolveActiveIndex()`, `dom.buildNavHtml()`. Two readers for two sources, by
+`#resolveSelectedIndex()`, `dom.buildNavHtml()`. Two readers for two sources, by
 design — at validation time there is no tab element yet for the default nav.
 
 **refresh / reconciliation.** `refresh()` (snapshot → re-read + re-validate →
 tear down old listeners → regenerate IDs / nav →
-`#initTabs(#resolveActiveIndex(...))` → optional title removal → restore focus);
-`#resolveActiveIndex()` (keep the active panel, else a positional fallback, else
-skip disabled); the `isRefresh` branches in `config.js`; `dom.panelForTab()`.
+`#initTabs(#resolveSelectedIndex(...))` → optional title removal → restore focus);
+`#resolveSelectedIndex()` (keep the selected panel, else a positional fallback,
+else skip disabled); the `isRefresh` branches in `config.js`; `dom.panelForTab()`.
 
 **lifecycle.** `constructor()`; `destroy()` → `#teardownListeners()`;
 `#initTabs()` (rebuild nav via `dom`, `dom.applyRovingTabIndex`, wire
@@ -403,7 +420,7 @@ shared primitive, candidate for `internal/error.js` in MAINT-12). `#makeUniqueId
 
 - `#elements` (renamed from `#objectsHTML` in MAINT-5) holds the queried
   `NodeList`s keyed by the config `classes` names, plus the resolved
-  `tabsNavBtn`. The orchestrator still threads individual entries into each
+  `tabButtons`. The orchestrator still threads individual entries into each
   `dom.*` call rather than passing one "resolved elements" value object — a
   deliberate stop: the current shape is readable and every `dom.*` signature is
   explicit about what it needs.
@@ -416,9 +433,11 @@ shared primitive, candidate for `internal/error.js` in MAINT-12). `#makeUniqueId
 - ~~Global `document` vs scoped `#context`~~ — resolved in MAINT-4: only the
   bootstrap context lookup in `#initElements()` still uses the global `document`
   (nothing else is available before `#context` is set).
-- Naming: `classes.tabsNavButton` (a config selector) vs `#elements.tabsNavBtn`
-  (the resolved `role="tab"` list) — different things, near-identical names
-  (MAINT-10).
+- ~~Naming: `classes.tabsNavButton` (a config selector) vs `#elements.tabsNavBtn`
+  (the resolved `role="tab"` list) — different things, near-identical names~~ —
+  resolved in MAINT-10: the resolved list is `#elements.tabButtons`, produced by
+  `dom.queryTabButtons()`. See [Naming (internal)](#naming-internal) for the
+  selected / focused / tab-button / active vocabulary.
 
 ---
 
@@ -478,11 +497,11 @@ tear down listeners on the previous elements
 ↓
 regenerate panel ids, rebuild / adopt nav (remove-before-add wiring)
 ↓
-#resolveActiveIndex(): keep active panel → else positional fallback → else skip disabled
+#resolveSelectedIndex(): keep selected panel → else positional fallback → else skip disabled
 ↓
 re-sync ARIA, hidden, disabled state
 ↓
-restore focus to the active tab only if it was in the tablist before
+restore focus to the selected tab only if it was in the tablist before
 ```
 
 No `MutationObserver`; `refresh()` is the only reconciliation entry point (see

@@ -6,7 +6,7 @@
  * synchronization.
  *
  * They represent state in the DOM but never decide *which* tab that
- * state should describe — the orchestrator (`Tabs`) resolves the active
+ * state should describe — the orchestrator (`Tabs`) resolves the selected
  * index, the button labels, and the disabled flags, and passes them in.
  *
  * Internal module — not part of the public API. See `src/js/internal/*`
@@ -141,7 +141,7 @@ export function discoverElements(context, classes) {
  *
  * @returns {NodeList}
  */
-export function queryTabs(context) {
+export function queryTabButtons(context) {
     return context.querySelectorAll('[role = "tab"]');
 }
 
