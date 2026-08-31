@@ -13,7 +13,7 @@
  * 'touchend' event types, but desktop Firefox doesn't expose a global `Touch`
  * constructor outside of touch-emulation mode ("Touch is not defined").
  * Dispatching a plain `Event` with `changedTouches` attached as a normal
- * property — exactly what the jsdom unit tests do (test/tabs.test.js) —
+ * property — exactly what the jsdom unit tests do (test/lifecycle.test.js) —
  * sidesteps that entirely and still exercises the real listener wiring in
  * every engine.
  *

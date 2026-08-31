@@ -498,18 +498,59 @@ markup or ARIA — a destroyed instance leaves the DOM in its last rendered stat
 
 ## Testing layers
 
-Which layer a test belongs to is a boundary decision. The commands and the
-"which suite for which change" table are in
-[`AGENTS.md` → How to verify](../AGENTS.md#how-to-verify); the accessibility test
-detail is in [`ACCESSIBILITY.md` → Automated testing](../ACCESSIBILITY.md#automated-testing).
+Which layer a test belongs to is a boundary decision, and this section is the
+rule that settles it. The commands and the "which suite for which change" table
+are in [`AGENTS.md` → How to verify](../AGENTS.md#how-to-verify); the exhaustive
+per-behavior inventory is in
+[`ACCESSIBILITY.md` → Automated testing](../ACCESSIBILITY.md#automated-testing).
 
 | Layer | Responsible for | Not responsible for |
 | --- | --- | --- |
-| unit / integration (`test/`, jsdom) | validation, state transitions, event payloads, pure/internal helpers, error messages, API behavior | real focus, real computed styles, cross-browser behavior |
+| pure unit (`test/keyboard.test.mjs`, no jsdom) | the keyboard / swipe decision function in isolation — key + orientation + RTL + position + `enabled` array → target index | anything DOM-, focus-, or event-related |
+| unit / integration (`test/*.test.js`, jsdom) | config validation and its message text, state transitions, `aria-*` / `hidden` / roving `tabindex` wiring, event `detail` shape and order, `refresh()` reconciliation, `selectTab()` / `getSelectedIndex()` / `destroy()`, multiple-instance isolation | real focus, real computed styles / layout, real hit-testing, the browser accessibility tree, cross-browser differences |
 | package smoke (`scripts/package-smoke/`) | the real `npm pack` tarball — `exports`, ESM/CJS, CSS, `.d.ts`, file list | anything about component behavior |
-| Playwright (`e2e/`) | real focus, keyboard, browser DOM, multiple instances, cross-browser | things a unit test already pins down cheaply |
-| axe (`e2e/accessibility.spec.js`) | automated ARIA / contrast / naming regression detection | "is it actually usable with a screen reader" |
+| Playwright (`e2e/`) | real focus movement, real key events over the rendered nav, the accessibility tree (`getByRole` seeing exactly one `tabpanel`), `Enter` / `Space` activation, cascaded `direction` resolution, touch / swipe, the mousedown-focuses-target quirk, that the shipped bundle behaves the same in Chromium / Firefox / WebKit | logic a unit test already pins down cheaply — validation branches, message text, payload keys |
+| axe (`e2e/accessibility.spec.js`) | automated ARIA / contrast / naming regression detection, on initial render and after interaction | whether the component is actually usable with a screen reader |
 | manual AT | VoiceOver / NVDA / other assistive technology | — never marked PASS by automation |
+
+### Unit vs. browser — the split
+
+Put a test in the **unit** layer when the thing under test is a decision or a
+state change: a validation rule, an error message, which index the keyboard
+picks, what `aria-selected` / `hidden` / `tabindex` end up as, the `detail` of an
+event, the order two events fire in, what `refresh()` does to a mutated DOM.
+jsdom is enough for all of it and the suite runs in about a second.
+
+Put a test in the **browser** layer when the thing under test only exists in a
+real engine: where focus actually lands, whether a real `ArrowRight` keypress
+travels through the rendered nav, what `getByRole` (the accessibility tree) sees,
+`Enter` / `Space` activating a `<button>`, cascaded `direction` resolution, touch
+gestures, and the fact that the built bundle loads and runs the same way in three
+browsers.
+
+### Deliberate parallel coverage
+
+Some behavior is checked at more than one layer **on purpose** — this is not
+duplication to remove:
+
+- **Keyboard navigation** (arrows, `Home` / `End`, wrap-around, disabled-skipping,
+  RTL). `keyboard.test.mjs` pins the pure algorithm with plain values; the jsdom
+  suites check that the orchestrator reads `dir` and disabled state *from the DOM*
+  and routes the result to selection vs. focus per `activationMode`; the
+  Playwright specs check that a real keypress produces real focus movement and
+  selection in every engine. Each layer covers a different link in the chain.
+- **`tabs:beforechange` cancellation.** The jsdom suite pins the payload and the
+  "nothing mutated, `tabs:change` suppressed" contract;
+  `e2e/before-change.spec.js` additionally proves a real browser's
+  mousedown-focus is unwound on a canceled click, which jsdom cannot reproduce.
+- **Disabled-tab guards.** Unit tests prove the component's own guard;
+  the Playwright specs additionally prove a native `<button disabled>` or an
+  `aria-disabled` element stays inert against a real event path.
+
+What is *not* wanted is a third test that re-asserts the same plain value with no
+new dimension — re-checking an error string, or an event `detail` key, in a
+browser when a unit test already owns it. A new test goes to the lowest layer
+that can actually exercise its risk.
 
 Coverage is gated at 100% branch and 100% function on the built bundle; that gate
 does not move.
