@@ -106,7 +106,6 @@ const DEFAULT_HTML = tabsHtml(['One', 'Two', 'Three']);
 const CUSTOM_NAV_HTML = customNavHtml(['Tab 1', 'Tab 2'], ['One', 'Two']);
 
 module.exports = {
-    CUSTOM_NAV_CLASSES,
     customNavConfig,
     panels,
     tabsHtml,
