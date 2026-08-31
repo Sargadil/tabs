@@ -362,9 +362,9 @@ class Tabs {
             return;
         }
 
-        const old_tab = this.#context.querySelector('[aria-selected = "true"]');
+        const tab_buttons = this.#elements.tabButtons;
 
-        this.#setSelectedTab(old_tab, new_tab);
+        this.#setSelectedTab(tab_buttons[this.getSelectedIndex()], new_tab);
     }
 
     /**
