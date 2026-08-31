@@ -43,8 +43,9 @@ src/js/internal/         Internal, non-public helper modules (config.js, keyboar
 src/js/script.d.ts       Public TypeScript types — hand-maintained, copied into dist/ by the build
 src/scss/                Style source
 dist/                    Generated build output — COMMITTED (see "Generated files")
-test/tabs.test.js        Unit/integration tests (node --test, jsdom)
+test/*.test.js           Unit/integration tests (node --test, jsdom), one file per behavior area
 test/keyboard.test.mjs   Isolated unit tests for src/js/internal/keyboard.js (pure, no jsdom)
+test/helpers/setup.js    Shared setup() + event helpers + the two cross-suite HTML fixtures
 e2e/                     Playwright: specs, fixtures/, axe scans, static server
 examples/                Small runnable public-API examples (also smoke-tested in CI)
 index.html               Live demo (served at github.io via Pages-from-branch)
