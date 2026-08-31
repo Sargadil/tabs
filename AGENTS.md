@@ -31,6 +31,7 @@ Public docs (present in every clone):
 | `docs/ARCHITECTURE.md` | Structure, responsibility boundaries, invariants, the frozen public contract |
 | `docs/NON-GOALS.md` | Features intentionally out of scope — do not implement them |
 | `ACCESSIBILITY.md` | Accessibility and keyboard contract |
+| `docs/MANUAL_ACCESSIBILITY_CHECKLIST.md` | Step script for manual screen-reader verification (human-run) |
 | `CHANGELOG.md` | User-facing change history (`[Unreleased]` at the top) |
 
 Planned work is delivered as numbered `ROADMAP-N` tickets; the maintainer gives
@@ -154,8 +155,9 @@ Change `src/`, then run `npm run build`. The build also runs in
 
 A human must do these — an agent may not mark them done:
 
-- VoiceOver / NVDA / other manual screen-reader verification. Never report `PASS`
-  on the strength of automated tests alone; leave it as `TBD`.
+- VoiceOver / NVDA / other manual screen-reader verification
+  (`docs/MANUAL_ACCESSIBILITY_CHECKLIST.md`). Never report `PASS` on the strength
+  of automated tests alone; leave it as `TBD`.
 - final release approval
 - `npm publish` and the GitHub Release
 
