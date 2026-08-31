@@ -285,6 +285,7 @@ readability requires.
 | **Configuration** (`src/js/internal/config.js`) | defaults, merge, validation, configuration errors |
 | **Keyboard** (`src/js/internal/keyboard.js`) | interpreting keys / swipes — orientation, RTL direction, wrapping, enabled/disabled navigation → *which tab to move to* |
 | **DOM / ARIA** (`src/js/internal/dom.js`) | element discovery, id generation, nav markup, ARIA / `tabindex` / `hidden` synchronization — *how to represent that state* |
+| **Error** (`src/js/internal/error.js`) | the single throw primitive — `ERROR_PREFIX` + `fail(message)`, a plain prefixed `Error` |
 
 The keyboard and DOM layers must not decide which tab is *selected* (keyboard
 returns an index; the orchestrator applies it as a selection or a focus move
@@ -299,6 +300,7 @@ labels, and disabled flags and writes them out).
 | MAINT-3 | keyboard | ✅ `src/js/internal/keyboard.js` |
 | MAINT-4 | DOM / ARIA | ✅ `src/js/internal/dom.js` |
 | MAINT-5 | orchestration cleanup | ✅ `Tabs` now coordinates initialize / select / refresh / destroy / events; helpers do the rest |
+| MAINT-12 | error primitive | ✅ `src/js/internal/error.js` — one `fail()` for config, DOM, and API errors |
 
 ### Current internal map
 
@@ -321,8 +323,8 @@ that will move.
   relaxations are driven by an `isRefresh` flag;
 - remaining in `Tabs`: a thin `#validateDomStructure()` adapter (counts from
   `#elements` + a closure over `#isSourceDisabled`);
-- the error prefix is briefly duplicated (`config.js` and `#throwError` in
-  `script.js`) — to be unified in MAINT-12.
+- it raises every failure through `internal/error.js` → `fail()` (MAINT-12), the
+  same primitive the orchestrator uses.
 
 **DOM / ARIA — extracted (MAINT-4).** `src/js/internal/dom.js`. Low-level reads
 and writes; it represents state but never decides which tab that state describes.
@@ -400,10 +402,15 @@ swipe); `#initSwipe()`; the bound-handler fields
 `#boundOnKeyDown/Click/TouchStart/TouchEnd` (stable identities for `add` /
 `removeEventListener`).
 
-**utilities.** `#throwError()` (prefix + throw `Error` — the one genuinely
-shared primitive, candidate for `internal/error.js` in MAINT-12). `#makeUniqueId`,
-`#getClickedTabIndex`, `#appendElement` are gone — folded into `dom.js`
-(`ensurePanelIds`, `tabIndexByControls`) or inlined.
+**error — extracted (MAINT-12).** `src/js/internal/error.js`, exporting
+`ERROR_PREFIX` and `fail(message)`. The one throw primitive for the whole
+library: a plain `Error` (never `TypeError`), message prefixed
+`[@sargadil/tabs] `. `config.js` (config + DOM-structure errors) and `script.js`
+(`selectTab()` range / disabled guards, missing context element) both call it, so
+`#throwError()` and the second `ERROR_PREFIX` copy in `config.js` are gone.
+
+**utilities.** `#makeUniqueId`, `#getClickedTabIndex`, `#appendElement` are gone —
+folded into `dom.js` (`ensurePanelIds`, `tabIndexByControls`) or inlined.
 
 ### Deliberately not separate modules
 
@@ -413,8 +420,8 @@ shared primitive, candidate for `internal/error.js` in MAINT-12). `#makeUniqueId
 - **events** — `tabs:beforechange` / `tabs:change` construction is ~15 lines and
   its payload is public contract; it stays in orchestration next to
   `#setSelectedTab`.
-- **utilities** — distributed to their owners; only the error primitive is
-  shared widely enough to stand alone.
+- **utilities** — distributed to their owners; only the error primitive
+  (`internal/error.js`, MAINT-12) is shared widely enough to stand alone.
 
 ### Open coupling — remaining notes
 
@@ -457,7 +464,27 @@ and the per-panel title `querySelector` that a default-nav build runs twice (onc
 for the label, once for the disabled flag) — trivial cost, and merging the passes
 would couple `dom.buildNavHtml()`'s inputs for no real gain.
 
----
+### Error handling audit (MAINT-12)
+
+Every error the library throws is now raised through one primitive,
+`internal/error.js` → `fail(message)`: a plain `Error` (never `TypeError`, never a
+raw low-level exception), message prefixed `[@sargadil/tabs] `. Before MAINT-12
+the prefix and the throw lived in two places — `#throwError()` in `script.js` and
+a private `ERROR_PREFIX` + `fail()` in `config.js`; both now import the shared
+module. No behavior change: the constructor sequence, the `Error` type, and every
+message string are unchanged.
+
+The message wording was audited and left as-is — it is frozen public contract
+(README → "Errors", `test/configuration.test.js`, `test/disabled.test.js`,
+`e2e/public-api.spec.js`, `e2e/disabled-tabs.spec.js` all match on exact text).
+The conventions it already follows: config option names quoted when the message
+states the option's contract (`"orientation" must be …`), bare when naming a
+specific offending value (`initSelectedItem 5 is out of range`); selectors always
+quoted; received values rendered with `JSON.stringify` (`Received "diagonal".`),
+except the `contextID` type check which reports the bare `typeof` word; indices
+bare. Low-level accidental errors do not reach the consumer on any reachable
+path — `selectTab()` range-guards before indexing, `refresh()` re-validates the
+DOM before mutating, and config/DOM validation runs before anything is read.
 
 ## Flows
 
@@ -546,7 +573,7 @@ per-behavior inventory is in
 
 | Layer | Responsible for | Not responsible for |
 | --- | --- | --- |
-| pure unit (`test/keyboard.test.mjs`, no jsdom) | the keyboard / swipe decision function in isolation — key + orientation + RTL + position + `enabled` array → target index | anything DOM-, focus-, or event-related |
+| pure unit (`test/*.test.mjs`, no jsdom) | pure internal modules in isolation — the keyboard / swipe decision function (`keyboard.test.mjs`: key + orientation + RTL + position + `enabled` array → target index) and the shared error primitive (`error.test.mjs`: plain prefixed `Error`) | anything DOM-, focus-, or event-related |
 | unit / integration (`test/*.test.js`, jsdom) | config validation and its message text, state transitions, `aria-*` / `hidden` / roving `tabindex` wiring, event `detail` shape and order, `refresh()` reconciliation, `selectTab()` / `getSelectedIndex()` / `destroy()`, multiple-instance isolation | real focus, real computed styles / layout, real hit-testing, the browser accessibility tree, cross-browser differences |
 | package smoke (`scripts/package-smoke/`) | the real `npm pack` tarball — `exports`, ESM/CJS, CSS, `.d.ts` shape, file list, plus a real `tsc --noEmit` compile of a consumer project (`consumer-ts/`) against the installed tarball | anything about component behavior |
 | Playwright (`e2e/`) | real focus movement, real key events over the rendered nav, the accessibility tree (`getByRole` seeing exactly one `tabpanel`), `Enter` / `Space` activation, cascaded `direction` resolution, touch / swipe, the mousedown-focuses-target quirk, that the shipped bundle behaves the same in Chromium / Firefox / WebKit | logic a unit test already pins down cheaply — validation branches, message text, payload keys |

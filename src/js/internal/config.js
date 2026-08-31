@@ -11,25 +11,15 @@
  * counts plus a disabled-state probe, so the rules can be validated in
  * isolation.
  *
+ * Configuration/structure errors are raised through the shared
+ * `internal/error.js` → `fail()`, so they follow the same convention as
+ * every other library error.
+ *
  * Internal module — not part of the public API. See
  * `src/js/internal/*` in ARCHITECTURE.md.
  */
 
-// Keep in sync with #throwError() in script.js until error handling is
-// unified (MAINT-12).
-const ERROR_PREFIX = '[@sargadil/tabs]';
-
-/**
- * Throw a configuration/structure error, consistently prefixed so
- * callers get a readable, actionable message instead of a raw
- * low-level exception.
- *
- * @param {string} message
- *   Error message, without the package prefix.
- */
-function fail(message) {
-    throw new Error(`${ERROR_PREFIX} ${message}`);
-}
+import { fail } from './error.js';
 
 /**
  * A fresh copy of the built-in configuration. A factory rather than a
