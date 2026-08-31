@@ -146,7 +146,9 @@ when it doesn't), and only moves focus if focus was already inside the tablist.
 Three layers of automated tests exist. **None of them are a substitute for manual testing with
 real assistive technology** — see [Manual assistive technology test matrix](#manual-assistive-technology-test-matrix).
 
-- **Unit tests** (`npm test`, [`test/tabs.test.js`](./test/tabs.test.js)) — run against jsdom.
+- **Unit tests** (`npm test`, [`test/`](./test) — one `*.test.js` file per behavior area:
+  `initialization`, `configuration`, `selection`, `keyboard-navigation`, `disabled`, `events`,
+  `refresh`, `lifecycle`) — run against jsdom.
   Cover the ARIA attributes set on init, `hidden` as the source of truth for every interaction
   path (click, automatic keyboard activation, manual activation, `selectTab()`), roving
   `tabindex`, orientation, configuration validation, the cancelable `tabs:beforechange` event
