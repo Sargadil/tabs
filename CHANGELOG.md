@@ -5,6 +5,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.3.1] — 2026-08-31
+
+Maintenance release. No public API, behaviour, package exports, keyboard, or accessibility changes —
+`1.3.1` is a drop-in replacement for `1.3.0`. The work was an internal maintainability pass
+(the `MAINT` track).
+
+### Changed
+- Internal refactor of `src/js/`: the `Tabs` class now delegates to small internal helper modules
+  under `src/js/internal/` (`config.js`, `keyboard.js`, `dom.js`, `error.js`). These are bundled
+  into `dist/` and are not part of the public API. Library errors are unified behind a single
+  `fail()` primitive; the exact `[@sargadil/tabs] …` messages are unchanged.
+- Test suite reorganised into one file per behaviour area under `test/`, with shared fixture and
+  setup helpers, plus isolated pure-unit tests for the keyboard and error modules. Coverage stays
+  gated at 100% branch/function.
+- Package smoke test now also compiles a real TypeScript consumer project against the packed
+  tarball (`tsc --noEmit`); `typescript` added as a dev dependency (runtime dependencies remain 0).
+
+### Documentation
+- Finalised `docs/ARCHITECTURE.md` and `docs/COMPONENT_STANDARD.md` as stable references
+  (the running refactor log was removed).
+- Added `docs/MANUAL_ACCESSIBILITY_CHECKLIST.md`, a step-by-step manual screen-reader verification
+  script, cross-linked from the accessibility docs.
+
 ## [1.3.0] — 2026-08-28
 
 ### Added
