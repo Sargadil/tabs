@@ -242,7 +242,12 @@ here (with the date and, ideally, a link to notes or an issue for any `FAIL`).
 | iOS | Safari | VoiceOver | TBD | — |
 | Android | Chrome | TalkBack | TBD | — |
 
-Suggested minimum check per row, using the [live demo](https://sargadil.github.io/tabs/), the
+The full step-by-step script — per browser + AT combination, covering entering the tablist, role
+and selected-state announcement, set position, automatic vs. manual activation, disabled tabs,
+vertical navigation, RTL, leaving the tablist, and panel content, with the pages to use and a
+results grid to fill in — is [`docs/MANUAL_ACCESSIBILITY_CHECKLIST.md`](./docs/MANUAL_ACCESSIBILITY_CHECKLIST.md).
+
+Quick version, using the [live demo](https://sargadil.github.io/tabs/), the
 [`examples/`](./examples/) pages, or the `e2e/fixtures/` pages:
 
 1. Tab into the tablist; confirm the AT announces a tab, its name, its selected state, and its
@@ -254,5 +259,6 @@ Suggested minimum check per row, using the [live demo](https://sargadil.github.i
 4. Confirm the active panel's content is reachable and announced after switching tabs.
 5. Repeat for the vertical orientation fixture, confirming `ArrowUp`/`ArrowDown` are used instead.
 
-Update this table only from a real, human-run session — replace `TBD` with `PASS` or `FAIL`, and
-fill in the date.
+A row here may move from `TBD` to `PASS` only when every step in the full checklist passed for
+that combination. Update this table only from a real, human-run session — replace `TBD` with
+`PASS` or `FAIL`, and fill in the date.

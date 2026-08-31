@@ -441,7 +441,7 @@ per-behavior inventory is in
 | package smoke (`scripts/package-smoke/`) | the real `npm pack` tarball — `exports`, ESM/CJS, CSS, `.d.ts` shape, file list, plus a real `tsc --noEmit` compile of a consumer project (`consumer-ts/`) against the installed tarball | anything about component behavior |
 | Playwright (`e2e/`) | real focus movement, real key events over the rendered nav, the accessibility tree (`getByRole` seeing exactly one `tabpanel`), `Enter` / `Space` activation, cascaded `direction` resolution, touch / swipe, the mousedown-focuses-target quirk, that the shipped bundle behaves the same in Chromium / Firefox / WebKit | logic a unit test already pins down cheaply — validation branches, message text, payload keys |
 | axe (`e2e/accessibility.spec.js`) | automated ARIA / contrast / naming regression detection, on initial render and after interaction | whether the component is actually usable with a screen reader |
-| manual AT | VoiceOver / NVDA / other assistive technology | — never marked PASS by automation |
+| manual AT | VoiceOver / NVDA / other assistive technology, run from the step script in [`MANUAL_ACCESSIBILITY_CHECKLIST.md`](./MANUAL_ACCESSIBILITY_CHECKLIST.md) | — never marked PASS by automation |
 
 ### Unit vs. browser — the split
 
@@ -532,6 +532,7 @@ After the refactor all three must still agree.
 | --- | --- |
 | Install and use the API | [`README.md`](../README.md) |
 | Keyboard / ARIA / focus contract, manual AT matrix | [`ACCESSIBILITY.md`](../ACCESSIBILITY.md) |
+| Step-by-step manual screen-reader verification script | [`MANUAL_ACCESSIBILITY_CHECKLIST.md`](./MANUAL_ACCESSIBILITY_CHECKLIST.md) |
 | Development rules, quality gates, per-ticket workflow, agent prompts | [`CONTRIBUTING.md`](./CONTRIBUTING.md) |
 | Why the project exists, priority order, namespace | [`PROJECT.md`](./PROJECT.md) |
 | Features intentionally out of scope | [`NON-GOALS.md`](./NON-GOALS.md) |
