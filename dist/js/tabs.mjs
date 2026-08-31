@@ -254,8 +254,8 @@ var A = class {
 	#x(e) {
 		let t = e.currentTarget;
 		if (d(t)) return;
-		let n = this.#s.querySelector("[aria-selected = \"true\"]");
-		this.#w(n, t);
+		let n = this.#e.tabButtons;
+		this.#w(n[this.getSelectedIndex()], t);
 	}
 	#S(e) {
 		let t = e.currentTarget;

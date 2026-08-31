@@ -438,6 +438,24 @@ shared primitive, candidate for `internal/error.js` in MAINT-12). `#makeUniqueId
   resolved in MAINT-10: the resolved list is `#elements.tabButtons`, produced by
   `dom.queryTabButtons()`. See [Naming (internal)](#naming-internal) for the
   selected / focused / tab-button / active vocabulary.
+- ~~`#onClick()` located the outgoing tab with its own
+  `querySelector('[aria-selected="true"]')` — a second "which tab is selected"
+  mechanism next to `getSelectedIndex()` / `dom.selectedIndex()`~~ — resolved in
+  MAINT-11: it now reads `#elements.tabButtons[this.getSelectedIndex()]` like
+  every other caller of `#setSelectedTab()`.
+
+### Duplication & dead-code audit (MAINT-11)
+
+A full sweep of `src/js/` after MAINT-2…5 and MAINT-10 found no dead branches,
+unreachable code, unused helpers, or leftover compatibility paths to remove. The
+one consolidation was `#onClick()`'s selected-tab lookup (above); the one unused
+test export (`CUSTOM_NAV_CLASSES`, still used internally by `customNavConfig()`)
+was dropped from `test/helpers/fixtures.js`. Deliberately kept: the
+remove-before-add listener wiring in `#initTabs()` / `#initSwipe()` (idempotent
+rebuilds), the field initializers that document `#elements` / `#panelIds` shape,
+and the per-panel title `querySelector` that a default-nav build runs twice (once
+for the label, once for the disabled flag) — trivial cost, and merging the passes
+would couple `dom.buildNavHtml()`'s inputs for no real gain.
 
 ---
 
