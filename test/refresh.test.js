@@ -1,28 +1,20 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { setup, click, DEFAULT_HTML, CUSTOM_NAV_HTML } = require('./helpers/setup');
+const { setup, click } = require('./helpers/setup');
+const { panels, tabsHtml, DEFAULT_HTML, CUSTOM_NAV_HTML } = require('./helpers/fixtures');
 
 describe('refresh()', () => {
-    // Titles carry data-nav-title so the generated button text is readable in
-    // jsdom, which has no innerText (same reason as the removeTabPanelTitle suite).
-    const REFRESH_HTML = `
-    <div class="tabs" id="tabs">
-        <div class="tabs__nav"></div>
-        <div class="tabs__panels">
-            <div class="tab-panel"><h3 class="tab-panel__title" data-nav-title="One">One</h3><div class="tab-panel__content">1</div></div>
-            <div class="tab-panel"><h3 class="tab-panel__title" data-nav-title="Two">Two</h3><div class="tab-panel__content">2</div></div>
-            <div class="tab-panel"><h3 class="tab-panel__title" data-nav-title="Three">Three</h3><div class="tab-panel__content">3</div></div>
-        </div>
-    </div>`;
+    // navTitles: true so the generated button text is readable in jsdom
+    // (no innerText) — the same reason the removeTabPanelTitle suite uses it.
+    const REFRESH_HTML = tabsHtml(['One', 'Two', 'Three'], { navTitles: true });
 
     function refreshSetup() {
         return setup(REFRESH_HTML);
     }
 
     function panelMarkup(title, content, { disabled = false } = {}) {
-        const disabled_attr = disabled ? ' aria-disabled="true"' : '';
-        return `<div class="tab-panel"><h3 class="tab-panel__title" data-nav-title="${title}"${disabled_attr}>${title}</h3><div class="tab-panel__content">${content}</div></div>`;
+        return panels([{ title, content, disabled }], { navTitles: true });
     }
 
     function panelsContainer(document) {

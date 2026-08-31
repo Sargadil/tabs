@@ -1,7 +1,8 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { setup, CUSTOM_NAV_HTML } = require('./helpers/setup');
+const { setup } = require('./helpers/setup');
+const { customNavConfig, customNavHtml, tabsHtml, CUSTOM_NAV_HTML } = require('./helpers/fixtures');
 
 describe('configuration validation', () => {
     test('all errors are prefixed with "[@sargadil/tabs]"', () => {
@@ -80,7 +81,7 @@ describe('configuration validation', () => {
     });
 
     test('missing tab panels throws a friendly error naming the selector', () => {
-        const { Tabs } = setup('<div class="tabs" id="tabs"><div class="tabs__nav"></div><div class="tabs__panels"></div></div>');
+        const { Tabs } = setup(tabsHtml([]));
 
         assert.throws(
             () => new Tabs(),
@@ -123,26 +124,10 @@ describe('configuration validation', () => {
     });
 
     test('missing custom navigation elements throws a friendly error', () => {
-        const html = `
-        <div class="tabs" id="tabs">
-            <div class="custom-tabs__nav">
-                <div class="custom-tabs__nav-inner"></div>
-            </div>
-            <div class="tabs__panels">
-                <div class="tab-panel"><h3 class="tab-panel__title">One</h3><div class="tab-panel__content">1</div></div>
-            </div>
-        </div>`;
-        const { Tabs } = setup(html);
+        const { Tabs } = setup(customNavHtml([], ['One'])); // no nav elements, 1 panel
 
         assert.throws(
-            () => new Tabs({
-                classes: {
-                    tabsNavContainer: '.custom-tabs__nav',
-                    tabsNavList: '.custom-tabs__nav-inner',
-                    tabsNavButton: '.custom-tabs__nav-button',
-                },
-                options: { useCustomNav: true },
-            }),
+            () => new Tabs(customNavConfig()),
             /\[@sargadil\/tabs\] No custom navigation elements were found\./
         );
     });
@@ -150,42 +135,14 @@ describe('configuration validation', () => {
     test('matching custom navigation/panel counts do not throw', () => {
         const { Tabs } = setup(CUSTOM_NAV_HTML); // 2 custom nav buttons, 2 panels
 
-        assert.doesNotThrow(() => new Tabs({
-            classes: {
-                tabsNavContainer: '.custom-tabs__nav',
-                tabsNavList: '.custom-tabs__nav-inner',
-                tabsNavButton: '.custom-tabs__nav-button',
-            },
-            options: { useCustomNav: true },
-        }));
+        assert.doesNotThrow(() => new Tabs(customNavConfig()));
     });
 
     test('custom navigation/panel count mismatch throws a friendly error', () => {
-        const html = `
-        <div class="tabs" id="tabs">
-            <div class="custom-tabs__nav">
-                <div class="custom-tabs__nav-inner">
-                    <button class="custom-tabs__nav-button" role="tab">Tab 1</button>
-                    <button class="custom-tabs__nav-button" role="tab">Tab 2</button>
-                </div>
-            </div>
-            <div class="tabs__panels">
-                <div class="tab-panel"><h3 class="tab-panel__title">One</h3><div class="tab-panel__content">1</div></div>
-                <div class="tab-panel"><h3 class="tab-panel__title">Two</h3><div class="tab-panel__content">2</div></div>
-                <div class="tab-panel"><h3 class="tab-panel__title">Three</h3><div class="tab-panel__content">3</div></div>
-            </div>
-        </div>`;
-        const { Tabs } = setup(html); // 2 custom nav buttons, 3 panels
+        const { Tabs } = setup(customNavHtml(['Tab 1', 'Tab 2'], ['One', 'Two', 'Three'])); // 2 nav buttons, 3 panels
 
         assert.throws(
-            () => new Tabs({
-                classes: {
-                    tabsNavContainer: '.custom-tabs__nav',
-                    tabsNavList: '.custom-tabs__nav-inner',
-                    tabsNavButton: '.custom-tabs__nav-button',
-                },
-                options: { useCustomNav: true },
-            }),
+            () => new Tabs(customNavConfig()),
             /\[@sargadil\/tabs\] Custom navigation has 2 tab\(s\) but there are 3 panel\(s\)\. The counts must match\./
         );
     });

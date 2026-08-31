@@ -2,72 +2,27 @@ const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 
 const { setup, click, keydown } = require('./helpers/setup');
+const { customNavConfig, customNavHtml, tabsHtml } = require('./helpers/fixtures');
 
 describe('disabled tabs', () => {
-    const DISABLED_MIDDLE_HTML = `
-    <div class="tabs" id="tabs">
-        <div class="tabs__nav"></div>
-        <div class="tabs__panels">
-            <div class="tab-panel"><h3 class="tab-panel__title">One</h3><div class="tab-panel__content">1</div></div>
-            <div class="tab-panel"><h3 class="tab-panel__title" aria-disabled="true">Two</h3><div class="tab-panel__content">2</div></div>
-            <div class="tab-panel"><h3 class="tab-panel__title">Three</h3><div class="tab-panel__content">3</div></div>
-        </div>
-    </div>
-    `;
+    const DISABLED_MIDDLE_HTML = tabsHtml(['One', { title: 'Two', disabled: true }, 'Three']);
 
     // First ("One") and last ("Four") disabled, so Home/End/wrap-around
     // all have to skip past a disabled edge to reach an enabled tab.
-    const DISABLED_EDGES_HTML = `
-    <div class="tabs" id="tabs">
-        <div class="tabs__nav"></div>
-        <div class="tabs__panels">
-            <div class="tab-panel"><h3 class="tab-panel__title" aria-disabled="true">One</h3><div class="tab-panel__content">1</div></div>
-            <div class="tab-panel"><h3 class="tab-panel__title">Two</h3><div class="tab-panel__content">2</div></div>
-            <div class="tab-panel"><h3 class="tab-panel__title">Three</h3><div class="tab-panel__content">3</div></div>
-            <div class="tab-panel"><h3 class="tab-panel__title" aria-disabled="true">Four</h3><div class="tab-panel__content">4</div></div>
-        </div>
-    </div>
-    `;
+    const DISABLED_EDGES_HTML = tabsHtml([
+        { title: 'One', disabled: true }, 'Two', 'Three', { title: 'Four', disabled: true },
+    ]);
 
-    const ALL_DISABLED_HTML = `
-    <div class="tabs" id="tabs">
-        <div class="tabs__nav"></div>
-        <div class="tabs__panels">
-            <div class="tab-panel"><h3 class="tab-panel__title" aria-disabled="true">One</h3><div class="tab-panel__content">1</div></div>
-            <div class="tab-panel"><h3 class="tab-panel__title" aria-disabled="true">Two</h3><div class="tab-panel__content">2</div></div>
-        </div>
-    </div>
-    `;
+    const ALL_DISABLED_HTML = tabsHtml([
+        { title: 'One', disabled: true }, { title: 'Two', disabled: true },
+    ]);
 
     // Custom nav: a native disabled <button> and an aria-disabled <div>,
     // exercising both disabled mechanisms side by side.
-    const CUSTOM_NAV_DISABLED_HTML = `
-    <div class="tabs" id="tabs">
-        <div class="custom-tabs__nav">
-            <div class="custom-tabs__nav-inner">
-                <button class="custom-tabs__nav-button" role="tab">Docs</button>
-                <button class="custom-tabs__nav-button" role="tab" disabled>Support</button>
-                <div class="custom-tabs__nav-button" role="tab" tabindex="-1" aria-disabled="true">Settings</div>
-            </div>
-        </div>
-        <div class="tabs__panels">
-            <div class="tab-panel"><h3 class="tab-panel__title">Docs</h3><div class="tab-panel__content">1</div></div>
-            <div class="tab-panel"><h3 class="tab-panel__title">Support</h3><div class="tab-panel__content">2</div></div>
-            <div class="tab-panel"><h3 class="tab-panel__title">Settings</h3><div class="tab-panel__content">3</div></div>
-        </div>
-    </div>
-    `;
-
-    function customNavConfig(extra = {}) {
-        return {
-            classes: {
-                tabsNavContainer: '.custom-tabs__nav',
-                tabsNavList: '.custom-tabs__nav-inner',
-                tabsNavButton: '.custom-tabs__nav-button',
-            },
-            options: { useCustomNav: true, ...extra },
-        };
-    }
+    const CUSTOM_NAV_DISABLED_HTML = customNavHtml(
+        ['Docs', { label: 'Support', disabled: true }, { label: 'Settings', tag: 'div', disabled: true }],
+        ['Docs', 'Support', 'Settings'],
+    );
 
     describe('default nav: aria-disabled on the title becomes a native disabled button', () => {
         test('a title with aria-disabled="true" produces <button disabled>', () => {

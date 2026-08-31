@@ -1,7 +1,8 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { setup, click, keydown, DEFAULT_HTML, CUSTOM_NAV_HTML } = require('./helpers/setup');
+const { setup, click, keydown } = require('./helpers/setup');
+const { customNavConfig, DEFAULT_HTML, CUSTOM_NAV_HTML } = require('./helpers/fixtures');
 
 describe('default nav: WAI-ARIA structure', () => {
     test('sets role=tabpanel, aria-labelledby, and role=tablist', () => {
@@ -51,14 +52,7 @@ describe('default nav: WAI-ARIA structure', () => {
 describe('custom nav', () => {
     test('adds role=tablist and ids without clobbering existing ones', () => {
         const { Tabs, document } = setup(CUSTOM_NAV_HTML);
-        new Tabs({
-            classes: {
-                tabsNavContainer: '.custom-tabs__nav',
-                tabsNavList: '.custom-tabs__nav-inner',
-                tabsNavButton: '.custom-tabs__nav-button',
-            },
-            options: { useCustomNav: true },
-        });
+        new Tabs(customNavConfig());
 
         const tablist = document.querySelector('.custom-tabs__nav-inner');
         const buttons = document.querySelectorAll('.custom-tabs__nav-button');
@@ -70,14 +64,7 @@ describe('custom nav', () => {
 
     test('gives a <button> without an explicit type a type="button"', () => {
         const { Tabs, document } = setup(CUSTOM_NAV_HTML);
-        new Tabs({
-            classes: {
-                tabsNavContainer: '.custom-tabs__nav',
-                tabsNavList: '.custom-tabs__nav-inner',
-                tabsNavButton: '.custom-tabs__nav-button',
-            },
-            options: { useCustomNav: true },
-        });
+        new Tabs(customNavConfig());
 
         const buttons = document.querySelectorAll('.custom-tabs__nav-button');
 
@@ -100,14 +87,7 @@ describe('custom nav', () => {
             </div>
         </div>`;
         const { Tabs, document } = setup(html);
-        new Tabs({
-            classes: {
-                tabsNavContainer: '.custom-tabs__nav',
-                tabsNavList: '.custom-tabs__nav-inner',
-                tabsNavButton: '.custom-tabs__nav-button',
-            },
-            options: { useCustomNav: true },
-        });
+        new Tabs(customNavConfig());
 
         const buttons = document.querySelectorAll('.custom-tabs__nav-button');
 
@@ -130,14 +110,7 @@ describe('custom nav', () => {
             </div>
         </div>`;
         const { Tabs, document } = setup(html);
-        new Tabs({
-            classes: {
-                tabsNavContainer: '.custom-tabs__nav',
-                tabsNavList: '.custom-tabs__nav-inner',
-                tabsNavButton: '.custom-tabs__nav-button',
-            },
-            options: { useCustomNav: true },
-        });
+        new Tabs(customNavConfig());
 
         const items = document.querySelectorAll('.custom-tabs__nav-button');
 
@@ -147,14 +120,7 @@ describe('custom nav', () => {
 
     test('ariaLabel and vertical orientation are applied to the custom tablist container too', () => {
         const { Tabs, document } = setup(CUSTOM_NAV_HTML);
-        new Tabs({
-            classes: {
-                tabsNavContainer: '.custom-tabs__nav',
-                tabsNavList: '.custom-tabs__nav-inner',
-                tabsNavButton: '.custom-tabs__nav-button',
-            },
-            options: { useCustomNav: true, ariaLabel: 'Sections', orientation: 'vertical' },
-        });
+        new Tabs(customNavConfig({ ariaLabel: 'Sections', orientation: 'vertical' }));
 
         const tablist = document.querySelector('.custom-tabs__nav-inner');
 
@@ -195,14 +161,7 @@ describe('form submission safety', () => {
 
     test('clicking a custom-nav tab inside a <form> does not submit it', () => {
         const { Tabs, dom, document } = setup(withForm(CUSTOM_NAV_HTML));
-        new Tabs({
-            classes: {
-                tabsNavContainer: '.custom-tabs__nav',
-                tabsNavList: '.custom-tabs__nav-inner',
-                tabsNavButton: '.custom-tabs__nav-button',
-            },
-            options: { useCustomNav: true },
-        });
+        new Tabs(customNavConfig());
         const form = document.getElementById('host-form');
         const buttons = document.querySelectorAll('.custom-tabs__nav-button');
         let submitted = false;
