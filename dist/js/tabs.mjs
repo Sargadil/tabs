@@ -198,7 +198,7 @@ var A = class {
 		}, e);
 	}
 	destroy() {
-		this.#h(this.#e.tabsNavBtn, this.#e.tabPanel);
+		this.#h(this.#e.tabButtons, this.#e.tabPanel);
 	}
 	#h(e, t) {
 		for (let t = 0; t < e.length; t++) e[t].removeEventListener("keydown", this.#r), e[t].removeEventListener("click", this.#i);
@@ -207,8 +207,8 @@ var A = class {
 		});
 	}
 	refresh() {
-		let e = this.#e.tabsNavBtn, t = this.#e.tabPanel, n = this.getSelectedIndex(), r = g(e[n], this.#s.ownerDocument), i = Array.prototype.indexOf.call(e, this.#s.ownerDocument.activeElement) !== -1;
-		this.#j(), this.#p(!0), this.#h(e, t), this.#A(), this.#_(this.#g(r, n)), i && this.#e.tabsNavBtn[this.getSelectedIndex()].focus();
+		let e = this.#e.tabButtons, t = this.#e.tabPanel, n = this.getSelectedIndex(), r = g(e[n], this.#s.ownerDocument), i = Array.prototype.indexOf.call(e, this.#s.ownerDocument.activeElement) !== -1;
+		this.#j(), this.#p(!0), this.#h(e, t), this.#A(), this.#_(this.#g(r, n)), i && this.#e.tabButtons[this.getSelectedIndex()].focus();
 	}
 	#g(e, t) {
 		let n = this.#e.tabPanel, r = Array.prototype.indexOf.call(n, e);
@@ -216,17 +216,17 @@ var A = class {
 		return r;
 	}
 	getSelectedIndex() {
-		return m(this.#e.tabsNavBtn);
+		return m(this.#e.tabButtons);
 	}
 	selectTab(e) {
-		let t = this.#e.tabsNavBtn, n = t[e];
+		let t = this.#e.tabButtons, n = t[e];
 		n || this.#f(`selectTab: no tab exists at index ${e}.`), d(n) && this.#f(`Cannot select disabled tab at index ${e}.`);
 		let r = t[this.getSelectedIndex()];
 		this.#w(r, n);
 	}
 	#_(e) {
 		this.#O(e);
-		let t = this.#e.tabsNavBtn;
+		let t = this.#e.tabButtons;
 		E(t, e);
 		for (let e = 0; e < t.length; e++) t[e].removeEventListener("keydown", this.#r), t[e].removeEventListener("click", this.#i), t[e].addEventListener("keydown", this.#r), t[e].addEventListener("click", this.#i);
 		w({
@@ -248,7 +248,7 @@ var A = class {
 	#b(e) {
 		let t = e.changedTouches[0], n = t.screenX - this.#l, r = t.screenY - this.#u;
 		if (Math.abs(n) < this.#n || Math.abs(n) <= Math.abs(r)) return;
-		let i = this.#e.tabsNavBtn, a = this.getSelectedIndex(), o = l(a, n < 0 ? 1 : -1, this.#C());
+		let i = this.#e.tabButtons, a = this.getSelectedIndex(), o = l(a, n < 0 ? 1 : -1, this.#C());
 		this.#w(i[a], i[o]);
 	}
 	#x(e) {
@@ -260,7 +260,7 @@ var A = class {
 	#S(e) {
 		let t = e.currentTarget;
 		if (d(t)) return;
-		let n = this.#t.options, r = this.#e.tabsNavBtn, i = u(e.key, {
+		let n = this.#t.options, r = this.#e.tabButtons, i = u(e.key, {
 			orientation: n.orientation,
 			rtl: n.orientation === "horizontal" && f(t),
 			currentIndex: h(r, t),
@@ -271,11 +271,11 @@ var A = class {
 		n.activationMode === "manual" ? O(t, a) : this.#w(t, a), e.stopPropagation(), e.preventDefault();
 	}
 	#C() {
-		return Array.from(this.#e.tabsNavBtn, (e) => !d(e));
+		return Array.from(this.#e.tabButtons, (e) => !d(e));
 	}
 	#w(e, t) {
 		if (e === t) return;
-		let n = this.#e.tabsNavBtn, r = this.#s.ownerDocument, i = Array.prototype.indexOf.call(n, e), a = Array.prototype.indexOf.call(n, t), o = g(e, r), s = g(t, r);
+		let n = this.#e.tabButtons, r = this.#s.ownerDocument, i = Array.prototype.indexOf.call(n, e), a = Array.prototype.indexOf.call(n, t), o = g(e, r), s = g(t, r);
 		if (!this.#T(i, a, e, t, o, s)) {
 			this.#E(n, e);
 			return;
@@ -333,7 +333,7 @@ var A = class {
 				vertical: t.orientation === "vertical"
 			});
 		}
-		this.#e.tabsNavBtn = y(this.#s);
+		this.#e.tabButtons = y(this.#s);
 	}
 	#k(e) {
 		let t = this.#e.tabPanel[e], n;
