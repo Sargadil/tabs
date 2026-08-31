@@ -298,6 +298,12 @@ npm pack
 
 Testing a file in `dist/` directly is not enough to verify the package contract.
 
+The types are checked the same way: `npm run test:package` compiles the consumer
+project in `scripts/package-smoke/consumer-ts/` with `tsc --noEmit` against the
+installed tarball. When a public API change touches `src/js/script.d.ts`, update
+that consumer fixture too — both the valid usage and the `// @ts-expect-error`
+snippets that must stay type errors.
+
 ---
 
 # Browser tests
